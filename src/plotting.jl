@@ -1,0 +1,496 @@
+@recipe function f(eq::equilibria_object)
+    seriestype := :scatter
+    markersize := 8.0
+    if eq.stable != []
+        @series begin
+            label := "Stable"
+            c := :green
+            marker := :star
+            x = []
+            y = []
+            for pt in eq.stable
+                push!(x, pt[1])
+                push!(y, pt[2])
+            end
+            x, y
+        end
+    end
+    if eq.unstable != []
+        @series begin
+            label := "Unstable"
+            c := :red
+            marker := :star
+            x = []
+            y = []
+            for pt in eq.unstable
+                push!(x, pt[1])
+                push!(y, pt[2])
+            end
+            x, y
+        end
+    end
+    if eq.saddle != []
+        @series begin
+            label := "Saddle"
+            c := :blue
+            markershape = :star
+            x = []
+            y = []
+            for pt in eq.saddle
+                push!(x, pt[1])
+                push!(y, pt[2])
+            end
+            x, y
+        end
+    end
+    if eq.unstable_focus != []
+        @series begin
+            label := "Unstable Focus"
+            c := :red
+            x = []
+            y = []
+            for pt in eq.unstable_focus
+                push!(x, pt[1])
+                push!(y, pt[2])
+            end
+            x, y
+        end
+    end
+    if eq.stable_focus != []
+        @series begin
+            label := "Stable Focus"
+            c := :green
+            x = []
+            y = []
+            for pt in eq.stable_focus
+                push!(x, pt[1])
+                push!(y, pt[2])
+            end
+            x, y
+        end
+    end
+end
+
+@recipe function f(z::Float64, eq::equilibria_object; 
+        view = :xyz, legend = :none)
+    legend := legend
+    seriestype := :scatter
+    markersize := 8.0
+    if eq.stable != []
+        @series begin
+            label := ""
+            c := :green
+            marker := :star
+
+            xs = []
+            ys = []
+            zs = []
+            for pt in eq.stable
+                push!(zs, z)
+                push!(xs, pt[1])
+                push!(ys, pt[2])
+            end
+           if view == :xyz
+                xs, ys, zs
+            elseif view == :xzy
+                xs, zs, ys
+            elseif view == :zxy
+                zs, xs, ys
+            elseif view == :zyx
+                zs, ys, xs
+            elseif view == :yzx
+                ys, zs, xs
+            elseif view == :yxz
+                ys, xs, zs
+            elseif view == :xy
+                xs, ys
+            elseif view == :xz
+                xs, zs
+            elseif view == :yz
+                ys, zs
+            elseif view == :yx
+                ys, xs
+            elseif view == :zx
+                zs, xs
+            else
+                zs, ys
+            end
+        end
+    end
+    if eq.unstable != []
+        @series begin
+            label := ""
+            c := :red
+            marker := :star
+            xs = []
+            ys = []
+            zs = []
+            for pt in eq.unstable
+                push!(zs, z)
+                push!(xs, pt[1])
+                push!(ys, pt[2])
+            end
+           if view == :xyz
+                xs, ys, zs
+            elseif view == :xzy
+                xs, zs, ys
+            elseif view == :zxy
+                zs, xs, ys
+            elseif view == :zyx
+                zs, ys, xs
+            elseif view == :yzx
+                ys, zs, xs
+            elseif view == :yxz
+                ys, xs, zs
+            elseif view == :xy
+                xs, ys
+            elseif view == :xz
+                xs, zs
+            elseif view == :yz
+                ys, zs
+            elseif view == :yx
+                ys, xs
+            elseif view == :zx
+                zs, xs
+            else
+                zs, ys
+            end
+        end
+    end
+    if eq.saddle != []
+        @series begin
+            label := ""
+            c := :blue
+            markershape = :star
+            xs = []
+            ys = []
+            zs = []
+            for pt in eq.saddle
+                push!(zs, z)
+                push!(xs, pt[1])
+                push!(ys, pt[2])
+            end
+            if view == :xyz
+                xs, ys, zs
+            elseif view == :xzy
+                xs, zs, ys
+            elseif view == :zxy
+                zs, xs, ys
+            elseif view == :zyx
+                zs, ys, xs
+            elseif view == :yzx
+                ys, zs, xs
+            elseif view == :yxz
+                ys, xs, zs
+            elseif view == :xy
+                xs, ys
+            elseif view == :xz
+                xs, zs
+            elseif view == :yz
+                ys, zs
+            elseif view == :yx
+                ys, xs
+            elseif view == :zx
+                zs, xs
+            else
+                zs, ys
+            end
+        end
+    end
+    if eq.unstable_focus != []
+        @series begin
+            label := ""
+            c := :red
+            xs = []
+            ys = []
+            zs = []
+            for pt in eq.unstable_focus
+                push!(zs, z)
+                push!(xs, pt[1])
+                push!(ys, pt[2])
+            end
+            if view == :xyz
+                xs, ys, zs
+            elseif view == :xzy
+                xs, zs, ys
+            elseif view == :zxy
+                zs, xs, ys
+            elseif view == :zyx
+                zs, ys, xs
+            elseif view == :yzx
+                ys, zs, xs
+            elseif view == :yxz
+                ys, xs, zs
+            elseif view == :xy
+                xs, ys
+            elseif view == :xz
+                xs, zs
+            elseif view == :yz
+                ys, zs
+            elseif view == :yx
+                ys, xs
+            elseif view == :zx
+                zs, xs
+            else
+                zs, ys
+            end
+        end
+    end
+    if eq.stable_focus != []
+        @series begin
+            label := "Stable Focus"
+            c := :green
+            xs = []
+            ys = []
+            zs = []
+            for pt in eq.stable_focus
+                push!(zs, z)
+                push!(xs, pt[1])
+                push!(ys, pt[2])
+            end
+            if view == :xyz
+                xs, ys, zs
+            elseif view == :xzy
+                xs, zs, ys
+            elseif view == :zxy
+                zs, xs, ys
+            elseif view == :zyx
+                zs, ys, xs
+            elseif view == :yzx
+                ys, zs, xs
+            elseif view == :yxz
+                ys, xs, zs
+            elseif view == :xy
+                xs, ys
+            elseif view == :xz
+                xs, zs
+            elseif view == :yz
+                ys, zs
+            elseif view == :yx
+                ys, xs
+            elseif view == :zx
+                zs, xs
+            else
+                zs, ys
+            end
+        end
+    end
+end
+
+function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1, view = :xyz)
+    xs = []; ys = []; zs = [];
+    for idx = 1:length(c2.points)
+        eq = c2.equilibria[idx]
+        if isa(c2.vars, Symbol)
+            x = c2.points[idx]
+            y = 0.0
+        else
+            x,y = c2.points[idx]
+        end
+        if eq_type == :stable && eq.stable != []
+            for eq_points in eq.stable
+                push!(xs, x)
+                push!(ys, y)
+                push!(zs, eq_points[eq_var])
+            end
+        end
+        if eq_type == :unstable && eq.unstable != []
+            for eq_points in eq.unstable
+                push!(xs, x)
+                push!(ys, y)
+                push!(zs, eq_points[eq_var])
+            end
+        end
+        if eq_type == :saddle && eq.saddle != []
+            for eq_points in eq.saddle
+                push!(xs, x)
+                push!(ys, y)
+                push!(zs, eq_points[eq_var])
+            end
+        end
+        if eq_type == :stable_focus && eq.stable_focus != []
+            for eq_points in eq.stable_focus
+                push!(xs, x)
+                push!(ys, y)
+                push!(zs, eq_points[eq_var])
+            end
+        end
+        if eq_type == :unstable_focus && eq.unstable_focus != []
+            for eq_points in eq.unstable_focus
+                push!(xs, x)
+                push!(ys, y)
+                push!(zs, eq_points[eq_var])
+            end
+        end
+    end 
+    if view == :xyz
+        xs, ys, zs
+    elseif view == :xzy
+        xs, zs, ys
+    elseif view == :zxy
+        zs, xs, ys
+    elseif view == :zyx
+        zs, ys, xs
+    elseif view == :yzx
+        ys, zs, xs
+    elseif view == :yxz
+        ys, xs, zs
+    elseif view == :xy
+        xs, ys
+    elseif view == :xz
+        xs, zs
+    elseif view == :yz
+        ys, zs
+    elseif view == :yx
+        ys, xs
+    elseif view == :zx
+        zs, xs
+    else
+        zs, ys
+    end
+end
+
+
+
+@recipe function f(c2::codim_object; eq_var = 1, view = :xyz)
+       
+    legend := :none
+    
+    markersize := 8.0
+    #Plotting begins here
+    if isa(c2.vars, Symbol)
+        if view == :thresholds
+            @series begin
+                legend := true
+                label := "Threshold"
+                c := :blue
+                lw := 4.0
+                extract_thresholds(c1_map)
+            end
+        elseif view == :baselines
+            @series begin
+                legend := true
+                label := "Baselines"
+                c := :green
+                lw := 4.0
+                extract_baselines(c1_map)
+            end
+        else
+            @series begin
+                legend := true
+                seriestype := :scatter
+                label := "Stable"
+                c := :green
+                marker := :star
+                extract_equilibria(c2, :stable; eq_var = eq_var, view = :xz)
+            end
+
+            @series begin
+                seriestype := :scatter
+                label := "Unstable"
+                c := :red
+                marker := :star
+                extract_equilibria(c2, :unstable; eq_var = eq_var, view = :xz)
+            end
+
+
+            @series begin
+                seriestype := :scatter
+                label := "Saddle"
+                c := :blue
+                marker := :star
+                extract_equilibria(c2, :saddle; eq_var = eq_var, view = :xz)
+            end
+
+
+            @series begin
+                seriestype := :scatter
+                label := "Stable_focus"
+                c := :green
+                marker := :circle
+                extract_equilibria(c2, :stable_focus; eq_var = eq_var, view = :xz)
+            end
+
+
+            @series begin
+                
+                seriestype := :scatter
+                label := "Unstable_focus"
+                c := :red
+                marker := :circle
+                extract_equilibria(c2, :unstable_focus; eq_var = eq_var, view = :xz)
+            end  
+        end
+    else
+        if view == :thresholds
+
+            xspan, yspan, threshmap = extract_thresholds(c2)
+            null_map = (threshmap .!= Inf) .* Inf
+            legend := true
+            @series begin
+                seriestype := :heatmap
+                c := :thermal
+                xspan, yspan, threshmap
+            end
+            @series begin
+                seriestype := :heatmap
+                c := :black
+                xspan, yspan, null_map
+            end
+        elseif view == :baselines
+            xspan, yspan, basemap = extract_baselines(c2)
+            null_map = (basemap .!= Inf) .* Inf
+            legend := true
+            @series begin
+                seriestype := :heatmap
+                c := :thermal
+                xspan, yspan, basemap
+            end
+            @series begin
+                seriestype := :heatmap
+                c := :black
+                xspan, yspan, null_map
+            end
+        else    
+            @series begin
+                seriestype := :scatter
+                label := "Stable"
+                c := :green
+                marker := :star
+                extract_equilibria(c2, :stable;eq_var = eq_var, view = view)
+            end
+
+            @series begin
+                seriestype := :scatter
+                label := "Unstable"
+                c := :red
+                marker := :star
+                extract_equilibria(c2, :unstable; eq_var = eq_var, view = view)
+            end
+
+            @series begin
+                seriestype := :scatter
+                label := "Saddle"
+                c := :blue
+                marker := :star
+                extract_equilibria(c2, :saddle; eq_var = eq_var, view = view)
+            end
+
+            @series begin
+                seriestype := :scatter
+                label := "Stable_focus"
+                c := :green
+                marker := :circle
+                extract_equilibria(c2, :stable_focus; eq_var = eq_var, view = view)
+            end
+
+            @series begin
+                seriestype := :scatter
+                label := "Unstable_focus"
+                c := :red
+                marker := :circle
+                extract_equilibria(c2, :unstable_focus; eq_var = eq_var, view = view)
+            end  
+        end
+    end
+end
