@@ -1,3 +1,5 @@
+module RetinalChaos
+
 using JSON2
 using DifferentialEquations, ParameterizedFunctions
 using LinearAlgebra, ForwardDiff, NLsolve
@@ -58,4 +60,6 @@ function run_model(p_dict, u_dict, tspan; nx = 96, ny = 96, μ = 0.25)
     println("[$(now())]: Running statistics")
     df_stats = @time run_wavestats(timestamp, SDE_sol_arr[:,:,1,:])
     return SDE_sol_arr, df_params, df_stats
+end
+
 end
