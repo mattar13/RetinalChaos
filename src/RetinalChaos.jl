@@ -6,6 +6,7 @@ using LinearAlgebra, ForwardDiff, NLsolve
 using Distributions
 using Images, ImageSegmentation
 using ProgressMeter
+using Plots
 
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
