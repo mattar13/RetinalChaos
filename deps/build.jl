@@ -21,7 +21,6 @@ end
 
 println("Checking RetinalChaos dependancies")
 check_pkg("Dates")
-println("[$(Dates.now())]: Building package RetinalChaos")
 check_pkg("JSON2")
 check_pkg("DifferentialEquations") 
 check_pkg("ParameterizedFunctions")
