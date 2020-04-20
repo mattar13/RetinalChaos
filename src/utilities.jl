@@ -94,17 +94,27 @@ end
 These function are for reading and writing to excel spreadsheets
 """
 function append_modeldata(filename, stats, params)
-    XLSX.openxlsx("DataSheet.xlsx", mode="rw") do xf
-        #First we need to open the datasheets
-        df_params_old = DataFrame(XLSX.readtable(filename, "Parameters")...)
-        df_wavestats_old = DataFrame(XLSX.readtable(filename, "WaveStats")...)
+    try
+        XLSX.openxlsx("DataSheet.xlsx", mode="rw") do xf
+            #First we need to open the datasheets
+            df_params_old = DataFrame(XLSX.readtable(filename, "Parameters")...)
+            df_wavestats_old = DataFrame(XLSX.readtable(filename, "WaveStats")...)
 
-        stats_sheet = xf[1]
-        param_sheet = xf[2]
+            stats_sheet = xf[1]
+            param_sheet = xf[2]
 
-        df_params_new = vcat(df_params_old, params)
-        df_wavestats_new = vcat(df_wavestats_old, stats)
-        XLSX.writetable!(stats_sheet, collect(DataFrames.eachcol(df_wavestats_new)), DataFrames.names(df_wavestats_new))
-        XLSX.writetable!(param_sheet, collect(DataFrames.eachcol(df_params_new)), DataFrames.names(df_params_new))
+            df_params_new = vcat(df_params_old, params)
+            df_wavestats_new = vcat(df_wavestats_old, stats)
+            XLSX.writetable!(stats_sheet, collect(DataFrames.eachcol(df_wavestats_new)), DataFrames.names(df_wavestats_new))
+            XLSX.writetable!(param_sheet, collect(DataFrames.eachcol(df_params_new)), DataFrames.names(df_params_new))
+        end
+    catch
+        println("Excel sheet not yet made")
+        XLSX.openxlsx("DataSheet.xlsx", mode="w") do xf
+            XLSX.writetable!(
+                WaveStats  = (collect(DataFrames.eachcol(stats)), DataFrames.names(stats)),
+                Parameters = (collect(DataFrames.eachcol(params)), DataFrames.names(params))
+            )
+        end
     end
 end
