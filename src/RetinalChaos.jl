@@ -18,6 +18,9 @@ include("plotting.jl")
 include("fitting.jl")
 include("wave_extraction.jl")
 
+export read_JSON
+export run_model
+export append_modeldata
 ###### The main simulation loop is here#########################################
 """
 This function contains everything you need to run a single instance of the model,
