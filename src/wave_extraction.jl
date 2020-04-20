@@ -47,25 +47,6 @@ function extract_isi(spike_trace::BitArray{1}; dt = 1.0)
 end
 
 """
-This function counts the number of spikes within a burst
-"""
-function extract_isi(spike_trace::BitArray{1}; dt = 1.0)
-    isi = Array{Float64}([])
-    count = 0
-    for spike in spike_trace
-        if spike == 0
-            count += 1
-        elseif spike == 1 && count == 0
-            count = 0
-        elseif spike == 1 && count > 0
-            push!(isi, count*dt)
-            count = 0
-        end
-    end
-    isi
-end
-
-"""
 This function calculates the interspike interval
 The input must always be a thresholded spike array
 """
