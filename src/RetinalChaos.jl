@@ -8,6 +8,7 @@ using Distributions
 using Images, ImageSegmentation
 using ProgressMeter
 using Plots
+using DataFrames
 
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
