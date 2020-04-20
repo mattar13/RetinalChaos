@@ -46,7 +46,7 @@ function run_model(p_dict, u_dict, tspan; nx = 96, ny = 96, μ = 0.25)
         #saveat = 100
     );
     #get the last solution from the warmup
-    println("[$(now())]: Warming up the model for $(tspan[end]/1000)s")
+    println("[$(now())]: Running the model for $(tspan[end]/1000)s")
     u0_new = SDE_mat_sol[end]
     SDE_mat_prob = SDEProblem(SACnet, noise_2D, u0_new, tspan, p0);
     @time SDE_mat_sol = solve(
