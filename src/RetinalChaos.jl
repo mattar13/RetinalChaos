@@ -1,5 +1,6 @@
 module RetinalChaos
 
+using Dates
 using JSON2
 using DifferentialEquations, ParameterizedFunctions
 using LinearAlgebra, ForwardDiff, NLsolve
