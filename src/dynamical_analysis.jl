@@ -164,8 +164,8 @@ function codim_map(ui, pi, codim::Tuple{Symbol, Symbol};
     for (idx1, c1) in enumerate(c1_range)
         #println(idx1)
         for (idx2, c2) in enumerate(c2_range)
-            pv = copy(p0)
-            uv = copy(u0)
+            pv = copy(pi)
+            uv = copy(ui)
             pv[(codim[1] |> p_find)...] = c1
             pv[(codim[2] |> p_find)...] = c2
             equilibria = find_equilibria(uv, pv; resolution = eq_res)
@@ -191,8 +191,8 @@ function codim_map(ui, pi, codim::Tuple{Symbol, Symbol, Symbol};
     for (idx1, c1) in enumerate(c1_range)
         for (idx2, c2) in enumerate(c2_range)
             for (idx3, c3) in enumerate(c3_range)
-                pv = copy(p0)
-                uv = copy(u0)
+                pv = copy(pi)
+                uv = copy(ui)
                 pv[(codim[1] |> p_find)...] = c1
                 pv[(codim[2] |> p_find)...] = c2
                 pv[(codim[3] |> p_find)...] = c3
