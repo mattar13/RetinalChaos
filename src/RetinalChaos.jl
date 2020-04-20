@@ -8,12 +8,12 @@ using ProgressMeter
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
-include("models.jl")
-include("utilities.jl")
-include("dynamical_analysis.jl")
-include("plotting.jl")
-include("fitting.jl")
-include("wave_extraction.jl")
+Base.include("models.jl")
+Base.include("utilities.jl")
+Base.include("dynamical_analysis.jl")
+Base.include("plotting.jl")
+Base.include("fitting.jl")
+Base.include("wave_extraction.jl")
 
 ###### The main simulation loop is here#########################################
 """
