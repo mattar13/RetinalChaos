@@ -32,9 +32,9 @@ This function contains everything you need to run a single instance of the model
 """
 function run_model(p_dict, u_dict, tspan; nx = 96, ny = 96, μ = 0.25)
     SACnet = BurstPDE(nx, ny; μ = μ)
-    u0_mat = cat(map(x -> fill(u_dict[x], (ny, nx)), BurstModel.syms)..., dims = 3)
-    u0 = extract_dict(u_dict, BurstModel.syms)
-    p0 = extract_dict(p_dict, BurstModel.params)
+    u0_mat = cat(map(x -> fill(u_dict[x], (ny, nx)), model_conds)..., dims = 3)
+    u0 = extract_dict(u_dict, model_conds)
+    p0 = extract_dict(p_dict, model_pars)
     #warm up the model
     println("[$(now())]: Warming up the model for 60s")
     SDE_mat_prob = SDEProblem(SACnet, noise_2D, u0_mat, (0.0, 60e3), p0);
