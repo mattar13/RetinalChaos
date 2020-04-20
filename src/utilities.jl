@@ -95,7 +95,7 @@ These function are for reading and writing to excel spreadsheets
 """
 function append_modeldata(filename, stats, params)
     try
-        XLSX.openxlsx("DataSheet.xlsx", mode="rw") do xf
+        XLSX.openxlsx(filename, mode="rw") do xf
             #First we need to open the datasheets
             df_params_old = DataFrame(XLSX.readtable(filename, "Parameters")...)
             df_wavestats_old = DataFrame(XLSX.readtable(filename, "WaveStats")...)
@@ -110,7 +110,7 @@ function append_modeldata(filename, stats, params)
         end
     catch
         println("Excel sheet not yet made")
-        XLSX.openxlsx("DataSheet.xlsx", mode="w") do xf
+        XLSX.openxlsx(filename, mode="w") do xf
             XLSX.writetable!(
                 WaveStats  = (collect(DataFrames.eachcol(stats)), DataFrames.names(stats)),
                 Parameters = (collect(DataFrames.eachcol(params)), DataFrames.names(params))
