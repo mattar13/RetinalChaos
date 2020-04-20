@@ -1,27 +1,27 @@
-using Dates
-println("[$(Dates.now())]: Building package RetinalChaos")
+
 using Pkg
 
-println("[$(Dates.now())]: Activating RetinalChaos files")
+println("Activating RetinalChaos files")
 #Pkg.activate("RetinalChaos")
-println("[$(Dates.now())]: Developing RetinalChaos files")
+println("Developing RetinalChaos files")
 #Pkg.develop("NeuroChaos")
 
 function check_pkg(pkg::String)
-    println("[$(Dates.now())]: Checking package $pkg.")
+    println("Checking package $pkg.")
     pkgs_installed = Pkg.installed()
     if haskey(pkgs_installed, pkg)
-        println("[$(Dates.now())]: Package $pkg is installed.")
+        println("Package $pkg is installed.")
     else
-        println("[$(Dates.now())]: Installing package $pkg.")
+        println("Installing package $pkg.")
         Pkg.add(pkg)
-        println("[$(Dates.now())]: Package $pkg successfully installed.")
+        println("Package $pkg successfully installed.")
     end
     println("  ")
 end
 
-println("[$(Dates.now())]: Checking RetinalChaos dependancies")
-  
+println("Checking RetinalChaos dependancies")
+check_pkg("Dates")
+println("[$(Dates.now())]: Building package RetinalChaos")
 check_pkg("JSON2")
 check_pkg("DifferentialEquations") 
 check_pkg("ParameterizedFunctions")
