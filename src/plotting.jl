@@ -1,3 +1,59 @@
+function frame_draw(sol_array; idx = :all, saveas = :gif)
+    threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
+    spike_arr = sol_array[:,:,1,:] .>= threshold
+    θr = RetinalChaos.find_maxISI(spike_arr; dt = 10.0)
+    burst_arr = RetinalChaos.convolve_bursts(spike_arr, θr; dt = 10.0)
+    m_ach = maximum(sol_array[:, :, 6, :])
+    if idx == :all
+        save_name = :Full
+        anim = @animate for i = 1:2:size(sol_array, 4)
+            println("Animating frame $i")
+            p = plot(layout = grid(2, 2), size = (800, 800))
+            heatmap!(p[1], sol_array[:, :, 1, i], ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                c = :curl, clims = (-70.0, 0.0),
+            )
+            heatmap!(p[2], burst_arr[:,:,i], ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                c = :grays, clims = (0.0, 1.0),
+            )
+            heatmap!(p[3], sol_array[:, :, 3, i], ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                c = :kgy, clims = (0.0, 1.0),
+            )
+            heatmap!(p[4], sol_array[:, :, 6, i], ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                c = :bgy, clims = (0.0, m_ach),
+            )
+        end
+    elseif idx == :spike
+        save_name = :spike
+        anim = @animate for i = 1:2:size(sol_array, 4)
+            println("Animating frame $i")
+            heatmap(burst_arr[:,:,i], ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                c = :grays, clims = (0.0, 1.0),
+            )
+            #contourf!(SDE_sol_arr[:,:,1,i])
+        end
+    else
+        save_name = model_conds[idx]
+        anim = @animate for i = 1:2:size(sol_array, 4)
+            println("Animating frame $i")
+            heatmap(sol_array[:, :, idx, i], ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                c = :curl, clims = (minimum(SDE_sol_arr[:, :, idx, i]), maximum(SDE_sol_arr[:, :, idx, i]))
+            )
+        end
+    end
+
+    if saveas == :mp4
+        mp4(anim, "$(save_name)t_map.mp4", fps = 50)
+    elseif saveas == :gif
+        gif(anim, "$(save_name)t_map.gif", fps = 50)
+    end
+end
+
 function raster_plot(sol_array)
     threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
     spike_arr = sol_array[:,:,1,:] .>= threshold
