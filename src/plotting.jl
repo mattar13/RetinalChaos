@@ -1,3 +1,38 @@
+function raster_plot(sol_array)
+    threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
+    spike_arr = sol_array[:,:,1,:] .>= threshold
+    θr = RetinalChaos.find_maxISI(spike_arr; dt = 10.0)
+    burst_arr = RetinalChaos.convolve_bursts(spike_arr, θr; dt = 10.0)
+    nx, ny, t = size(wave_arr)
+    spike_raster = reshape(spike_arr, (nx * ny, t))
+    burst_raster = RetinalChaos.convolve_bursts(spike_raster, θr; dt = 10.0)
+    raster = reshape(sol_array, (nx * ny, 7, t))
+    p = plot(layout = grid(7, 1), size = (2000, 2000));
+    heatmap!(p[1], raster[:, 1, :], c = :curl);
+    heatmap!(p[2], burst_raster, c = :grayscale);
+    heatmap!(p[3], raster[:, 2, :], c = :RdPu);
+    heatmap!(p[4], raster[:, 3, :], c = :kgy);
+    heatmap!(p[5], 1 .- raster[:, 4, :], c = :BuPu);
+    heatmap!(p[6], raster[:, 5, :], c = :reds);
+    heatmap!(p[7], raster[:, 6, :], c = :bgy)
+    p
+end
+
+function trace_plot(sol_array)
+    nx, ny, var, t = size(sol_array)
+    raster = reshape(sol_array, (nx * ny, 7, size(sol_array, 4)))
+    pick_ten = rand((1:size(raster, 1)), 10)
+    p = plot(layout = grid(6, 1), cbar = :none, legend = false);
+    plot!(p[1], raster[pick_ten, 1, :]', lw = 4.0, c = :blues, line_z = pick_ten');
+    plot!(p[2], raster[pick_ten, 2, :]', lw = 4.0, c = :PuRd, line_z = pick_ten');
+    plot!(p[3], raster[pick_ten, 3, :]', lw = 4.0, c = :greens, line_z = pick_ten', clims = pick_ten');
+    plot!(p[4], 1 .- raster[pick_ten, 4, :]', lw = 4.0, c = :BuPu, line_z = pick_ten', clims = pick_ten');
+    plot!(p[5], raster[pick_ten, 5, :]', lw = 4.0, c = :reds, line_z = pick_ten', clims = pick_ten');
+    plot!(p[6], raster[pick_ten, 6, :]', lw = 4.0, c = :bgy, line_z = pick_ten', clims = pick_ten')
+    p
+end
+
+
 @recipe function f(eq::equilibria_object)
     seriestype := :scatter
     markersize := 8.0
