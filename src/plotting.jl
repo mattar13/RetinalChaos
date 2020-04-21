@@ -59,7 +59,7 @@ function raster_plot(sol_array)
     spike_arr = sol_array[:,:,1,:] .>= threshold
     θr = RetinalChaos.find_maxISI(spike_arr; dt = 10.0)
     burst_arr = RetinalChaos.convolve_bursts(spike_arr, θr; dt = 10.0)
-    nx, ny, t = size(wave_arr)
+    nx, ny, t = size(spike_arr)
     spike_raster = reshape(spike_arr, (nx * ny, t))
     burst_raster = RetinalChaos.convolve_bursts(spike_raster, θr; dt = 10.0)
     raster = reshape(sol_array, (nx * ny, 7, t))
