@@ -110,11 +110,9 @@ function append_modeldata(filename, stats, params)
         end
     catch
         println("Excel sheet not yet made")
-        XLSX.openxlsx(filename, mode="w") do xf
-            XLSX.writetable!(
+        XLSX.writetable(filename,
                 WaveStats  = (collect(DataFrames.eachcol(stats)), DataFrames.names(stats)),
                 Parameters = (collect(DataFrames.eachcol(params)), DataFrames.names(params))
             )
-        end
     end
 end
