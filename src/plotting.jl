@@ -4,6 +4,7 @@ function frame_draw(sol_array; idx = :all, saveas = :gif)
     θr = RetinalChaos.find_maxISI(spike_arr; dt = 10.0)
     burst_arr = RetinalChaos.convolve_bursts(spike_arr, θr; dt = 10.0)
     m_ach = maximum(sol_array[:, :, 6, :])
+    nx, ny, var, t = size(sol_array)
     if idx == :all
         save_name = :Full
         anim = @animate for i = 1:2:size(sol_array, 4)
