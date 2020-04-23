@@ -9,6 +9,7 @@ using Images, ImageSegmentation
 using ProgressMeter
 using Plots
 using DataFrames, XLSX
+using Loess, StatsBase
 
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
