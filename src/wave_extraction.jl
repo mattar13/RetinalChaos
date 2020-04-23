@@ -356,7 +356,18 @@ function run_wavestats(timestamp, vm_arr; dt = 0.01, default_θ = :none)
     df_stats
 end
 
-
+"""
+This function finds local maxima in a graph. Usually requires noise to be cleaned with a loess function
+"""
+function findlocalmaxima(array)
+    maxima = Int64[]
+    for idx = 2:length(array)-1
+        if array[idx-1] < array[idx] > array[idx+1]
+            push!(maxima, idx)
+        end
+    end
+    maxima
+end
 
 """
 This method uses the Loess filter function to find peaks within a histogram or waveform
