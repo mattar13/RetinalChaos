@@ -371,12 +371,16 @@ end
 """
 This method uses the Loess filter function to find peaks within a histogram or waveform
 """
-function findpeak(x, y)
-    model = loess(x, y, span = 0.33, degree = 4)
-    loess_filt = Loess.predict(model, x)
-    findlocalmaxima(isi_loess)
+function find_baselines(array)
+    thresh = calculate_threshold(vm[reduced]);
+    bins = collect(LinRange(minimum(vm[reduced])-1,thresh, 1000))
+    h_fit = fit(Histogram, vm, bins, closed = :left);
+    h_edges = Float64.(h_fit.edges[1][2:end]);
+    h_weights = Float64.(h_fit.weights);
+    h_model = loess(h_edges, h_weights; span = 0.15, degree = 2);
+    smooth_weights = Loess.predict(h_model, h_edges);
+    findlocalmaxima(smooth_weights)
 end
-
 
 
 
