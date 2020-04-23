@@ -20,8 +20,7 @@ end
 """
 Calculate threshold
 """
-calculate_threshold(vm_arr::Array{T, 3} where T) = sum(vm_arr)/length(vm_arr) + 4*std(vm_arr)
-
+calculate_threshold(vm_arr::AbstractArray where T) = sum(vm_arr)/length(vm_arr) + 4*std(vm_arr)
 
 
 """
