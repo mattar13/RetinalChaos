@@ -118,22 +118,22 @@ function convolve_bursts(spike_arr::BitArray{1}, θr; dt = 10.0, include_theta =
     burst_arr, burst_inds
 end
 
-function convolve_bursts(spike_arr::BitArray{2}, θr; dt = 10.0)
+function convolve_bursts(spike_arr::BitArray{2}, θr; dt = 10.0, include_theta = false)
     ret_arr = similar(spike_arr)
     burst_inds = Array{Tuple}([])
     for i = 1:size(spike_arr, 1)
-        ret_arr[i,:], b_idxs = convolve_bursts(spike_arr[i, :], θr; dt = dt)
+        ret_arr[i,:], b_idxs = convolve_bursts(spike_arr[i, :], θr; dt = dt, include_theta = include_theta)
         push!(burst_inds, (i, b_idxs...))
     end
     ret_arr, burst_inds
 end
 
-function convolve_bursts(spike_arr::BitArray{3}, θr; dt = 10.0)
+function convolve_bursts(spike_arr::BitArray{3}, θr; dt = 10.0, include_theta = false)
     ret_arr = similar(spike_arr)
     burst_inds = Array{Tuple}([])
     for i = 1:size(spike_arr, 1)
         for j = 1:size(spike_arr, 2)
-            ret_arr[i,j,:], b_idxs = convolve_bursts(spike_arr[i,j, :], θr)
+            ret_arr[i,j,:], b_idxs = convolve_bursts(spike_arr[i,j, :], θr, include_theta = include_theta)
             push!(burst_inds, (i, j, b_idxs...))
         end
     end
