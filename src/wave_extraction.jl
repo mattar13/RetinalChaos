@@ -103,7 +103,7 @@ function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, dt = 10.0, include
             if burst_start > 0 && burst_end != 0
                 push!(burst_inds, (burst_start, burst_end))
                 if include_theta == true
-                    burst_start = max(0, round(Int, burst_start-(θr/dt)))
+                    burst_start = max(1, round(Int, burst_start-(θr/dt)))
                     burst_end = round(Int, min(length(burst_arr), burst_end+(θr/dt)))
                 end                    
                 burst_arr[burst_start:burst_end] .= 1
