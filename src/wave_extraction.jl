@@ -124,7 +124,7 @@ function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, IBI = 1000.0, dt =
     burst_arr, burst_inds
 end
 
-function convolve_bursts(spike_arr::BitArray{2}; θr = 500.0,  IBI = 0.0, dt = 10.0, include_theta = false)
+function convolve_bursts(spike_arr::BitArray{2}; θr = 500.0,  IBI = 1000.0, dt = 10.0, include_theta = false)
     ret_arr = similar(spike_arr)
     burst_inds = Array{Tuple}([])
     for i = 1:size(spike_arr, 1)
@@ -134,7 +134,7 @@ function convolve_bursts(spike_arr::BitArray{2}; θr = 500.0,  IBI = 0.0, dt = 1
     ret_arr, burst_inds
 end
 
-function convolve_bursts(spike_arr::BitArray{3}; θr =  500.0, IBI = 0.0,  dt = 10.0, include_theta = false)
+function convolve_bursts(spike_arr::BitArray{3}; θr =  500.0, IBI = 1000.0,  dt = 10.0, include_theta = false)
     ret_arr = similar(spike_arr)
     burst_inds = Array{Tuple}([])
     for i = 1:size(spike_arr, 1)
