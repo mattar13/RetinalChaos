@@ -102,6 +102,11 @@ function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, IBI = 1000.0, dt =
         else
             spike_timer = 0.0
             
+            #If a burst has concluded and duration is greater than 0, countdown the duration timer
+            if duration_timer > 0
+                duration_timer -= dt
+            end
+            
             if burst_start > 0 && burst_end != 0
                 push!(burst_inds, (burst_start, burst_end))
                 if include_theta == true
@@ -109,6 +114,7 @@ function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, IBI = 1000.0, dt =
                     burst_end = round(Int, min(length(burst_arr), burst_end+(θr/dt)))
                 end                    
                 burst_arr[burst_start:burst_end] .= 1
+                #This signifies that a burst has ended and we can begin a duration timer
                 duration_timer = IBI
             end
             burst_start = 0
