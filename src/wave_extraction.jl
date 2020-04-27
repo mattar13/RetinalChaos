@@ -120,20 +120,24 @@ end
 
 function convolve_bursts(spike_arr::BitArray{2}, θr; dt = 10.0)
     ret_arr = similar(spike_arr)
+    burst_inds = Array{Tuple}([])
     for i = 1:size(spike_arr, 1)
-        ret_arr[i,:], _ = convolve_bursts(spike_arr[i, :], θr)
+        ret_arr[i,:], b_idxs = convolve_bursts(spike_arr[i, :], θr; dt = dt)
+        push!(burst_inds, (i, b_idxs...))
     end
-    ret_arr
+    ret_arr, burst_inds
 end
 
 function convolve_bursts(spike_arr::BitArray{3}, θr; dt = 10.0)
     ret_arr = similar(spike_arr)
+    burst_inds = Array{Tuple}([])
     for i = 1:size(spike_arr, 1)
         for j = 1:size(spike_arr, 2)
-            ret_arr[i,j,:], _ = convolve_bursts(spike_arr[i,j, :], θr)
+            ret_arr[i,j,:], b_idxs = convolve_bursts(spike_arr[i,j, :], θr)
+            push!(burst_inds, (i, j, b_idxs...))
         end
     end
-    ret_arr
+    ret_arr, burst_inds
 end
 
 """
