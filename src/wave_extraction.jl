@@ -414,6 +414,17 @@ function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64
     1/2*((P1-T2)/(1-P1*T2) + (P2-T1)/(1-P2*T1))
 end
 
+function calculate_STTC(spike_array::BitArray{2}; Δt::Float64 = 50.0, dt::Float64 = 1.0)
+    n_traces = size(spike_array, 1)
+    corr_matrix = zeros(n_traces, n_traces)
+    for i = 1:n_traces
+        for j = 1:n_traces
+            corr_matrix[i,j] = calculate_STTC(spike_array[i, :], spike_array[j, :])
+        end
+    end
+    corr_matrix
+end
+
 """
 max_val = maximum(isi); min_val = minimum(isi); dBin = 10.0;
 bins = collect(min_val:dBin:max_val)
