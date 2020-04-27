@@ -134,7 +134,7 @@ function convolve_bursts(spike_arr::BitArray{3}, θr; dt = 10.0, include_theta =
     for i = 1:size(spike_arr, 1)
         for j = 1:size(spike_arr, 2)
             ret_arr[i,j,:], b_idxs = convolve_bursts(spike_arr[i,j, :], θr, include_theta = include_theta)
-            push!(burst_inds, (i, j, b_idxs...))
+            push!(burst_inds, ((i, j), b_idxs...))
         end
     end
     ret_arr, burst_inds
