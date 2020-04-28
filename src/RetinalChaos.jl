@@ -77,7 +77,11 @@ function run_model(p_dict, u_dict, tspan; dt = 10.0, nx = 96, ny = 96, μ = 0.25
     println("[$(now())]: Model completed")
     timestamp = now()
     df_params = params_to_datasheet(timestamp, p0, u0)
-    SDE_sol_arr = Array(SDE_mat_sol);
+    #Converting Solution to array
+    SDE_sol_arr = zeros(size(SDE_mat_sol)...)
+    for i in size(SDE_sol_arr, 4)
+        SDE_sol_arr[:,:,:,i] .= Array(SDE_mat_sol(i))
+    end
     println("[$(now())]: Running statistics")
     df_stats = @time run_wavestats(timestamp, SDE_sol_arr[:,:,1,:])
     return SDE_sol_arr, df_params, df_stats
