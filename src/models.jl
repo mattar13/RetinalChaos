@@ -15,6 +15,13 @@ N_INF(V, V3, V4) = (1 + tanh((V - V3)/V4))/2;
 LAM(V, V3, V4) = cosh((V-V3)/(2*V4));
 Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 ħ(a, K_d) = (a^2)/(a^2 + K_d)
+
+M_INF(V::CuArray, V1, V2) = (1.0 .+ CUDAnative.tanh.((V .- V1)/V2))/2;
+N_INF(V::CuArray, V3, V4) = (1.0 .+ CUDAnative.tanh.((V .- V3)/V4))/2;
+LAM(V::CuArray, V3, V4) = CUDAnative.cosh.((V.-V3)/(2*V4));
+Φ(v::CuArray, κ, V_0) = 1/(1 .+ CUDAnative.exp(-κ * (v .- V_0)))
+ħ(a::CuArray, K_d) = (a^2)/(a^2 .+ K_d)
+
 #This is the generalized current calculation function
 fI(g::Float64, r, v, e::Float64) = -g*r*(v-e)
 #This file will include several models
