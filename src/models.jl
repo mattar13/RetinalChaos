@@ -1,4 +1,4 @@
-mutable struct BurstPDE5{A} <: Function
+mutable struct BurstPDE{A} <: Function
         Mx::Union{Tridiagonal, A}
         My::Union{Tridiagonal, A}
         MyA::A 
