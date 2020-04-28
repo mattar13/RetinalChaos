@@ -105,9 +105,9 @@ function (PDE::BurstPDE)(dU, U, p, t)
     mul!(PDE.AMx, ACh, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
     if PDE.nullout == :ρ
-        @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null) - ACh)/τACh
+        @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - ACh)/τACh
     else
-        @. dACh = PDE.DA + (ρ*Φ(v, k, V0)) - ACh)/τACh
+        @. dACh = PDE.DA + (ρ*Φ(v, k, V0) - ACh)/τACh
     end
     @. dW = -W/τw
     nothing
