@@ -11,6 +11,7 @@ using Plots
 using DataFrames, XLSX
 using Loess, StatsBase
 
+using CuArrays
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
