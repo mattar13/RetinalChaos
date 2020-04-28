@@ -273,12 +273,7 @@ function run_wavestats(timestamp, vm_arr; dt = 0.01, default_θ = :none)
     BurstFrequency = 60/InterburstInterval#in bursts per minute
     BurstFrequencyStd = 1/InterburstIntervalStd
     #Find the burst/spike threshold
-    if default_θ == :none
-        θr = find_maxISI(spike_arr)
-    else
-        θr = default_θ
-    end
-    burst_arr = convolve_bursts(spike_arr, θr)
+    burst_arr = convolve_bursts(spike_arr)
     burst_length = calculate_isi(burst_arr.==0; dt = dt) #All burst lengths
     #Calculate the burst durations
     n_BD = length(burst_length)
