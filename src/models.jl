@@ -1,9 +1,9 @@
-mutable struct BurstPDE{T} <: Function
-        Mx::Tridiagonal{T, Array{T, 1}}
-        My::Tridiagonal{T, Array{T, 1}}
-        MyA::Matrix{T}
-        AMx ::Matrix{T}
-        DA::Matrix{T}
+mutable struct BurstPDE5{A} <: Function
+        Mx::Union{Tridiagonal, A}
+        My::Union{Tridiagonal, A}
+        MyA::A 
+        AMx::A 
+        DA::A
         null::Union{Nothing, Matrix{Int64}}
         nullout::Symbol
 end
