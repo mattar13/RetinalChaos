@@ -10,7 +10,7 @@ using ProgressMeter
 using Plots
 using DataFrames, XLSX
 using Loess, StatsBase
-
+# We make it so, CuArrays is attempted to be loaded onto a computer. If it cannot, then GPU arrays are disabled
 using CuArrays
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
