@@ -4,7 +4,7 @@ mutable struct BurstPDE{A} <: Function
         MyA::A 
         AMx::A 
         DA::A
-        null::Union{Nothing, Matrix{Int64}}
+        null::A
         nullout::Symbol
 end
 
@@ -145,6 +145,7 @@ function BurstPDE(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, n
         gAMx = CuArray(Float32.(Mx))
         gMyA = CuArray(Float32.(Mx))
         gDA = CuArray(Float32.(Mx))
+        gNull = CuArray(Float32.(null)
         return BurstPDE(gMx, gMy, gMyA, gAMx, gDA, null, nullout)
     else
         return BurstPDE(Mx, My, Array(MyA), Array(AMx), Array(DA), null, nullout)
