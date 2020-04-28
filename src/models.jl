@@ -5,6 +5,7 @@ mutable struct BurstPDE{T} <: Function
         AMx ::Matrix{T}
         DA::Matrix{T}
         null::Union{Nothing, Matrix{Int64}}
+        nullout::Symbol
 end
 
 
@@ -69,8 +70,8 @@ function (PDE::BurstPDE)(dU, U, p, t)
               fI(g_leak,  1.0, v, E_leak)
             + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
             + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K)
-            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh)
+            + fI(g_TREK, b, v, E_K) * (PDE.nullout == :g_TREK ? PDE.null : ones(size(PDE.null)))
+            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) * (PDE.nullout == :g_ACh ? PDE.null : ones(size(PDE.null)))
             + I_app
             + W
         )/C_m
@@ -82,7 +83,7 @@ function (PDE::BurstPDE)(dU, U, p, t)
     mul!(PDE.MyA, PDE.My, ACh)
     mul!(PDE.AMx, ACh, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - ACh)/τACh
+    @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*(PDE.nullout == :ρ ? PDE.null : ones(size(PDE.null))) - ACh)/τACh
     @. dW = -W/τw
     nothing
 end
