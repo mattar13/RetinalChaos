@@ -45,6 +45,7 @@ function run_model(p_dict, u_dict, tspan; dt = 10.0, nx = 96, ny = 96, μ = 0.25
     u0_mat = cat(map(x -> fill(u_dict[x], (ny, nx)), model_conds)..., dims = 3)
     if gpu
         u0_mat = u0_mat |> cu
+        CuArrays.allowscalar(false)
     end
     u0 = extract_dict(u_dict, model_conds)
     p0 = extract_dict(p_dict, model_pars)
