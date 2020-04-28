@@ -145,8 +145,8 @@ function BurstPDE(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, n
         gAMx = CuArray(Float32.(Mx))
         gMyA = CuArray(Float32.(Mx))
         gDA = CuArray(Float32.(Mx))
-        gNull = CuArray(Float32.(null)
-        return BurstPDE(gMx, gMy, gMyA, gAMx, gDA, null, nullout)
+        gNull = CuArray(Float32.(null))
+        return BurstPDE(gMx, gMy, gMyA, gAMx, gDA, gNull, nullout)
     else
         return BurstPDE(Mx, My, Array(MyA), Array(AMx), Array(DA), null, nullout)
     end
