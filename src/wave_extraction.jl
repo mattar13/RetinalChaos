@@ -402,8 +402,8 @@ end
 function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
     n_spike1 = sum(signal1);
     n_spike2 = sum(signal2);
-    burst_conv1, burst_idxs1 = convolve_bursts(signal1, Δt; dt = dt, include_theta = true);
-    burst_conv2, burst_idxs2 = convolve_bursts(signal2, Δt; dt = dt, include_theta = true);
+    burst_conv1, burst_idxs1 = convolve_bursts(signal1; θr = Δt, dt = dt, include_theta = true);
+    burst_conv2, burst_idxs2 = convolve_bursts(signal2; θr = Δt, dt = dt, include_theta = true);
     T1 = sum(burst_conv1)/length(signal1)*dt;
     T2 = sum(burst_conv2)/length(signal2)*dt;
 
