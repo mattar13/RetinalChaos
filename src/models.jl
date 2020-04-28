@@ -65,16 +65,37 @@ function (PDE::BurstPDE)(dU, U, p, t)
     dW = view(dU, :,:,7)
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
-
-    @. dv = (
-              fI(g_leak,  1.0, v, E_leak)
-            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K) .* (PDE.nullout == :g_TREK ? PDE.null : ones(size(PDE.null)))
-            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) .* (PDE.nullout == :g_ACh ? PDE.null : ones(size(PDE.null)))
-            + I_app
-            + W
-        )/C_m
+    if PDE.nullout == :g_TREK
+        @. dv = (
+                  fI(g_leak,  1.0, v, E_leak)
+                + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+                + fI(g_K, n , v, E_K)
+                + fI(g_TREK, b, v, E_K) .* PDE.null
+                + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) 
+                + I_app
+                + W
+            )/C_m
+    elseif PDE.nullout == :g_ACh
+        @. dv = (
+                  fI(g_leak,  1.0, v, E_leak)
+                + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+                + fI(g_K, n , v, E_K)
+                + fI(g_TREK, b, v, E_K) 
+                + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) .* PDE.null
+                + I_app
+                + W
+            )/C_m
+    else
+        @. dv = (
+                  fI(g_leak,  1.0, v, E_leak)
+                + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+                + fI(g_K, n , v, E_K)
+                + fI(g_TREK, b, v, E_K)
+                + fI(g_ACh, ħ(ACh, k_d), v, E_ACh)
+                + I_app
+                + W
+            )/C_m
+    end
 
     @. dn = (LAM(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
     @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
@@ -83,10 +104,16 @@ function (PDE::BurstPDE)(dU, U, p, t)
     mul!(PDE.MyA, PDE.My, ACh)
     mul!(PDE.AMx, ACh, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*(PDE.nullout == :ρ ? PDE.null : ones(size(PDE.null))) - ACh)/τACh
+    if PDE.nullout == :ρ
+        @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null) - ACh)/τACh
+    else
+        @. dACh = PDE.DA + (ρ*Φ(v, k, V0)) - ACh)/τACh
+    end
     @. dW = -W/τw
     nothing
 end
+
+
 """
 This constructs the PDE function so that it can be called
 """
