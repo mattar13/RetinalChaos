@@ -16,6 +16,18 @@ LAM(V, V3, V4) = cosh((V-V3)/(2*V4));
 Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 ħ(a, K_d) = (a^2)/(a^2 + K_d)
 
+CuArrays.@cufunc M_INF(V, V1, V2) = (1 + tanh((V - V1)/V2))/2;
+CuArrays.@cufunc N_INF(V, V3, V4) = (1 + tanh((V - V3)/V4))/2;
+CuArrays.@cufunc LAM(V, V3, V4) = cosh((V-V3)/(2*V4));
+CuArrays.@cufunc Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
+CuArrays.@cufunc ħ(a, K_d) = (a^2)/(a^2 + K_d)
+
+M_INF(V::CuArray, V1, V2) = M_INF.(V, V1, V2)
+N_INF(V::CuArray, V3, V4) = N_INF.(V, V3, V4)
+LAM(V::CuArray, V3, V4) = LAM.(V, V3, V4) 
+Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
+ħ(a::CuArray, K_d) = ħ.(a, K_d)
+
 #This is the generalized current calculation function
 fI(g::Float64, r, v, e::Float64) = -g*r*(v-e)
 #This file will include several models
