@@ -40,9 +40,12 @@ export model_pars, model_conds
 This function contains everything you need to run a single instance of the model,
     and then save the stats and params.
 """
-function run_model(p_dict, u_dict, tspan; nx = 96, ny = 96, μ = 0.25)
-    SACnet = BurstPDE(nx, ny; μ = μ)
+function run_model(p_dict, u_dict, tspan; dt = 10.0, nx = 96, ny = 96, μ = 0.25, gpu = true)
+    SACnet = BurstPDE(nx, ny; μ = μ, gpu = gpu)
     u0_mat = cat(map(x -> fill(u_dict[x], (ny, nx)), model_conds)..., dims = 3)
+    if gpu
+        u0_mat = u0_mat |> cu
+    end
     u0 = extract_dict(u_dict, model_conds)
     p0 = extract_dict(p_dict, model_pars)
     #warm up the model
@@ -56,7 +59,6 @@ function run_model(p_dict, u_dict, tspan; nx = 96, ny = 96, μ = 0.25)
         maxiters = 1e7,
         progress = true,
         save_everystep = false,
-        #saveat = 100
     );
     #get the last solution from the warmup
     println("[$(now())]: Running the model for $(tspan[end]/1000)s")
@@ -69,7 +71,7 @@ function run_model(p_dict, u_dict, tspan; nx = 96, ny = 96, μ = 0.25)
         reltol = 2e-2,
         maxiters = 1e7,
         progress = true,
-        saveat = 10.0,
+        saveat = dt,
     );
     println("[$(now())]: Model completed")
     timestamp = now()
