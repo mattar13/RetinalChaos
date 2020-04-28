@@ -117,7 +117,7 @@ end
 """
 This constructs the PDE function so that it can be called
 """
-function BurstPDE(nx::Int64, ny::Int64; μ::Float64 = 0.75, nullout = :g_ACh, 
+function BurstPDE(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, nullout = :g_ACh,
         DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0))
     #Set up x diffusion steps
     x_dv = repeat([DX[1]], nx)
@@ -139,7 +139,16 @@ function BurstPDE(nx::Int64, ny::Int64; μ::Float64 = 0.75, nullout = :g_ACh,
     DA = zeros(ny, nx);
     d = Binomial(1, μ)
     null = rand(d, (ny, nx))
-    return BurstPDE(Mx, My, MyA, AMx, DA, null, nullout)
+    if gpu
+        gMx = CuArray(Float32.(Mx))
+        gMy = CuArray(Float32.(Mx))
+        gAMx = CuArray(Float32.(Mx))
+        gMyA = CuArray(Float32.(Mx))
+        gDA = CuArray(Float32.(Mx))
+        return BurstPDE(gMx, gMy, gMyA, gAMx, gDA, null, nullout)
+    else
+        return BurstPDE(Mx, My, Array(MyA), Array(AMx), Array(DA), null, nullout)
+    end
 end
 
 #Noise models
