@@ -14,10 +14,10 @@ using Loess, StatsBase
 using CuArrays
 try 
     CuArray(zeros(2,2))
-    const GPU_active = true
+    GPU_active = true
 catch
     println("Module loaded without GPU capabilities")
-    const GPU_active = false
+    GPU_active = false
 end
     
 check_version() = println("Version 1.0")
