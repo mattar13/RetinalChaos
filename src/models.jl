@@ -70,8 +70,8 @@ function (PDE::BurstPDE)(dU, U, p, t)
               fI(g_leak,  1.0, v, E_leak)
             + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
             + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K) * (PDE.nullout == :g_TREK ? PDE.null : ones(size(PDE.null)))
-            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) * (PDE.nullout == :g_ACh ? PDE.null : ones(size(PDE.null)))
+            + fI(g_TREK, b, v, E_K) .* (PDE.nullout == :g_TREK ? PDE.null : ones(size(PDE.null)))
+            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) .* (PDE.nullout == :g_ACh ? PDE.null : ones(size(PDE.null)))
             + I_app
             + W
         )/C_m
