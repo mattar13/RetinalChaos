@@ -1,8 +1,7 @@
 function frame_draw(sol_array; idx = :all, saveas = :gif)
     threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
     spike_arr = sol_array[:,:,1,:] .>= threshold
-    θr = RetinalChaos.find_maxISI(spike_arr; dt = 10.0)
-    burst_arr = RetinalChaos.convolve_bursts(spike_arr, θr; dt = 10.0)
+    burst_arr = RetinalChaos.convolve_bursts(spike_arr; dt = 10.0)
     m_ach = maximum(sol_array[:, :, 6, :])
     nx, ny, var, t = size(sol_array)
     if idx == :all
@@ -56,13 +55,11 @@ function frame_draw(sol_array; idx = :all, saveas = :gif)
 end
 
 function raster_plot(sol_array)
-    threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
+    threshold = calculate_threshold(sol_array[:,:,1,:])
     spike_arr = sol_array[:,:,1,:] .>= threshold
-    θr = RetinalChaos.find_maxISI(spike_arr; dt = 10.0)
-    burst_arr = RetinalChaos.convolve_bursts(spike_arr, θr; dt = 10.0)
     nx, ny, t = size(spike_arr)
     spike_raster = reshape(spike_arr, (nx * ny, t))
-    burst_raster = RetinalChaos.convolve_bursts(spike_raster, θr; dt = 10.0)
+    burst_raster = convolve_bursts(spike_raster; dt = 10.0)
     raster = reshape(sol_array, (nx * ny, 7, t))
     p = plot(layout = grid(7, 1), size = (2000, 2000));
     heatmap!(p[1], raster[:, 1, :], c = :curl);
