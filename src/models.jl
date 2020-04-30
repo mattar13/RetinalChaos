@@ -52,7 +52,7 @@ end g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_ACh k_d E_ACh I_app C_m V3 V4
 model_pars = BurstModel.params
 model_conds = BurstModel.syms
 
-function diffuse(lattice, D, PDE::BurstPDE)
+function diffuse(lattice, D, PDE::Network)
     mul!(PDE.MyA, PDE.My, lattice)
     mul!(PDE.AMx, lattice, PDE.Mx)
     DA = D*(PDE.MyA + PDE.AMx)
@@ -216,9 +216,9 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, nu
         gMyA = CuArray(Float32.(Mx))
         gDA = CuArray(Float32.(Mx))
         gNull = CuArray(Float32.(null))
-        return BurstPDE(gMx, gMy, gMyA, gAMx, gDA, gNull, nullout)
+        return Network(gMx, gMy, gMyA, gAMx, gDA, gNull, nullout)
     else
-        return BurstPDE(Mx, My, MyA, AMx, DA, null, nullout)
+        return Network(Mx, My, MyA, AMx, DA, null, nullout)
     end
 end
 
