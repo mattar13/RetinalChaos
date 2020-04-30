@@ -187,7 +187,7 @@ end
 """
 This constructs the PDE function so that it can be called
 """
-function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, nullout = :g_ACh,
+function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, nullout = :gACh,
         DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0))
     #Set up x diffusion steps
     x_dv = repeat([DX[1]], nx)
