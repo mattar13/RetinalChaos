@@ -1,13 +1,12 @@
-mutable struct BurstPDE{A} <: Function
-        Mx::Union{Tridiagonal, A}
-        My::Union{Tridiagonal, A}
-        MyA::A 
-        AMx::A 
-        DA::A
-        null::A
-        nullout::Symbol
+mutable struct Network{A, N} <: Function
+      Mx::Union{Tridiagonal, A}
+      My::Union{Tridiagonal, A}
+      MyA::A
+      AMx::A
+      DA::A
+      null::A
 end
-
+Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
 
 #Auxillary functions
 M_INF(V, V1, V2) = (1 + tanh((V - V1)/V2))/2;
@@ -60,7 +59,8 @@ function diffuse(lattice, D, PDE::BurstPDE)
     return lattice + DA
 end
 
-function (PDE::BurstPDE)(dU, U, p, t)
+#Version 1: gTREK nullout
+function (PDE::Network{T, :gTREK} where T)(dU, U, p, t)
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -78,37 +78,16 @@ function (PDE::BurstPDE)(dU, U, p, t)
     dW = view(dU, :,:,7)
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
-    if PDE.nullout == :g_TREK
-        @. dv = (
-                  fI(g_leak,  1.0, v, E_leak)
-                + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-                + fI(g_K, n , v, E_K)
-                + fI(g_TREK, b, v, E_K) .* PDE.null
-                + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) 
-                + I_app
-                + W
-            )/C_m
-    elseif PDE.nullout == :g_ACh
-        @. dv = (
-                  fI(g_leak,  1.0, v, E_leak)
-                + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-                + fI(g_K, n , v, E_K)
-                + fI(g_TREK, b, v, E_K) 
-                + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) .* PDE.null
-                + I_app
-                + W
-            )/C_m
-    else
-        @. dv = (
-                  fI(g_leak,  1.0, v, E_leak)
-                + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-                + fI(g_K, n , v, E_K)
-                + fI(g_TREK, b, v, E_K)
-                + fI(g_ACh, ħ(ACh, k_d), v, E_ACh)
-                + I_app
-                + W
-            )/C_m
-    end
+
+    @. dv = (
+              fI(g_leak,  1.0, v, E_leak)
+            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + fI(g_K, n , v, E_K)
+            + fI(g_TREK, b, v, E_K) .* PDE.null
+            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh)
+            + I_app
+            + W
+        )/C_m
 
     @. dn = (LAM(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
     @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
@@ -117,15 +96,93 @@ function (PDE::BurstPDE)(dU, U, p, t)
     mul!(PDE.MyA, PDE.My, ACh)
     mul!(PDE.AMx, ACh, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    if PDE.nullout == :ρ
-        @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - ACh)/τACh
-    else
-        @. dACh = PDE.DA + (ρ*Φ(v, k, V0) - ACh)/τACh
-    end
+    @. dACh = PDE.DA + (ρ*Φ(v, k, V0) - ACh)/τACh
     @. dW = -W/τw
     nothing
 end
 
+#Version 2: gACh nullout
+function (PDE::Network{T, :gACh} where T)(dU, U, p, t)
+    v = view(U, :, :, 1)
+    n = view(U, :, :, 2)
+    c = view(U, :, :, 3)
+    a = view(U, :, :, 4)
+    b = view(U, :, :, 5)
+    ACh = view(U, :, :, 6)
+    W = view(U, :, :, 7)
+
+    dv = view(dU, :, :, 1)
+    dn = view(dU, :, :, 2)
+    dc = view(dU, :, :, 3)
+    da = view(dU, :, :, 4)
+    db = view(dU, :, :, 5)
+    dACh = view(dU, :, :, 6)
+    dW = view(dU, :,:,7)
+
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
+
+    @. dv = (
+              fI(g_leak,  1.0, v, E_leak)
+            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + fI(g_K, n , v, E_K)
+            + fI(g_TREK, b, v, E_K)
+            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh) .* PDE.null
+            + I_app
+            + W
+        )/C_m
+
+    @. dn = (LAM(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. da =  (α*c^4*(1-a) - a)/τa
+    @. db =  (β*a^4*(1-b) - b)/τb
+    mul!(PDE.MyA, PDE.My, ACh)
+    mul!(PDE.AMx, ACh, PDE.Mx)
+    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
+    @. dACh = PDE.DA + (ρ*Φ(v, k, V0) - ACh)/τACh
+    @. dW = -W/τw
+    nothing
+end
+
+#Version 3 :Acetylcholine release nullout
+function (PDE::Network{T, :ρ} where T)(dU, U, p, t)
+    v = view(U, :, :, 1)
+    n = view(U, :, :, 2)
+    c = view(U, :, :, 3)
+    a = view(U, :, :, 4)
+    b = view(U, :, :, 5)
+    ACh = view(U, :, :, 6)
+    W = view(U, :, :, 7)
+
+    dv = view(dU, :, :, 1)
+    dn = view(dU, :, :, 2)
+    dc = view(dU, :, :, 3)
+    da = view(dU, :, :, 4)
+    db = view(dU, :, :, 5)
+    dACh = view(dU, :, :, 6)
+    dW = view(dU, :,:,7)
+
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
+
+    @. dv = (
+              fI(g_leak,  1.0, v, E_leak)
+            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + fI(g_K, n , v, E_K)
+            + fI(g_TREK, b, v, E_K)
+            + fI(g_ACh, ħ(ACh, k_d), v, E_ACh)
+            + I_app
+            + W
+        )/C_m
+    @. dn = (LAM(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. da =  (α*c^4*(1-a) - a)/τa
+    @. db =  (β*a^4*(1-b) - b)/τb
+    mul!(PDE.MyA, PDE.My, ACh)
+    mul!(PDE.AMx, ACh, PDE.Mx)
+    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
+    @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - ACh)/τACh
+    @. dW = -W/τw
+    nothing
+end
 
 """
 This constructs the PDE function so that it can be called
