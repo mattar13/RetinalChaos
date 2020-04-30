@@ -151,7 +151,7 @@ function BurstPDE(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, n
     AMx = zeros(ny, nx);
     DA = zeros(ny, nx);
     d = Binomial(1, μ)
-    null = rand(d, (ny, nx))
+    null = rand(Float64, d, (ny, nx))
     if gpu
         gMx = CuArray(Float32.(Mx))
         gMy = CuArray(Float32.(Mx))
