@@ -184,6 +184,41 @@ function (PDE::Network{T, :ρ} where T)(dU, U, p, t)
     nothing
 end
 
+function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
+    v = view(U, :, :, 1)
+    r = view(U, :, :, 2)
+    s = view(U, :, :, 3)
+    a = view(U, :, :, 4)
+    W = view(U, :, :, 7)
+
+    dv = view(dU, :, :, 1)
+    dr = view(dU, :, :, 2)
+    ds = view(dU, :, :, 3)
+    da = view(dU, :, :, 4)
+    dW = view(dU, :,:,7)
+    
+    (E_Ca, E_K, E_Leak, E_ACh, V1, V2, V3, V4, g_Ca, g_K, g_Leak, g_noise, g_ACh, δ, C_m, τr, τs, τACh, γ, α, β, κ, V0, D) = p
+
+    @. dv = (
+              fI(g_leak,  1.0, v, E_leak)
+            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + fI(g_K, R , v, E_K)
+            + fI(g_ACh, h(ACh, δ), v, E_ACh)
+            + fI(g_noise, W, v, E_Ca)
+            + I_app
+        )/C_m
+
+    @. dr = (Λ(v, V3, V4)*(N_INF(v, V3, V4) - r) + α*s*(1-r))/τr
+    @. ds = γ*Φ(s, κ, V0) - (s/τs)
+    mul!(PDE.MyA, PDE.My, a)
+    mul!(PDE.AMx, a, PDE.Mx)
+    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
+    @. da = PDE.DA + β*Φ(v, k, V0) - a/τACh
+    @. dW = -W
+    nothing
+end 
+
+
 """
 This constructs the PDE function so that it can be called
 """
