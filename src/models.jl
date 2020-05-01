@@ -224,7 +224,7 @@ end
 """
 This constructs the PDE function so that it can be called
 """
-function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, nullout = :gACh,
+function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gACh,
         DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0))
     #Set up x diffusion steps
     x_dv = repeat([DX[1]], nx)
@@ -253,9 +253,9 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, nu
         gMyA = CuArray(Float32.(Mx))
         gDA = CuArray(Float32.(Mx))
         gNull = CuArray(Float32.(null))
-        return Network(gMx, gMy, gMyA, gAMx, gDA, gNull, nullout)
+        return Network(gMx, gMy, gMyA, gAMx, gDA, gNull, version)
     else
-        return Network(Mx, My, MyA, AMx, DA, null, nullout)
+        return Network(Mx, My, MyA, AMx, DA, null, version)
     end
 end
 
