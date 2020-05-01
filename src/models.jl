@@ -248,7 +248,7 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
     @. dv = (
               fI(g_leak,  1.0, v, E_leak)
             + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, R , v, E_K)
+            + fI(g_K, r , v, E_K)
             + fI(g_ACh, h(ACh, δ), v, E_ACh)
             + fI(g_noise, W, v, E_Ca)
             + I_app
