@@ -235,13 +235,13 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
     r = view(U, :, :, 2)
     s = view(U, :, :, 3)
     a = view(U, :, :, 4)
-    W = view(U, :, :, 7)
+    W = view(U, :, :, 5)
 
     dv = view(dU, :, :, 1)
     dr = view(dU, :, :, 2)
     ds = view(dU, :, :, 3)
     da = view(dU, :, :, 4)
-    dW = view(dU, :,:,7)
+    dW = view(dU, :, :, 5)
     
     (E_Ca, E_K, E_Leak, E_ACh, V1, V2, V3, V4, g_Ca, g_K, g_Leak, g_noise, g_ACh, δ, C_m, τr, τs, τACh, γ, α, β, κ, V0, D) = p
 
