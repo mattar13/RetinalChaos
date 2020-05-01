@@ -12,7 +12,7 @@ end
 """
 This function reads JSON files into whatever type is_type is.
 """
-function read_JSON(name_file::String; is_type = NamedTuple{Symbol, Float64})
+function read_JSON(name_file::String; is_type = Dict{Symbol, Float64})
     nt = nothing
     open(name_file, "r") do f
         nt = JSON2.read(f, is_type)
