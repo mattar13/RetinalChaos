@@ -227,7 +227,7 @@ function (PDE::Network{T, :ρ} where T)(dU, U, p, t)
 end
 
 lansdell_pars = [:E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :g_noise, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :κ, :V0, :D]
-lansdell_conds = [:v, :r, :s, :a, :w]
+lansdell_conds = [:v, :r, :s, :a, :W]
 
 #This is the Lansdell version of the SAC model
 function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
