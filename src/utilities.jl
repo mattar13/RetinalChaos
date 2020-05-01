@@ -29,8 +29,15 @@ OR
 
 > p0 = extract_dict(p_dict, BurstModel.params)
 
+If your initial conditions are for a network, you can add the extra argument for dims
+
+> In[1]: dims = (64,64);
+> In[2]: p0 = extract_dict(p_dict, BurstModel.params, dims)
+> Out[2]: 64x64xN AbstractArray:
 """
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> Float64(dict_item[x]), pars)
+extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
+
 
 """
 Multiple dispatch function that is called to extract a distribution dictionary
