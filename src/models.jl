@@ -304,8 +304,9 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, ve
 end
 
 #Noise models
-noise(du, u, p, t) = du[7] = p[30]
-noise_2D(du, u, p, t) = du[:,:,7] .= p[30]
+noise(du, u, p, t) = du[end] = p[30]
+noise_2D(du, u, p, t) = du[:,:,end] .= p[30]
+lansdell_noise(du, u, p, t) = du[:,:,end] .= 1
 
 p_find(p) = findall(x -> x == p, BurstModel.params)
 u_find(u) = findall(x -> x == u, BurstModel.syms)
