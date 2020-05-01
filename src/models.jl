@@ -184,7 +184,7 @@ function (PDE::Network{T, :ρ} where T)(dU, U, p, t)
     nothing
 end
 
-lansdell_syms = (:E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :g_noise, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :κ, :V0, :D)
+lansdell_syms = [:E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :g_noise, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :κ, :V0, :D]
 
 function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
     v = view(U, :, :, 1)
