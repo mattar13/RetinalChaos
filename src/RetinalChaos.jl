@@ -3,6 +3,7 @@ module RetinalChaos
 using Dates
 using JSON2
 using DifferentialEquations, ParameterizedFunctions
+using ModelingToolkit
 using LinearAlgebra, ForwardDiff, NLsolve
 using Distributions
 using Images, ImageSegmentation
