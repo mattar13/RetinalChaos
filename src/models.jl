@@ -52,8 +52,8 @@ BurstModel = @ode_def begin
     dACh = (-2*D*ACh) + (ρ*Φ(v, k, V0) - ACh)/τACh
     dW = -W/τw
 end g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_ACh k_d E_ACh I_app C_m V3 V4 τn C_0 λ δ τc α τa β τb ρ τACh k V0 σ D τw;
-model_pars = BurstModel.params
-model_conds = BurstModel.syms
+#model_pars = BurstModel.params
+#model_conds = BurstModel.syms
 
 function diffuse(lattice, D, PDE::Network)
     mul!(PDE.MyA, PDE.My, lattice)
