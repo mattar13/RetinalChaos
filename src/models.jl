@@ -258,7 +258,7 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
         )/C_m
 
     @. dr = (Λ(v, V3, V4)*(N_INF(v, V3, V4) - r) + α*s*(1-r))/τr
-    @. ds = γ*Φ(s, k, V0) - (s/τs)
+    @. ds = γ*Φ(v, k, V0) - (s/τs)
     mul!(PDE.MyA, PDE.My, a)
     mul!(PDE.AMx, a, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
