@@ -4,7 +4,7 @@ all_pars = [g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_
 @variables v(t) n(t) c(t) a(t) b(t) ACh(t) W(t)
 @derivatives d'~t
 
-eqs = [d(v)~ (
+TM_eqs = [d(v)~ (
           -g_leak*(v-E_leak)
         + -g_Ca*M_INF(v, V1, V2)*(v-E_Ca)
         + -g_K*n*(v-E_K)
@@ -21,3 +21,4 @@ eqs = [d(v)~ (
         d(W) ~ -W/τw
 ]
 noise_eqs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, σ]
+TModel_sys = SDESystem(TM_eqs, noise_eqs, t, [v, n, c, a, b, ACh, W], all_pars)
