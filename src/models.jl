@@ -6,7 +6,15 @@ mutable struct Network{A, N} <: Function
       DA::A
       null::A
 end
+
 Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
+
+function diffuse(lattice, D, PDE::Network)
+    mul!(PDE.MyA, PDE.My, lattice)
+    mul!(PDE.AMx, lattice, PDE.Mx)
+    DA = D*(PDE.MyA + PDE.AMx)
+    return lattice + DA
+end
 
 #Auxillary functions
 M_INF(V, V1, V2) = (1 + tanh((V - V1)/V2))/2;
@@ -35,32 +43,9 @@ fI(g::Float64, r, v, e::Float64) = -g*r*(v-e)
 #This file will include several models
 #1) Starburst Amacrine Cell Burst models
 
-BurstModel = @ode_def begin
-    dv = (
-          fI(g_leak,  1.0, v, E_leak)
-        + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-        + fI(g_K, n , v, E_K)
-        + fI(g_TREK, b, v, E_K)
-        + fI(g_ACh, ħ(ACh, k_d), v, E_ACh)
-        + I_app
-        + W
-        )/C_m
-    dn = (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
-    dc = (C_0 + δ*(-g_Ca * M_INF(v, V1, V2)* (v - E_Ca)) - λ*c)/τc
-    da =  (α*c^4*(1-a) - a)/τa
-    db =  (β*a^4*(1-b) - b)/τb
-    dACh = (-2*D*ACh) + (ρ*Φ(v, k, V0) - ACh)/τACh
-    dW = -W/τw
-end g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_ACh k_d E_ACh I_app C_m V3 V4 τn C_0 λ δ τc α τa β τb ρ τACh k V0 σ D τw;
-#model_pars = BurstModel.params
-#model_conds = BurstModel.syms
+include("1D_models.jl") 
+      
 
-function diffuse(lattice, D, PDE::Network)
-    mul!(PDE.MyA, PDE.My, lattice)
-    mul!(PDE.AMx, lattice, PDE.Mx)
-    DA = D*(PDE.MyA + PDE.AMx)
-    return lattice + DA
-end
 
 #Version 0: Model without nullout
 function (PDE::Network{T, :Default} where T)(dU, U, p, t)
