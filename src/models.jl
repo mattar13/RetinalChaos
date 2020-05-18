@@ -257,12 +257,12 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
             + I_app
         )/C_m
 
-    @. dr = (1/τr) * (Λ(v, V3, V4)*(N_INF(v, V3, V4) - r) + α*s*(1-r))
-    @. ds = -s/τs + γ*Φ(v, k, V0) 
+    @. dr = (Λ(v, V3, V4)*(N_INF(v, V3, V4) - r) + α*s*(1-r))/τr
+    @. ds = (γ*Φ(v, k, V0)-s)/τs
     mul!(PDE.MyA, PDE.My, a)
     mul!(PDE.AMx, a, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. da = -a/τACh + PDE.DA + β*Φ(v, k, V0) 
+    @. da = (PDE.DA + β*Φ(v, k, V0)-a)/τACh
     @. dW = -W
     nothing
 end 
