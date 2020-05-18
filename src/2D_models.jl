@@ -189,7 +189,7 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
             + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
             + fI(g_K, r , v, E_K)
             + fI(g_ACh, h(a, δ), v, E_ACh)
-            + fI(abs(W), v, E_Ca)
+            + fIn(abs(W), λ, v, E_Ca)
             + I_app
         )/C_m
 
