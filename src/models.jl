@@ -22,8 +22,8 @@ h(a::CuArray, δ) = h.(a, δ)
 
 #This is the generalized current calculation function
 fI(g::Float64, r, v, e::Float64) = -g*r*(v-e)
-#This file will include several models
-#1) Starburst Amacrine Cell Burst models
+#This is for calculating filtered shot noise
+fIn(W::Float64, λ::Float64, v, e::Float64) = (-log(W)/λ)*(v-e)  
 
 
 #p_find(p) = findall(x -> x == p, BurstModel.params)
