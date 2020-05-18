@@ -23,10 +23,7 @@ end
 """
 Extract a parameter, condition dictionary
 USAGE:
-> p0 = p_dict |> x -> extract_dict(x, BurstModel.params)
-
-OR
-
+#p_dict -> [The parameter dictionary read directly from JSON]
 > p0 = extract_dict(p_dict, BurstModel.params)
 
 If your initial conditions are for a network, you can add the extra argument for dims
@@ -38,6 +35,21 @@ If your initial conditions are for a network, you can add the extra argument for
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> Float64(dict_item[x]), pars)
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
 
+"""
+When using the Modeling Toolkit, the dictionary needs to be converted into an array of operations
+"""
+function extract_dict(dict_item::Dict{Symbol, Float64}, sys::AbstractODESystem)
+    par_set = nothing
+    idx = 1
+    for key in keys(dict_item)
+        if par_set == nothing
+            par_set = [Variable(key) => dict_item[key]]
+        else
+            push!(par_set, (Variable(key)=> dict_item[key]))
+        end
+    end
+    par_set
+end
 
 """
 Multiple dispatch function that is called to extract a distribution dictionary
