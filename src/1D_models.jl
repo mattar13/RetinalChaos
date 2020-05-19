@@ -41,4 +41,4 @@ K_model_eqs = [
   d(W) ~ -W
 ]
 K_noise_eqs = [0.0, 0.0, 0.0, 0.0, 0.0, σ]
-K_sys = SDESystem(K_model_eqs, K_noise_eqs, t, [v, n, r, s, c, W], K_pars)
+K_model_sys = SDESystem(K_model_eqs, K_noise_eqs, t, [v, n, r, s, c, W], K_pars)
