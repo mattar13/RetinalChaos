@@ -21,9 +21,9 @@ check_version() = println("Version 1.0")
 include("models.jl")
 include("utilities.jl")
 include("dynamical_analysis.jl")
-include("plotting.jl")
 include("fitting.jl")
 include("wave_extraction.jl")
+include("plotting.jl")
 
 export read_JSON
 export run_model
