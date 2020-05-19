@@ -35,12 +35,10 @@ If your initial conditions are for a network, you can add the extra argument for
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> Float64(dict_item[x]), pars)
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
 
-import ModelingToolkit: AbstractODESystem
-
 """
 When using the Modeling Toolkit, the dictionary needs to be converted into an array of operations
 """
-function extract_dict(dict_item::Dict{Symbol, Float64}, sys::AbstractODESystem)
+function extract_dict(dict_item::Dict{Symbol, Float64})
     par_set = nothing
     idx = 1
     for key in keys(dict_item)
