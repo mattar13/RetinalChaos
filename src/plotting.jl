@@ -2,7 +2,7 @@ function frame_draw(sol_array; idx = :all, saveas = :gif)
     threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
     spike_arr = sol_array[:,:,1,:] .>= threshold
     burst_arr = RetinalChaos.convolve_bursts(spike_arr; dt = 10.0)
-    m_ach = maximum(sol_array[:, :, 6, :])
+    
     nx, ny, var, t = size(sol_array)
     if idx == :all
         save_name = :Full
@@ -42,7 +42,7 @@ function frame_draw(sol_array; idx = :all, saveas = :gif)
             println("Animating frame $i")
             heatmap(sol_array[:, :, idx, i], ratio = :equal, grid = false,
                 xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :curl, clims = (minimum(SDE_sol_arr[:, :, idx, i]), maximum(SDE_sol_arr[:, :, idx, i]))
+                c = :curl, clims = (minimum(sol_arr[:, :, idx, i]), maximum(sol_arr[:, :, idx, i]))
             )
         end
     end
