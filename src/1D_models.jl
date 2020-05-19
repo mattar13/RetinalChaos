@@ -29,15 +29,14 @@ K_model_eqs = [
   d(v) ~ (-g_leak*(v-E_leak)
         + -g_Ca*M_INF(v, V1, V2)*(v-E_Ca)
         + -g_K*n*(v-E_K)
-        + -g_TREK*r^4*(v-E_K)
-        + -g_ACh*ħ(ACh, k_d)*(v-E_ACh)
+        + -g_sAHP*r^4*(v-E_K)
         + I_app
         + W
         )/C_m,
-  d(n) ~ (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn,
+  d(n)~ (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn,
   d(r) ~ (αr*s*(1-r)-r)/τr,
   d(s) ~ (αs*c^4*(1-s)-s)/τs,
-  d(c) ~ -(αc/H_x)*c + C_0 + δc*(-g_Ca*M_INF(v, V1, V2)*(v-E_Ca)),
+  d(c) ~ (-(αc/H_x)*c + C_0 + δc*(-g_Ca*M_INF(v, V1, V2)*(v-E_Ca)))/τc,
   d(W) ~ -W
 ]
 K_noise_eqs = [0.0, 0.0, 0.0, 0.0, 0.0, σ]
