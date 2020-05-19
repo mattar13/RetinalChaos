@@ -11,7 +11,7 @@ T_model_eqs = [
                   + -g_TREK*b*(v-E_K)
                   + -g_ACh*ħ(ACh, k_d)*(v-E_ACh)
                   + I_app
-                  + W
+                  + W + 0*σ
                   )/C_m ,
           d(n) ~ (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn,
           d(c) ~ (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)* (v - E_Ca)) - λ*c)/τc,
