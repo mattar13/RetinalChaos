@@ -38,5 +38,5 @@ include("2D_models.jl")
 #Noise models
 noise(du, u, p, t) = du[end] = p[30]
 noise_2D(du, u, p, t) = du[:,:,end] .= p[30]
-lansdell_noise(du, u, p, t) = du[:,:,end] .= 1
+lansdell_noise(du, u, p, t) = du[:,:,end] .= p[end]
 
