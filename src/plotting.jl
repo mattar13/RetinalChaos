@@ -1,5 +1,5 @@
 function frame_draw(sol_array; idx = :all, saveas = :gif)
-    threshold = RetinalChaos.calculate_threshold(sol_array[:,:,1,:])
+    threshold = calculate_threshold(sol_array[:,:,1,:])
     spike_arr = sol_array[:,:,1,:] .>= threshold
     burst_arr = RetinalChaos.convolve_bursts(spike_arr; dt = 10.0)
     
