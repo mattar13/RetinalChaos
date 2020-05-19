@@ -165,7 +165,7 @@ function (PDE::Network{T, :ρ} where T)(dU, U, p, t)
     nothing
 end
 
-lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D]
+lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
 lansdell_conds = [:v, :r, :s, :a, :W]
 
 #This is the Lansdell version of the SAC model
@@ -182,7 +182,7 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t)
     da = view(dU, :, :, 4)
     dW = view(dU, :, :, 5)
 
-    (I_app, E_Ca, E_K, E_leak, E_ACh, V1, V2, V3, V4, g_Ca, g_K, g_leak, λ, g_ACh, δ, C_m, τr, τs, τACh, γ, α, β, k, V0, D) = p
+    (I_app, E_Ca, E_K, E_leak, E_ACh, V1, V2, V3, V4, g_Ca, g_K, g_leak, λ, g_ACh, δ, C_m, τr, τs, τACh, γ, α, β, k, V0, D, μ) = p
 
     @. dv = (
               fI(g_leak,  1.0, v, E_leak)
