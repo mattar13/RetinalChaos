@@ -1,28 +1,3 @@
-#This function iteratively assigns variables to a parameter or conditions within a range
-function ensemble_func(prob, i, repeat; pars = [:I_app], par_range = LinRange(0.5, 15.0, 100))
-    new_pars = prob.p
-    new_conds = prob.u0
-    stochastic = false
-    for var in pars
-        conds = var |> u_find
-        pars = var |> p_find
-
-        if prob.p[(:σ |> p_find)[1]] > 0.0
-            stochastic = true
-        end
-        if length(conds) > 0
-            new_conds[conds[1]] = par_range[i]
-        elseif length(pars) > 0
-            new_pars[pars[1]] = par_range[i]
-        end
-    end
-    if stochastic
-        return SDEProblem(prob.f, noise, new_conds, prob.tspan, new_pars)
-    else
-        return ODEProblem(prob.f, new_conds, prob.tspan, new_pars)
-    end
-end
-
 """
 This function is a work of progress. Things I want it to include
 - Using the symbols to declare the changing parameter or initial condition
