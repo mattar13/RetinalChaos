@@ -23,6 +23,22 @@ function ensemble_func(prob, i, repeat; pars = [:I_app], par_range = LinRange(0.
     end
 end
 
+"""
+This function is a work of progress. Things I want it to include
+- Using the symbols to declare the changing parameter or initial condition
+- Changing multiple parameters at once
+"""
+function ensemble_func(prob, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
+    if isa(pars, Real) && conds == nothing
+        prob.p[pars] = rng[i]
+        return prob
+    elseif isa(conds, Real) && pars == nothing
+        prob.u0[conds] = rng[i]
+        return prob
+    else
+        
+    end
+end
 
 function phase_plane(ui, pi; vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-0.10, 5.0), resolution = 100)
     du = similar(ui)
