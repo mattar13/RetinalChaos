@@ -4,15 +4,14 @@ This function is a work of progress. Things I want it to include
 - Changing multiple parameters at once
 """
 function ensemble_func(prob, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
-    if isa(pars, Real) && conds == nothing
-        prob.p[pars] = rng[i]
-        return prob
-    elseif isa(conds, Real) && pars == nothing
-        prob.u0[conds] = rng[i]
-        return prob
-    else
-        
+    new_p = prob.p
+    new_u = prob.u0
+    if isa(pars, Real)
+        new_p[pars] = rng[i]
+    elseif isa(conds, Real)        
+        new_u[conds] = rng[i]        
     end
+    prob = ODEProblem(prob.f, new_u, prob.tspan, new_p)
 end
 
 function phase_plane(ui, pi; vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-0.10, 5.0), resolution = 100)
