@@ -3,7 +3,7 @@ This function is a work of progress. Things I want it to include
 - Using the symbols to declare the changing parameter or initial condition
 - Changing multiple parameters at once
 """
-function ensemble_func(prob, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
+function ensemble_func(prob::ODEProblem, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
     new_p = prob.p
     new_u = prob.u0
     if isa(pars, Real)
@@ -12,6 +12,17 @@ function ensemble_func(prob, i, repeat; pars = :I_app, conds = nothing, rng = Li
         new_u[conds] = rng[i]        
     end
     prob = ODEProblem(prob.f, new_u, prob.tspan, new_p)
+end
+
+function ensemble_func(prob::SDEProblem, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
+    new_p = prob.p
+    new_u = prob.u0
+    if isa(pars, Real)
+        new_p[pars] = rng[i]
+    elseif isa(conds, Real)        
+        new_u[conds] = rng[i]        
+    end
+    prob = SDEProblem(prob.f, prob.g, new_u, prob.tspan, new_p)
 end
 
 function phase_plane(ui, pi; vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-0.10, 5.0), resolution = 100)
