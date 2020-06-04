@@ -28,6 +28,7 @@ fIn(W::Float64, λ::Float64, v, e::Float64) = -(-log(W)/λ)*(v-e)
 
 #p_find(p) = findall(x -> x == p, BurstModel.params)
 #u_find(u) = findall(x -> x == u, BurstModel.syms)
+ModelPars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0, :σ, :D, :τw]
 
 include("pde_models.jl")
 include("1D_models.jl") 
