@@ -28,7 +28,10 @@ fIn(W::Float64, λ::Float64, v, e::Float64) = -(-log(W)/λ)*(v-e)
 
 #p_find(p) = findall(x -> x == p, BurstModel.params)
 #u_find(u) = findall(x -> x == u, BurstModel.syms)
-ModelPars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0, :σ, :D, :τw]
+tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0, :σ, :D, :τw]
+tar_conds = [:v, :n, :c, :a, :b, :e, :w]
+lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
+lansdell_conds = [:v, :r, :s, :a, :W]
 
 include("pde_models.jl")
 include("1D_models.jl") 
