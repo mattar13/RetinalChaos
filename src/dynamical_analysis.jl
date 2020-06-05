@@ -3,7 +3,7 @@ This function is a work of progress. Things I want it to include
 - Using the symbols to declare the changing parameter or initial condition
 - Changing multiple parameters at once
 """
-function ensemble_func(prob::ODEProblem, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
+function ensemble_func(prob::ODEProblem, i, repeat; pars = 1, conds = nothing, rng = LinRange(0.5, 15.0, 100))
     new_p = prob.p
     new_u = prob.u0
     if isa(pars, Real)
@@ -14,7 +14,7 @@ function ensemble_func(prob::ODEProblem, i, repeat; pars = :I_app, conds = nothi
     prob = ODEProblem(prob.f, new_u, prob.tspan, new_p)
 end
 
-function ensemble_func(prob::SDEProblem, i, repeat; pars = :I_app, conds = nothing, rng = LinRange(0.5, 15.0, 100))
+function ensemble_func(prob::SDEProblem, i, repeat; pars = 1, conds = nothing, rng = LinRange(0.5, 15.0, 100))
     new_p = prob.p
     new_u = prob.u0
     if isa(pars, Real)
