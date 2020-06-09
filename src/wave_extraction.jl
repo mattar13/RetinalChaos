@@ -56,6 +56,19 @@ function count_intervals(spike_arr::BitArray{3})
     isi_arr
 end
 
+"""
+After intervals have been counted, this function can give all the spike timestamps
+"""
+function get_timestamps(intervals, first_point)
+    current_point = first_point
+    points = Int[current_point]
+    
+    for int in intervals
+        current_point += int
+        push!(points, current_point)
+    end
+    return points
+end
 
 """
 This uses the minimum spike calculated above to convolve the spike trains into bursts
