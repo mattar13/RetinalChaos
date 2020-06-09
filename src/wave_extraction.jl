@@ -13,6 +13,12 @@ This function acts to calculate the distance between points in a single BitArray
 function count_intervals(spike_trace::BitArray{1}; clip = 2)
     isi = Array{Float64}([])
     count = 0
+    
+    #In the off chance that the first spike occurs right as the first time point, then clipping is cancelled. 
+    if spike[1] == 1
+        clip == 1
+    end
+    
     for spike in spike_trace
         if spike == 0
             count += 1
