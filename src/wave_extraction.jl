@@ -8,7 +8,9 @@ calculate_threshold(vm_arr::AbstractArray where T) = sum(vm_arr)/length(vm_arr) 
 
 
 """
-This function acts to calculate the distance between points in a single BitArray
+This function acts to calculate the distance between points in a single BitArray. 
+Very rarely is the first point part of a spike (in which case there is a fallback), 
+and because of this clip is set to remove the first interval. 
 """
 function count_intervals(spike_trace::BitArray{1}; clip = 2)
     isi = Array{Float64}([])
@@ -16,7 +18,7 @@ function count_intervals(spike_trace::BitArray{1}; clip = 2)
     
     #In the off chance that the first spike occurs right as the first time point, then clipping is cancelled. 
     if spike[1] == 1
-        clip == 1
+        clip = 1
     end
     
     for spike in spike_trace
