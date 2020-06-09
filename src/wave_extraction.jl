@@ -10,7 +10,7 @@ calculate_threshold(vm_arr::AbstractArray where T) = sum(vm_arr)/length(vm_arr) 
 """
 This function acts to calculate the distance between points in a single BitArray
 """
-function count_intervals(spike_trace::BitArray{1})
+function count_intervals(spike_trace::BitArray{1}; clip = 2)
     isi = Array{Float64}([])
     count = 0
     for spike in spike_trace
@@ -23,14 +23,14 @@ function count_intervals(spike_trace::BitArray{1})
             count = 0
         end
     end
-    isi
+    isi[clip:end]
 end
 
-function count_intervals(spike_arr::BitArray{2})
+function count_intervals(spike_arr::BitArray{2}, clip = 2)
     isi_arr = Array{Float64}([])
     count = 0
     for idx_y = 1:size(spike_arr,1)
-        all_intervals = extract_interval(spike_arr[idx_y, :])
+        all_intervals = extract_interval(spike_arr[idx_y, :], clip = 2)
         push!(isi_arr, all_intervals...)
     end
     isi_arr
@@ -41,7 +41,7 @@ function count_intervals(spike_arr::BitArray{3})
     count = 0
     for idx_y = 1:size(spike_arr,1)
         for idx_x = 1:size(spike_arr, 2)
-            all_intervals = extract_interval(spike_arr[idx_y, idx_x, :])
+            all_intervals = extract_interval(spike_arr[idx_y, idx_x, :], clip = 2)
             push!(isi_arr, all_intervals...)
         end
     end
