@@ -127,6 +127,28 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     burst_timestamps, DUR_list, SPB_list, IBI_list
 end
 
+function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
+    sim_thresh = calculate_threshold(vm_trace)
+    spike_arr = (vm_trace .> sim_thresh);
+    timestamps = get_timestamps(spike_array; dt = dt);
+    durations = map(x -> x[2]-x[1], timestamps)
+    avg_spike_dur = sum(durations)/length(durations)
+    std_spike_dur = std(durations)
+    
+    burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = verbose, dt = dt);
+    avg_burst_dur = sum(dur_list)/length(dur_list);
+    std_burst_dur = std(dur_list);
+    
+    avg_ibi = sum(ibi_list)/length(ibi_list)
+    std_ibi = std(ibi_list)
+    if verbose
+        println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
+        println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
+        println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
+    end
+    return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+end
+
 function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
     n_spike1 = sum(signal1);
     n_spike2 = sum(signal2);
