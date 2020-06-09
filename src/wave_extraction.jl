@@ -62,7 +62,7 @@ This function returns all the time stamps in a spike or burst array
 function get_timestamps(spike_array::BitArray{1}; dt = 1.0)
     intervals = count_intervals(spike_array) .* dt
     durations = count_intervals(spike_array .!= 1.0) .* dt
-    first_point = findfirst(x -> x==1, spike_array)-1
+    first_point = findfirst(x -> x==1, spike_array)-1|>Float64
     current_point = first_point
     points = Tuple[(current_point, current_point+durations[1])]
     
