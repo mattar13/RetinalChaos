@@ -64,11 +64,11 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0)
     durations = count_intervals(spike_array .!= 1.0) .* dt
     first_point = findfirst(x -> x==1, spike_array)-1
     current_point = first_point
-    points = Tuple[(current_point, current_point+spike_dur[1])]
+    points = Tuple[(current_point, current_point+durations[1])]
     
     for idx = 1:length(intervals)
-        current_point += intervals[idx] + spike_dur[idx+1]
-        push!(points, (current_point-spike_dur[idx+1], current_point))
+        current_point += intervals[idx] + durations[idx+1]
+        push!(points, (current_point-durations[idx+1], current_point))
     end
     return points
 end
