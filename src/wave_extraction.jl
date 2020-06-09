@@ -129,7 +129,7 @@ end
 
 function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
     sim_thresh = calculate_threshold(vm_trace)
-    spike_arr = (vm_trace .> sim_thresh);
+    spike_array = (vm_trace .> sim_thresh);
     timestamps = get_timestamps(spike_array; dt = dt);
     durations = map(x -> x[2]-x[1], timestamps)
     avg_spike_dur = sum(durations)/length(durations)
