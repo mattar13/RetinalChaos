@@ -6,7 +6,6 @@ Finds the threshold of a trace by calculating the average and then adding the 4x
 """
 calculate_threshold(vm_arr::AbstractArray where T) = sum(vm_arr)/length(vm_arr) + 4*std(vm_arr)
 
-
 """
 This function acts to calculate the distance between points in a single BitArray. 
 Very rarely is the first point part of a spike (in which case there is a fallback), 
