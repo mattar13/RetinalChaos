@@ -78,6 +78,10 @@ This function uses the Maximum Interval Sorting method to sort bursts in a singl
 """
 function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIend = 500, IBImin = 1000, DURmin = 100, SPBmin = 4, dt = 1.0, verbose = false)
     burst_timestamps = Array{Tuple,1}([])
+    DUR_list = Array{Float64,1}([])
+    SPB_list = Array{Float64,1}([])
+    IBI_list = Array{Float64,1}([])
+    
     intervals = count_intervals(spike_array) .* dt
     timestamps = get_timestamps(spike_array; dt = dt)
     bursting = false
@@ -99,6 +103,9 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
                     println("Timestamp: $burst_start -> $burst_end, DUR: $DUR,  SPB: $SPB, IBI: $IBI,")
                 end
                 push!(burst_timestamps, (burst_start, burst_end))
+                push!(DUR_list, DUR)
+                push!(SPB_list, SPB)
+                push!(IBI_list, IBI)
                 SPB = 0
             end  
         end
@@ -113,8 +120,10 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
             println("Timestamp: $burst_start -> $(timestamps[end][2]), DUR: $DUR, SPB: $SPB, IBI: Unknown")
         end
         push!(burst_timestamps, (burst_start, timestamps[end][2]))
+        push!(DUR_list, DUR)
+        push!(SPB_list, SPB)
     end
-    burst_timestamps
+    burst_timestamps, DUR_list, SPB_list, IBI_list
 end
 
 
