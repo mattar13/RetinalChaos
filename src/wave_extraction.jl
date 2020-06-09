@@ -89,6 +89,7 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     burst_end = 0.0
     IBI = 0.0
     SPB = 0
+    idx = 1
     for i = 1:length(intervals)
         if bursting == false && intervals[i] <= ISIstart
             bursting = true
@@ -100,13 +101,14 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
             DUR = (burst_end - burst_start)
             if IBI >= IBImin && DUR >= DURmin && SPB >= SPBmin
                 if verbose
-                    println("Timestamp: $burst_start -> $burst_end, DUR: $DUR,  SPB: $SPB, IBI: $IBI,")
+                    println("Timestamp $idx: $burst_start -> $burst_end, DUR $idx: $DUR,  SPB $idx: $SPB, IBI $idx: $IBI,")
                 end
                 push!(burst_timestamps, (burst_start, burst_end))
                 push!(DUR_list, DUR)
                 push!(SPB_list, SPB)
                 push!(IBI_list, IBI)
                 SPB = 0
+                idx+=1
             end  
         end
         if bursting == true
@@ -117,7 +119,7 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     DUR = (timestamps[end][2] - burst_start)
     if DUR >= DURmin && SPB >= SPBmin
         if verbose
-            println("Timestamp: $burst_start -> $(timestamps[end][2]), DUR: $DUR, SPB: $SPB, IBI: Unknown")
+            println("Timestamp  $idx: $burst_start -> $(timestamps[end][2]), DUR $idx: $DUR, SPB $idx: $SPB, IBI $idx: Unknown")
         end
         push!(burst_timestamps, (burst_start, timestamps[end][2]))
         push!(DUR_list, DUR)
