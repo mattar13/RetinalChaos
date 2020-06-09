@@ -1,35 +1,16 @@
-"""
-Function to extract 3D points
-"""
-function extract_points(points::Array{CartesianIndex{3},1})
-    xs = map(x -> x[1], points)
-    ys = map(x -> x[2], points)
-    zs = map(x -> x[3], points)
-    return xs, ys, zs
-end
-
-"""
-Function to extract 2D points
-"""
-function extract_points(points::Array{CartesianIndex{2},1})
-    xs = map(x -> x[1], points)
-    ys = map(x -> x[2], points)
-    return xs, ys
-end
+#### Time Scale Analysis ################################################################
 
 """
 Calculate threshold
+Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation 
 """
 calculate_threshold(vm_arr::AbstractArray where T) = sum(vm_arr)/length(vm_arr) + 4*std(vm_arr)
 
 
 """
-This function extracts the interspike intervals in a single wave.
-    It is designed to clip any intervals at the beginning (as they may or may not be part of a previous burst)
-    and clip events at the end (because we don't know when the next burst will occur)
-    - If interval_or_count is set to 1, then the isi extracts a spike count
+This function acts to calculate the distance between points in a single BitArray
 """
-function extract_isi(spike_trace::BitArray{1}; dt = 1.0)
+function count_intervals(spike_trace::BitArray{1})
     isi = Array{Float64}([])
     count = 0
     for spike in spike_trace
@@ -45,39 +26,28 @@ function extract_isi(spike_trace::BitArray{1}; dt = 1.0)
     isi
 end
 
-"""
-This function calculates the interspike interval
-The input must always be a thresholded spike array
-"""
-function calculate_isi(spike_arr::BitArray{3};  dt = 10.0)
+function count_intervals(spike_arr::BitArray{2})
+    isi_arr = Array{Float64}([])
+    count = 0
+    for idx_y = 1:size(spike_arr,1)
+        all_intervals = extract_interval(spike_arr[idx_y, :])
+        push!(isi_arr, all_intervals...)
+    end
+    isi_arr
+end
+
+function count_intervals(spike_arr::BitArray{3})
     isi_arr = Array{Float64}([])
     count = 0
     for idx_y = 1:size(spike_arr,1)
         for idx_x = 1:size(spike_arr, 2)
-            all_intervals = extract_isi(spike_arr[idx_y, idx_x, :]; dt = dt)
+            all_intervals = extract_interval(spike_arr[idx_y, idx_x, :])
             push!(isi_arr, all_intervals...)
         end
     end
-    sort(isi_arr)
+    isi_arr
 end
 
-"""
-Function to find the maximum interspike interval
-"""
-function find_maxISI(spike_arr::BitArray{3}; dt = 10.0, rank = 0.75, ci = 0.95, spike_dist = Exponential)
-    isi = calculate_isi(spike_arr; dt = dt) #Calculate all ISIs
-    spike_intervals, _ = rank_isi(isi; dt = dt, rank = rank)#all intervals below rank 75 are spikes
-    spike_fit = fit(spike_dist, spike_intervals) #Fit the spikes to a normal distribution
-    quantile(spike_fit, ci) #ANything beyond the 95 percentile is not a interspike distance
-end
-
-function rank_isi(isi::Vector{Float64}; dt = 10.0, rank = 0.75)
-    unique_isi = unique(isi) #Calculate all ISI ranks starting from shortests
-    ranking = unique_isi[round(Int, length(unique_isi)*(1-rank))]
-    spike_intervals = isi[findall(x -> x < ranking, isi)] #all intervals below rank 75 are spikes
-    burst_intervals = isi[findall(x -> x >= ranking, isi)]
-    return spike_intervals, burst_intervals
-end
 
 """
 This uses the minimum spike calculated above to convolve the spike trains into bursts
@@ -146,6 +116,47 @@ function convolve_bursts(spike_arr::BitArray{3}; θr =  500.0, IBI = 1000.0, min
     end
     ret_arr, burst_inds
 end
+############# Extracting Wave fronts #######################################################
+"""
+Function to extract 3D points
+"""
+function extract_points(points::Array{CartesianIndex{3},1})
+    xs = map(x -> x[1], points)
+    ys = map(x -> x[2], points)
+    zs = map(x -> x[3], points)
+    return xs, ys, zs
+end
+
+"""
+Function to extract 2D points
+"""
+function extract_points(points::Array{CartesianIndex{2},1})
+    xs = map(x -> x[1], points)
+    ys = map(x -> x[2], points)
+    return xs, ys
+end
+
+
+
+"""
+Function to find the maximum interspike interval
+"""
+function find_maxISI(spike_arr::BitArray{3}; dt = 10.0, rank = 0.75, ci = 0.95, spike_dist = Exponential)
+    isi = calculate_isi(spike_arr; dt = dt) #Calculate all ISIs
+    spike_intervals, _ = rank_isi(isi; dt = dt, rank = rank)#all intervals below rank 75 are spikes
+    spike_fit = fit(spike_dist, spike_intervals) #Fit the spikes to a normal distribution
+    quantile(spike_fit, ci) #ANything beyond the 95 percentile is not a interspike distance
+end
+
+function rank_isi(isi::Vector{Float64}; dt = 10.0, rank = 0.75)
+    unique_isi = unique(isi) #Calculate all ISI ranks starting from shortests
+    ranking = unique_isi[round(Int, length(unique_isi)*(1-rank))]
+    spike_intervals = isi[findall(x -> x < ranking, isi)] #all intervals below rank 75 are spikes
+    burst_intervals = isi[findall(x -> x >= ranking, isi)]
+    return spike_intervals, burst_intervals
+end
+
+
 
 """
 This function seperates bursts from waves It completes tasks in this order
