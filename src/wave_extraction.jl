@@ -19,7 +19,7 @@ function count_intervals(spike_trace::BitArray{1})
         elseif spike == 1 && count == 0
             count = 0
         elseif spike == 1 && count > 0
-            push!(isi, count*dt)
+            push!(isi, count)
             count = 0
         end
     end
