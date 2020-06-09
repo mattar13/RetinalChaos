@@ -128,81 +128,44 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     burst_timestamps, DUR_list, SPB_list, IBI_list
 end
 
+function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
+    n_spike1 = sum(signal1);
+    n_spike2 = sum(signal2);
+    burst_conv1, burst_idxs1 = convolve_bursts(signal1; θr = Δt, dt = dt, include_theta = true);
+    burst_conv2, burst_idxs2 = convolve_bursts(signal2; θr = Δt, dt = dt, include_theta = true);
+    T1 = sum(burst_conv1)/length(signal1)*dt;
+    T2 = sum(burst_conv2)/length(signal2)*dt;
 
+    s_b1 = 0.0
+    for (sta, en) in burst_idxs2
+        s_b1 += sum(signal1[sta:en])
+    end
+    P1 = s_b1/n_spike1
 
+    s_b2 = 0.0
+    for (sta, en) in burst_idxs1
+        s_b2 += sum(signal2[sta:en])
+    end
+    P2 = s_b2/n_spike2
+    1/2*((P1-T2)/(1-P1*T2) + (P2-T1)/(1-P2*T1))
+end
 
-
-
-
-
-
-"""
-This function will be replaced with max_interval_algorithim, but for now is a placeholder for all other functions still utilizing it. 
-"""
-function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
-    spike_timer = 0.0
-    duration_timer = 0.0
-    burst_start = 0
-    burst_end = 0
-    burst_inds = Array{Tuple}([])
-    burst_arr = zeros(Int, length(spike_arr))
-    for idx in 1:length(spike_arr)
-        if spike_arr[idx] == 1 && duration_timer == 0
-            spike_timer = θr
-            if burst_start == 0
-                burst_start = idx
-            else
-                burst_end = idx
-            end
-        elseif spike_arr[idx] == 0 && spike_timer > 0
-            spike_timer -= dt
-        else
-            spike_timer = 0.0
-            
-            #If a burst has concluded and duration is greater than 0, countdown the duration timer
-            if duration_timer > 0
-                duration_timer -= dt
-            end
-            
-            if burst_start > 0 && burst_end != 0 && burst_end - burst_start > min_dur
-                
-                push!(burst_inds, (burst_start, burst_end))
-                if include_theta == true
-                    burst_start = max(1, round(Int, burst_start-(θr/dt)))
-                    burst_end = round(Int, min(length(burst_arr), burst_end+(θr/dt)))
-                end                    
-                burst_arr[burst_start:burst_end] .= 1
-                #This signifies that a burst has ended and we can begin a duration timer
-                duration_timer = IBI
-            end
-            burst_start = 0
-            burst_end = 0
+function calculate_STTC(spike_array::BitArray{2}; Δt::Float64 = 50.0, dt::Float64 = 1.0)
+    n_traces = size(spike_array, 1)
+    corr_matrix = zeros(n_traces, n_traces)
+    for i = 1:n_traces
+        for j = 1:n_traces
+            corr_matrix[i,j] = calculate_STTC(spike_array[i, :], spike_array[j, :])
         end
     end
-    burst_arr, burst_inds
+    corr_matrix
 end
 
-function convolve_bursts(spike_arr::BitArray{2}; θr = 500.0,  IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
-    ret_arr = similar(spike_arr)
-    burst_inds = Array{Tuple}([])
-    for i = 1:size(spike_arr, 1)
-        ret_arr[i,:], b_idxs = convolve_bursts(spike_arr[i, :]; θr = θr, IBI = IBI, min_dur = min_dur, dt = dt, include_theta = include_theta)
-        push!(burst_inds, (i, b_idxs...))
-    end
-    ret_arr, burst_inds
-end
 
-function convolve_bursts(spike_arr::BitArray{3}; θr =  500.0, IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
-    ret_arr = similar(spike_arr)
-    burst_inds = Array{Tuple}([])
-    for i = 1:size(spike_arr, 1)
-        for j = 1:size(spike_arr, 2)
-            ret_arr[i,j,:], b_idxs = convolve_bursts(spike_arr[i,j, :];  θr = θr, IBI = IBI, min_dur = min_dur, dt = dt, include_theta = include_theta)
-            push!(burst_inds, ((i, j), b_idxs...))
-        end
-    end
-    ret_arr, burst_inds
-end
+
+
+
+
 
 
 ############# Extracting Wave fronts #######################################################
@@ -446,105 +409,69 @@ function run_wavestats(timestamp, vm_arr; dt = 0.01, default_θ = :none)
 end
 
 """
-This function finds local maxima in a graph. Usually requires noise to be cleaned with a loess function
+This function will be replaced with max_interval_algorithim, but for now is a placeholder for all other functions still utilizing it. 
 """
-function findlocalmaxima(array)
-    maxima = Int64[]
-    for idx = 2:length(array)-1
-        if array[idx-1] < array[idx] > array[idx+1]
-            push!(maxima, idx)
+function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
+    spike_timer = 0.0
+    duration_timer = 0.0
+    burst_start = 0
+    burst_end = 0
+    burst_inds = Array{Tuple}([])
+    burst_arr = zeros(Int, length(spike_arr))
+    for idx in 1:length(spike_arr)
+        if spike_arr[idx] == 1 && duration_timer == 0
+            spike_timer = θr
+            if burst_start == 0
+                burst_start = idx
+            else
+                burst_end = idx
+            end
+        elseif spike_arr[idx] == 0 && spike_timer > 0
+            spike_timer -= dt
+        else
+            spike_timer = 0.0
+            
+            #If a burst has concluded and duration is greater than 0, countdown the duration timer
+            if duration_timer > 0
+                duration_timer -= dt
+            end
+            
+            if burst_start > 0 && burst_end != 0 && burst_end - burst_start > min_dur
+                
+                push!(burst_inds, (burst_start, burst_end))
+                if include_theta == true
+                    burst_start = max(1, round(Int, burst_start-(θr/dt)))
+                    burst_end = round(Int, min(length(burst_arr), burst_end+(θr/dt)))
+                end                    
+                burst_arr[burst_start:burst_end] .= 1
+                #This signifies that a burst has ended and we can begin a duration timer
+                duration_timer = IBI
+            end
+            burst_start = 0
+            burst_end = 0
         end
     end
-    maxima
+    burst_arr, burst_inds
 end
 
-"""
-This method uses the Loess filter function to find peaks within a histogram or waveform
-"""
-function find_baselines(array)
-    thresh = calculate_threshold(vm[reduced]);
-    bins = collect(LinRange(minimum(vm[reduced])-1,thresh, 1000))
-    h_fit = fit(Histogram, vm, bins, closed = :left);
-    h_edges = Float64.(h_fit.edges[1][2:end]);
-    h_weights = Float64.(h_fit.weights);
-    h_model = loess(h_edges, h_weights; span = 0.15, degree = 2);
-    smooth_weights = Loess.predict(h_model, h_edges);
-    findlocalmaxima(smooth_weights)
-end
-
-
-
-function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
-    n_spike1 = sum(signal1);
-    n_spike2 = sum(signal2);
-    burst_conv1, burst_idxs1 = convolve_bursts(signal1; θr = Δt, dt = dt, include_theta = true);
-    burst_conv2, burst_idxs2 = convolve_bursts(signal2; θr = Δt, dt = dt, include_theta = true);
-    T1 = sum(burst_conv1)/length(signal1)*dt;
-    T2 = sum(burst_conv2)/length(signal2)*dt;
-
-    s_b1 = 0.0
-    for (sta, en) in burst_idxs2
-        s_b1 += sum(signal1[sta:en])
+function convolve_bursts(spike_arr::BitArray{2}; θr = 500.0,  IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
+    ret_arr = similar(spike_arr)
+    burst_inds = Array{Tuple}([])
+    for i = 1:size(spike_arr, 1)
+        ret_arr[i,:], b_idxs = convolve_bursts(spike_arr[i, :]; θr = θr, IBI = IBI, min_dur = min_dur, dt = dt, include_theta = include_theta)
+        push!(burst_inds, (i, b_idxs...))
     end
-    P1 = s_b1/n_spike1
-
-    s_b2 = 0.0
-    for (sta, en) in burst_idxs1
-        s_b2 += sum(signal2[sta:en])
-    end
-    P2 = s_b2/n_spike2
-    1/2*((P1-T2)/(1-P1*T2) + (P2-T1)/(1-P2*T1))
+    ret_arr, burst_inds
 end
 
-function calculate_STTC(spike_array::BitArray{2}; Δt::Float64 = 50.0, dt::Float64 = 1.0)
-    n_traces = size(spike_array, 1)
-    corr_matrix = zeros(n_traces, n_traces)
-    for i = 1:n_traces
-        for j = 1:n_traces
-            corr_matrix[i,j] = calculate_STTC(spike_array[i, :], spike_array[j, :])
+function convolve_bursts(spike_arr::BitArray{3}; θr =  500.0, IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
+    ret_arr = similar(spike_arr)
+    burst_inds = Array{Tuple}([])
+    for i = 1:size(spike_arr, 1)
+        for j = 1:size(spike_arr, 2)
+            ret_arr[i,j,:], b_idxs = convolve_bursts(spike_arr[i,j, :];  θr = θr, IBI = IBI, min_dur = min_dur, dt = dt, include_theta = include_theta)
+            push!(burst_inds, ((i, j), b_idxs...))
         end
     end
-    corr_matrix
+    ret_arr, burst_inds
 end
-
-"""
-max_val = maximum(isi); min_val = minimum(isi); dBin = 10.0;
-bins = collect(min_val:dBin:max_val)
-isi_hist = fit(Histogram, isi, bins, closed = :left)
-plot(isi_hist, xlabel = "ISI (s)", ylabel = "LogFrequency")
-
-e_isi = isi_hist.edges[1][2:end]
-w_isi = log.(isi_hist.weights)
-plot(e_isi, w_isi)
-model = loess(e_isi, w_isi, span = 0.33, degree = 4)
-isi_loess = Loess.predict(model, e_isi)
-plot!(e_isi, isi_loess*10)
-pi_k = findlocalmaxima(isi_loess)
-
-under_mcv = findall(x -> x<mcv, e_isi)
-ibp_k = argmax(isi_hist.weights[under_mcv])
-
-#now we need to find the C_peaks (will occur after the MCV)
-e_isi_mcv = isi_hist.edges[1][under_mcv[end]+1:end]
-w_isi_mcv = isi_hist.weights[under_mcv[end]:end]
-model = loess(e_isi_mcv, w_isi_mcv, span = 0.33, degree = 4)
-isi_loess = Loess.predict(model, e_isi_mcv);
-pi_k = findlocalmaxima(isi_loess)
-
-
-argsmin(series) = findall(x -> x == minimum(series), series)
-min_idxs = argsmin(isi_hist.weights[ibp_k:pi_k[1]])
-map(isi_min -> void(isi_min, c_pi[1], c_ibp), isi_hist.edges[1][min_idxs])
-
-maxISI = isi_hist.edges[1][min_idx]
-
-c_pi = isi_hist.weights[pi_k][1]
-c_ibp = isi_hist.weights[ibp_k]
-void(maxISI, c_pi[1], c_ibp)
-
-plot(e_isi_mcv, w_isi_mcv)
-vline!(e_isi_mcv[pi_k], lw = 2.0)
-
-
-"""
-not_good() = println("This stuff is not good")
