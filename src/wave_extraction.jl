@@ -74,7 +74,59 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0)
 end
 
 """
-This uses the minimum spike calculated above to convolve the spike trains into bursts
+This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
+"""
+function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIend = 500, IBImin = 1000, DURmin = 100, SPBmin = 4, dt = 1.0, verbose = false)
+    burst_timestamps = Array{Tuple,1}([])
+    intervals = count_intervals(spike_array) .* dt
+    timestamps = get_timestamps(spike_array; dt = dt)
+    bursting = false
+    burst_start = 0.0
+    burst_end = 0.0
+    IBI = 0.0
+    SPB = 0
+    for i = 1:length(intervals)
+        if bursting == false && intervals[i] <= ISIstart
+            bursting = true
+            burst_start = timestamps[i][1]
+        elseif bursting == true && intervals[i] >= ISIend
+            bursting = false
+            burst_end = timestamps[i][2]
+            IBI = intervals[i]
+            DUR = (burst_end - burst_start)
+            if IBI >= IBImin && DUR >= DURmin && SPB >= SPBmin
+                if verbose
+                    println("Timestamp: $burst_start -> $burst_end, DUR: $DUR,  SPB: $SPB, IBI: $IBI,")
+                end
+                push!(burst_timestamps, (burst_start, burst_end))
+                SPB = 0
+            end  
+        end
+        if bursting == true
+            SPB += 1
+        end
+    end
+    #This algorithim usually leaves one last burst off because it has no end point. We can add this
+    DUR = (timestamps[end][2] - burst_start)
+    if DUR >= DURmin && SPB >= SPBmin
+        if verbose
+            println("Timestamp: $burst_start -> $(timestamps[end][2]), DUR: $DUR, SPB: $SPB, IBI: Unknown")
+        end
+        push!(burst_timestamps, (burst_start, timestamps[end][2]))
+    end
+    burst_timestamps
+end
+
+
+
+
+
+
+
+
+
+"""
+This function will be replaced with max_interval_algorithim, but for now is a placeholder for all other functions still utilizing it. 
 """
 function convolve_bursts(spike_arr::BitArray{1}; θr = 500.0, IBI = 1000.0, min_dur = 100.0, dt = 10.0, include_theta = false)
     spike_timer = 0.0
@@ -140,6 +192,8 @@ function convolve_bursts(spike_arr::BitArray{3}; θr =  500.0, IBI = 1000.0, min
     end
     ret_arr, burst_inds
 end
+
+
 ############# Extracting Wave fronts #######################################################
 """
 Function to extract 3D points
@@ -158,26 +212,6 @@ function extract_points(points::Array{CartesianIndex{2},1})
     xs = map(x -> x[1], points)
     ys = map(x -> x[2], points)
     return xs, ys
-end
-
-
-
-"""
-Function to find the maximum interspike interval
-"""
-function find_maxISI(spike_arr::BitArray{3}; dt = 10.0, rank = 0.75, ci = 0.95, spike_dist = Exponential)
-    isi = calculate_isi(spike_arr; dt = dt) #Calculate all ISIs
-    spike_intervals, _ = rank_isi(isi; dt = dt, rank = rank)#all intervals below rank 75 are spikes
-    spike_fit = fit(spike_dist, spike_intervals) #Fit the spikes to a normal distribution
-    quantile(spike_fit, ci) #ANything beyond the 95 percentile is not a interspike distance
-end
-
-function rank_isi(isi::Vector{Float64}; dt = 10.0, rank = 0.75)
-    unique_isi = unique(isi) #Calculate all ISI ranks starting from shortests
-    ranking = unique_isi[round(Int, length(unique_isi)*(1-rank))]
-    spike_intervals = isi[findall(x -> x < ranking, isi)] #all intervals below rank 75 are spikes
-    burst_intervals = isi[findall(x -> x >= ranking, isi)]
-    return spike_intervals, burst_intervals
 end
 
 
