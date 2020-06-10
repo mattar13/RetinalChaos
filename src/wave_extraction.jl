@@ -134,7 +134,7 @@ function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
         if verbose
             println("No spikes detected")
         end
-        return zeros(6)
+        return fill(NaN, 6)
     end
     timestamps = get_timestamps(spike_array; dt = dt);
     durations = map(x -> x[2]-x[1], timestamps)
