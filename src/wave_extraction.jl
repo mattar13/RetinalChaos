@@ -130,6 +130,10 @@ end
 function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = (vm_trace .> sim_thresh);
+    if any(spike_array .== 1)
+        println("No spikes detected")
+        return zeros(6)
+    end
     timestamps = get_timestamps(spike_array; dt = dt);
     durations = map(x -> x[2]-x[1], timestamps)
     avg_spike_dur = sum(durations)/length(durations)
@@ -148,7 +152,6 @@ function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
     end
     return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
 end
-
 function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
     n_spike1 = sum(signal1);
     n_spike2 = sum(signal2);
