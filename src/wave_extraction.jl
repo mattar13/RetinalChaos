@@ -131,7 +131,9 @@ function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = (vm_trace .> sim_thresh);
     if !any(spike_array .== 1.0)
-        println("No spikes detected")
+        if verbose
+            println("No spikes detected")
+        end
         return zeros(6)
     end
     timestamps = get_timestamps(spike_array; dt = dt);
