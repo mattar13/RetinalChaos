@@ -11,7 +11,7 @@ This function acts to calculate the distance between points in a single BitArray
 Very rarely is the first point part of a spike (in which case there is a fallback), 
 and because of this clip is set to remove the first interval. 
 """
-function count_intervals(spike_trace::BitArray{1}; clip = 2)
+function count_intervals(spike_trace::BitArray{1}; clip = 2, clip_end = 0)
     isi = Array{Float64}([])
     count = 0
     
@@ -30,7 +30,7 @@ function count_intervals(spike_trace::BitArray{1}; clip = 2)
             count = 0
         end
     end
-    isi[clip:end]
+    isi[clip:end-clip_end]
 end
 
 function count_intervals(spike_arr::BitArray{2}, clip = 2)
@@ -63,13 +63,25 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0)
     durations = count_intervals(spike_array .!= 1.0) .* dt
     first_point = findfirst(x -> x==1, spike_array)-1|>Float64
     current_point = first_point
-    points = Tuple[(current_point, current_point+durations[1])]
-    
-    for idx = 1:length(intervals)
-        current_point += intervals[idx] + durations[idx+1]
-        push!(points, (current_point-durations[idx+1], current_point))
+    #If we land on the rare occasion where the last point of the spike array is true, we will have an incomplete final interval and interval and duration will be the same. 
+    if length(intervals) == length(durations)
+        points = Tuple[]
+        for idx = 1:length(intervals)
+            current_point += intervals[idx] 
+            push!(points, (current_point, current_point + durations[idx]))
+            current_point += durations[idx] 
+        end
+        push!(points, (current_point, length(spike_array)-1 .*dt))
+        return points        
+    else
+        points = Tuple[(current_point, current_point+durations[1])]
+        for idx = 1:length(intervals)
+            current_point += intervals[idx] 
+            push!(points, (current_point, current_point + durations[idx+1]))
+            current_point += durations[idx+1] 
+        end
+        return points
     end
-    return points
 end
 
 """
