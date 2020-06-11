@@ -33,6 +33,9 @@ tar_conds = [:v, :n, :c, :a, :b, :e, :w]
 lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
 lansdell_conds = [:v, :r, :s, :a, :W]
 
+#This function is used to get each time step within the simulation
+get_timesteps(sol) = [sol.t[i] - sol.t[i-1] for i = 2:length(sol.t)]
+
 include("pde_models.jl")
 include("1D_models.jl") 
 include("2D_models.jl")    
