@@ -140,11 +140,11 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     burst_timestamps, DUR_list, SPB_list, IBI_list
 end
 
-function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
+function timescale_analysis(vm_trace; dt = 10.0, verbose = 0)
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = (vm_trace .> sim_thresh);
     if !any(spike_array .== 1.0)
-        if verbose
+        if verbose >= 1
             println("No spikes detected")
         end
         return fill(NaN, 6)
@@ -154,13 +154,13 @@ function timescale_analysis(vm_trace; dt = 10.0, verbose = false)
         avg_spike_dur = sum(durations)/length(durations)
         std_spike_dur = std(durations)
 
-        burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = verbose, dt = dt);
+        burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = (verbose>=2), dt = dt);
         avg_burst_dur = sum(dur_list)/length(dur_list);
         std_burst_dur = std(dur_list);
 
         avg_ibi = sum(ibi_list)/length(ibi_list)
         std_ibi = std(ibi_list)
-        if verbose
+        if verbose >= 1
             println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
             println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
             println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
