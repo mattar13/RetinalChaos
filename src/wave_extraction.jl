@@ -129,7 +129,7 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     end
     #This algorithim usually leaves one last burst off because it has no end point. We can add this
     DUR = (timestamps[end][2] - burst_start)
-    if DUR >= DURmin && SPB >= SPBmin && bursting = true
+    if DUR >= DURmin && SPB >= SPBmin && bursting == true
         if verbose
             println("Timestamp  $idx: $burst_start -> $(timestamps[end][2]), DUR $idx: $DUR, SPB $idx: $SPB, IBI $idx: Unknown")
         end
