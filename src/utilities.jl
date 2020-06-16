@@ -135,3 +135,23 @@ function append_modeldata(filename, stats, params)
             )
     end
 end
+
+###############################################Opening and interacting with .abf files
+
+"""
+This function walks through the directory and locates any .abf file. 
+The extension can be changed with the keyword argument extension
+"""
+function parse_abf(super_folder::String; extension::String = ".abf")
+    file_list = []
+    for (root, dirs, files) in walkdir(super_folder)
+        for file in files
+            if file[end-3:end] == extension
+                path = joinpath(root, file)
+                println(path) # path to files
+                push!(file_list, path)
+            end
+        end
+    end
+    file_list
+end
