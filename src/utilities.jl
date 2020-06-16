@@ -136,22 +136,70 @@ function append_modeldata(filename, stats, params)
     end
 end
 
+function interleave(l1, l2)
+    interleaved_list = Array{l1[1]|>typeof}([])
+    @assert length(l1) == length(l2)
+    for i = 1:length(l1)
+        push!(interleaved_list, l1[i])
+        push!(interleaved_list, l2[i])
+    end
+    interleaved_list
+end
+
 ###############################################Opening and interacting with .abf files
 
 """
 This function walks through the directory and locates any .abf file. 
 The extension can be changed with the keyword argument extension
 """
-function parse_abf(super_folder::String; extension::String = ".abf")
+function parse_abf(super_folder::String; extension::String = ".abf", verbose = false)
     file_list = []
     for (root, dirs, files) in walkdir(super_folder)
         for file in files
             if file[end-3:end] == extension
                 path = joinpath(root, file)
-                println(path) # path to files
+                if verbose 
+                    println(path) # path to files
+                end
                 push!(file_list, path)
             end
         end
     end
     file_list
+end
+
+function extract_abf(abf_path; verbose = false, v_offset = -25.0)
+    if length(abf_path |> splitpath) > 1
+        full_path = abf_path
+    else
+        full_path = joinpath(pwd(), abf_path)   
+    end
+    #extract the abf file by using pyABF
+    exp_data = pyABF.ABF(full_path)
+    #if the data is segmented into sweeps (which Jordans data is) concatenate all sweeps
+    if length(exp_data.sweepList) > 1
+        data = Float64[]
+        time = Float64[]
+        previous_time = 0.0
+        for sweepNumber in exp_data.sweepList
+            exp_data.setSweep(sweepNumber = sweepNumber, channel = 0);
+            push!(data, exp_data.sweepY...);
+            push!(time, (exp_data.sweepX.+previous_time)...);
+            previous_time = time[end]
+        end
+        dt = time[2]*1000
+    else
+        exp_data.setSweep(sweepNumber = 0, channel = 0);
+        data = Float64.(exp_data.sweepY);
+        time = Float64.(exp_data.sweepX);
+        dt = time[2]*1000
+        
+    end
+    if verbose
+        println("Data extracted from $full_path")
+        println("Data from time stamp $(t[1]) s to $(t[end]+dt) s with dt = $dt ms")
+        println("Data was acquired at $(1/dt/1000) Hz")
+        println("$(length(t)) data points")
+    end
+    data, time, dt
 end
