@@ -119,7 +119,7 @@ function (PDE::Network{T, :gACh} where T)(dU, U, p, t)
     mul!(PDE.MyA, PDE.My, e)
     mul!(PDE.AMx, e, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. dACh = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
+    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
@@ -160,7 +160,7 @@ function (PDE::Network{T, :ρ} where T)(dU, U, p, t)
     mul!(PDE.MyA, PDE.My, e)
     mul!(PDE.AMx, e, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. dACh = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - e)/τACh
+    @. de = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - e)/τACh
     @. dW = -W/τw
     nothing
 end
