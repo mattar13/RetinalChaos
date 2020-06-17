@@ -1,14 +1,50 @@
-#Because the wave interface can get kinda slow in Julia, we have to run it in atom
 using CuArrays
-using RetinalChaos
+using Dates
+import RetinalChaos
+import RetinalChaos: Network, extract_dict, params_to_datasheet, read_JSON
+import RetinalChaos: tar_conds, tar_pars
+import RetinalChaos: SDEProblem, noise_2D, SOSRI, solve
 cd("C:\\Users\\RennaLabSA1\\Documents\\JuliaScripts\\RetinalChaos\\Parameters")
 #Defining Initial conditions and parameters
-p_dict = read_JSON("params.json", is_type = Dict{Symbol,Float64});
-u_dict = read_JSON("conds.json", is_type = Dict{Symbol,Float64});
-p_dict[:g_ACh] = 1.0
-tspan = (0.0, 60e3)
 
-#Trial 1
+
+dt = 10.0; tspan = (0.0, 300e3)
+nx = 96; ny = 96; μ = 1.0
+gpu = true
+SACnet = Network(nx, ny; μ = μ, gpu = gpu, version = :gACh)
+p_dict = read_JSON("params.json");
+u_dict = read_JSON("conds.json");
+u0 = extract_dict(u_dict, tar_conds, (nx, ny)) |> cu;
+p0 = extract_dict(p_dict, tar_pars);
+
+#warm up the model
+println("[$(now())]: Warming up the model for 60s")
+SDE_mat_prob = SDEProblem(SACnet, noise_2D, u0, (0.0, 60e3), p0);
+CuArrays.allowscalar(false)
+@time SDE_mat_sol = solve(
+   SDE_mat_prob,
+   SOSRI(),
+   abstol = 0.2,
+   reltol = 2e-2,
+   maxiters = 1e7,
+   progress = true,
+   save_everystep = false,
+);
+#get the last solution from the warmup
+println("[$(now())]: Running the model for $(tspan[end]/1000)s")
+u0_new = SDE_mat_sol[end]
+SDE_mat_prob = SDEProblem(SACnet, noise_2D, u0_new, tspan, p0);
+@time SDE_mat_sol = solve(
+   SDE_mat_prob,
+   SOSRI(),
+   abstol = 0.2,
+   reltol = 2e-2,
+   maxiters = 1e7,
+   progress = true,
+   saveat = dt,
+);
+println("[$(now())]: Model completed")
+#Running repeated trials 1
 p_rng = LinRange(7000, 10000, 25)
 for x in p_rng
     println("Simulating tau_a = $x")
