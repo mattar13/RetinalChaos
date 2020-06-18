@@ -27,7 +27,6 @@ CuArrays.allowscalar(false)
    abstol = 0.2,
    reltol = 2e-2,
    maxiters = 1e7,
-   progress = true,
    save_everystep = false,
 );
 #get the last solution from the warmup
@@ -40,7 +39,6 @@ SDE_mat_prob = SDEProblem(SACnet, noise_2D, u0_new, tspan, p0);
    abstol = 0.2,
    reltol = 2e-2,
    maxiters = 1e7,
-   progress = true,
    saveat = dt,
 );
 println("[$(now())]: Model completed")
