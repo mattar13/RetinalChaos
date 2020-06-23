@@ -209,6 +209,43 @@ function extract_burstmap(spike_array::BitArray{3})
     return burst_map
 end
 
+function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0)
+    nx, ny, tsteps = size(vm_trace);
+    sim_thresh = calculate_threshold(vm_trace)
+    spike_array = vm .> thresh;
+    if !any(spike_array .== 1.0)
+        if verbose >= 1
+            println("No spikes detected")
+        end
+        return fill(NaN, 6)
+    else
+        spike_durations = Float64[]
+        burst_durations = Float64[]
+        IBIs = Float64[]
+        for x = 1:nx
+            for y = 1:ny
+                timestamps = get_timestamps(spike_array[x,y,:]; dt = dt);
+                durations = map(x -> x[2]-x[1], timestamps)
+                push!(spike_durations, durations...)
+                burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array[x,y,:]; verbose = (verbose>=2), dt = dt);
+                push!(burst_durations, dur_list...)
+                push!(IBIs, ibi_list...)
+            end
+        end
+        avg_spike_dur = sum(spike_durations)/length(spike_durations)
+        std_spike_dur = std(spike_durations)
+        avg_burst_dur = sum(burst_durations)/length(burst_durations);
+        std_burst_dur = std(burst_durations);
+        avg_ibi = sum(IBIs)/length(IBIs)
+        std_ibi = std(IBIs)
+        if verbose >= 1
+            println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
+            println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
+            println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
+        end
+    end
+    return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+end
 
 function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
     n_spike1 = sum(signal1);
