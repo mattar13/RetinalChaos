@@ -157,7 +157,6 @@ end
 function max_interval_algorithim(spike_array::BitArray{3}; dt = 1.0)
     nx, ny, tsteps = size(spike_array)
     data_array = Tuple[]
-    println(nx, ny)
     for x = 1:nx
         for y = 1:ny
             data = max_interval_algorithim(spike_array[x,y,:]; dt = dt)
