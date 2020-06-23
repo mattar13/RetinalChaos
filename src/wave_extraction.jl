@@ -92,7 +92,7 @@ function get_timestamps(spike_array::BitArray{3}; dt = 1.0)
     for x = 1:nx
         for y = 1:ny
             stamps = get_timestamps(spike_array[x,y,:]; dt = dt)
-            push!(timestamps, (x, y, stamps...))
+            push!(timestamps, (x, y, stamps))
         end
     end
     timestamps
