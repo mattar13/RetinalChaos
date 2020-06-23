@@ -195,20 +195,6 @@ function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0)
     end
 end
 
-"""
-For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
-"""
-function extract_burstmap(spike_array::BitArray{3})
-    burst_map = similar(spike_array)
-    burst_data = max_interval_algorithim(spike_array; dt = 1.0)
-    for (x,y,data) in burst_data
-        for (rng_start, rng_stop) in data[1]
-            burst_map[x, y, Int(rng_start):Int(rng_stop)] .= 1.0
-        end
-    end
-    return burst_map
-end
-
 function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0)
     nx, ny, tsteps = size(vm_trace);
     sim_thresh = calculate_threshold(vm_trace)
@@ -245,6 +231,21 @@ function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0)
         end
     end
     return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+end
+
+
+"""
+For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
+"""
+function extract_burstmap(spike_array::BitArray{3})
+    burst_map = similar(spike_array)
+    burst_data = max_interval_algorithim(spike_array; dt = 1.0)
+    for (x,y,data) in burst_data
+        for (rng_start, rng_stop) in data[1]
+            burst_map[x, y, Int(rng_start):Int(rng_stop)] .= 1.0
+        end
+    end
+    return burst_map
 end
 
 function calculate_STTC(signal1::BitArray{1}, signal2::BitArray{1}; Δt::Float64 = 50.0, dt = 1.0)
