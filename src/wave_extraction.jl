@@ -85,8 +85,22 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0)
     end
 end
 
+function get_timestamps(spike_array::BitArray{3}; dt = 1.0)
+    nx, ny, tsteps = size(spike_array)
+    timestamps = Tuple[]
+    println(nx, ny)
+    for x = 1:nx
+        for y = 1:ny
+            stamps = get_timestamps(spike_array[x,y,:]; dt = dt)
+            push!(timestamps, (x, y, stamps...))
+        end
+    end
+    timestamps
+end
+
 """
 This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
+A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
 """
 function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIend = 500, IBImin = 1000, DURmin = 100, SPBmin = 4, dt = 1.0, verbose = false)
     burst_timestamps = Array{Tuple,1}([])
@@ -140,7 +154,20 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     burst_timestamps, DUR_list, SPB_list, IBI_list
 end
 
-function timescale_analysis(vm_trace; dt = 10.0, verbose = 0)
+function max_interval_algorithim(spike_array::BitArray{3}; dt = 1.0)
+    nx, ny, tsteps = size(spike_array)
+    data_array = Tuple[]
+    println(nx, ny)
+    for x = 1:nx
+        for y = 1:ny
+            data = max_interval_algorithim(spike_array[x,y,:]; dt = dt)
+            push!(data_array, (x, y, data))
+        end
+    end
+    data_array
+end
+
+function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0)
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = (vm_trace .> sim_thresh);
     if !any(spike_array .== 1.0)
@@ -167,6 +194,20 @@ function timescale_analysis(vm_trace; dt = 10.0, verbose = 0)
         end
         return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
     end
+end
+
+"""
+For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
+"""
+function extract_burstmap(spike_array::BitArray{3})
+    burst_map = similar(spike_array)
+    burst_data = max_interval_algorithim(spike_array; dt = 1.0)
+    for (x,y,data) in burst_data
+        for (rng_start, rng_stop) in data[1]
+            burst_map[x, y, Int(rng_start):Int(rng_stop)] .= 1.0
+        end
+    end
+    return burst_map
 end
 
 
