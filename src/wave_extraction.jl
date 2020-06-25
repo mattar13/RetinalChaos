@@ -88,7 +88,6 @@ end
 function get_timestamps(spike_array::BitArray{3}; dt = 1.0)
     nx, ny, tsteps = size(spike_array)
     timestamps = Tuple[]
-    println(nx, ny)
     for x = 1:nx
         for y = 1:ny
             stamps = get_timestamps(spike_array[x,y,:]; dt = dt)
@@ -202,7 +201,7 @@ function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0, 
     end
 end
 
-function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0)
+function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0, mode = 1)
     nx, ny, tsteps = size(vm_trace);
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = vm_trace .> thresh;
