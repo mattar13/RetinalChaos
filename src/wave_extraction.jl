@@ -166,7 +166,7 @@ function max_interval_algorithim(spike_array::BitArray{3}; dt = 1.0)
     data_array
 end
 
-function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0)
+function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0, mode = 1)
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = (vm_trace .> sim_thresh);
     if !any(spike_array .== 1.0)
@@ -177,21 +177,28 @@ function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0)
     else
         timestamps = get_timestamps(spike_array; dt = dt);
         durations = map(x -> x[2]-x[1], timestamps)
+        burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = (verbose>=2), dt = dt);
+        
         avg_spike_dur = sum(durations)/length(durations)
         std_spike_dur = std(durations)
-
-        burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = (verbose>=2), dt = dt);
         avg_burst_dur = sum(dur_list)/length(dur_list);
         std_burst_dur = std(dur_list);
-
         avg_ibi = sum(ibi_list)/length(ibi_list)
-        std_ibi = std(ibi_list)
+        std_ibi = std(ibi_list)      
+
         if verbose >= 1
             println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
             println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
             println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
         end
-        return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+        
+        if mode == 1
+            return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+        elseif mode == 2
+            #Mode 2 returns lists of spike durations, bursts and ibis
+            return durations, dur_list, ibi_list
+        end
+
     end
 end
 
@@ -230,7 +237,13 @@ function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0)
             println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
         end
     end
-    return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+    if mode == 1
+        return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
+    elseif mode == 2
+        #Mode 2 returns lists of spike durations, bursts and ibis
+        return spike_durations, burst_durations, IBIs
+    end
+
 end
 
 
