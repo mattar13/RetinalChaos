@@ -203,7 +203,7 @@ end
 
 function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0, mode = 1)
     nx, ny, tsteps = size(vm_trace);
-    sim_thresh = calculate_threshold(vm_trace)
+    thresh = calculate_threshold(vm_trace)
     spike_array = vm_trace .> thresh;
     if !any(spike_array .== 1.0)
         if verbose >= 1
