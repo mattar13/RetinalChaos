@@ -222,7 +222,7 @@ function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0, 
                 end
             else
                 timestamps = get_timestamps(spike_array[x,y,:]; dt = dt);
-                durations = map(x -> x[2]-x[1], timestamps)
+                durations = map(x -> x[2]-x[1], timestamps);
                 push!(spike_durations, durations...)
                 burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array[x,y,:]; verbose = (verbose>=2), dt = dt);
                 push!(burst_durations, dur_list...)
