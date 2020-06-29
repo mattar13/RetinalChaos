@@ -105,9 +105,18 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
     DUR_list = Array{Float64,1}([])
     SPB_list = Array{Float64,1}([])
     IBI_list = Array{Float64,1}([])
-    if any(spike_array.==1.0)
+    if !any(spike_array.==1.0)
+        if verbose >= 1
+            println("No spikes detected")
+        end
+        return fill(nothing, 4)
+    else
         intervals = count_intervals(spike_array) .* dt
         timestamps = get_timestamps(spike_array; dt = dt)
+        if length(timestamps) == 0
+            #Somehow there is a weird case where there are spikes, but none that matter"
+            return fill(nothing, 4)
+        end
         bursting = false
         burst_start = 0.0
         burst_end = 0.0
@@ -150,11 +159,6 @@ function max_interval_algorithim(spike_array::BitArray{1}; ISIstart = 500, ISIen
             push!(SPB_list, SPB)
         end
         return burst_timestamps, DUR_list, SPB_list, IBI_list
-    else
-        if verbose == true
-            println("No spike found")
-        end
-        return NaN, NaN, NaN, NaN
     end
 end
 
@@ -224,8 +228,10 @@ function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0, 
                 durations = map(x -> x[2]-x[1], timestamps);
                 push!(spike_durations, durations...)
                 burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array[x,y,:]; verbose = (verbose>=2), dt = dt);
-                push!(burst_durations, dur_list...)
-                push!(IBIs, ibi_list...)
+                if dur_list != nothing
+                    push!(burst_durations, dur_list...)
+                    push!(IBIs, ibi_list...)
+                end
             end
         end
     end
@@ -247,6 +253,7 @@ function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0, 
         return spike_durations, burst_durations, IBIs
     end
 end
+
 
 
 """
