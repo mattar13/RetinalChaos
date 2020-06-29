@@ -71,7 +71,6 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0, verbose = 0)
             push!(points, (current_point, current_point + durations[idx]))
             current_point += intervals[idx] 
         end
-        #push!(points, (current_point, length(spike_array)-1 .*dt))
         return points        
     else
         points = Tuple[(current_point, current_point+durations[1])]
