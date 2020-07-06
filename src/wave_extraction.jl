@@ -4,7 +4,7 @@
 Calculate threshold
 Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation 
 """
-calculate_threshold(vm_arr::AbstractArray where T) = sum(vm_arr)/length(vm_arr) + 4*std(vm_arr)
+calculate_threshold(vm_arr::AbstractArray where T; Z::Int64 = 4) = sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)
 
 """
 This function acts to calculate the distance between points in a single BitArray. 
