@@ -19,7 +19,7 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
     thresh = jldopen(filename, "r") do file
         for t in tstamps
             if t%10000==0.0
-                println(t)
+                #println(t)
             end
             if t == 0.0
                 arr = read(file, "$(t)")[:,:,1]
@@ -34,7 +34,7 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
         println(avg)
         for t in tstamps
             if t%10000==0.0
-                println(t)
+                #println(t)
             end
             if t == 0.0
                 arr = read(file, "$(t)")[:,:,1]
