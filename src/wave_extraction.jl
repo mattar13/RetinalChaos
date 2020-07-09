@@ -13,7 +13,10 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
     tstamps = jldopen("test.jld", "r") do file
         read(file, "time")
     end
-    n_points = nx*ny*length(tstamps)
+    nx, ny, npoints = jldopen("test.jld", "r") do file
+        read(file, "size")
+    end
+    n_points = nx*ny*npoints
     avg = 0.0
     covar = 0.0
     thresh = jldopen(filename, "r") do file
