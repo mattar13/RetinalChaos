@@ -1,7 +1,7 @@
 module RetinalChaos
 
 using Dates
-using JSON2
+using JSON2, JLD
 using DifferentialEquations, ParameterizedFunctions
 using ModelingToolkit
 using LinearAlgebra, ForwardDiff, NLsolve
@@ -12,7 +12,7 @@ using Logging, TerminalLoggers
 global_logger(TerminalLogger());
 using Plots
 using DataFrames, XLSX
-using Loess, StatsBase
+using Loess, StatsBase, Statistics
 
 # We make it so, CuArrays is attempted to be loaded onto a computer. If it cannot, then GPU arrays are disabled
 using CuArrays
