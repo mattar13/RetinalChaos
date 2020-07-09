@@ -14,10 +14,9 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
         read(file, "time")
     end
     n_points = nx*ny*length(tstamps)
-    println(n_points)
-    jldopen(filename, "r") do file
-        avg = 0.0
-        covar = 0.0
+    avg = 0.0
+    covar = 0.0
+    thresh = jldopen(filename, "r") do file
         for t in tstamps
             if t%10000==0.0
                 println(t)
@@ -32,23 +31,25 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
         end
         #Calculate the average
         avg /= n_points
+        println(avg)
         for t in tstamps
             if t%10000==0.0
                 println(t)
             end
             if t == 0.0
                 arr = read(file, "$(t)")[:,:,1]
-                covar += sum(arr .- avg)
+                covar += sum((arr .- avg).^2)
             else
                 arr = read(file, "$(t)")
-                covar += sum(arr .- avg)
+                covar += sum((arr .- avg).^2)
             end
         end
         #Calculate the standard deviation
-        std = sqrt((covar^2)/n_points-1)
+        std = sqrt(covar/n_points-1)
         #Calculate the threshold
-        return avg + Z*std
+        avg + Z*std
     end
+    thresh
 end
 
 """
