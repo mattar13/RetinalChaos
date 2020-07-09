@@ -7,6 +7,51 @@ Finds the threshold of a trace by calculating the average and then adding the 4x
 calculate_threshold(vm_arr::AbstractArray where T; Z::Int64 = 4) = sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)
 
 """
+This dispatch calculates the threshold on a JLD file
+"""
+function calculate_threshold(filename::String; Z::Int64 = 4)
+    tstamps = jldopen("test.jld", "r") do file
+        read(file, "time")
+    end
+    n_points = nx*ny*length(tstamps)
+    println(n_points)
+    jldopen(filename, "r") do file
+        avg = 0.0
+        covar = 0.0
+        for t in tstamps
+            if t%10000==0.0
+                println(t)
+            end
+            if t == 0.0
+                arr = read(file, "$(t)")[:,:,1]
+                avg += sum(arr)
+            else
+                arr = read(file, "$(t)")
+                avg += sum(arr)
+            end
+        end
+        #Calculate the average
+        avg /= n_points
+        for t in tstamps
+            if t%10000==0.0
+                println(t)
+            end
+            if t == 0.0
+                arr = read(file, "$(t)")[:,:,1]
+                covar += sum(arr .- avg)
+            else
+                arr = read(file, "$(t)")
+                covar += sum(arr .- avg)
+            end
+        end
+        #Calculate the standard deviation
+        std = sqrt((covar^2)/n_points-1)
+        #Calculate the threshold
+        return avg + Z*std
+    end
+end
+
+"""
 This function acts to calculate the distance between points in a single BitArray. 
 Very rarely is the first point part of a spike (in which case there is a fallback), 
 and because of this clip is set to remove the first interval. 
