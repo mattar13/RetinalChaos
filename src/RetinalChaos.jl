@@ -8,8 +8,8 @@ using LinearAlgebra, ForwardDiff, NLsolve
 using Distributions
 using Images, ImageSegmentation
 using ProgressMeter
-using Logging, TerminalLoggers
-global_logger(TerminalLogger());
+#using Logging, TerminalLoggers #For some reason these are causing problems randomly
+#global_logger(TerminalLogger());
 using Plots
 using DataFrames, XLSX
 using Loess, StatsBase, Statistics
