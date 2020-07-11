@@ -1,6 +1,7 @@
 module RetinalChaos
 
 using Dates
+import Dates.now
 using JSON2, JLD
 using DifferentialEquations, ParameterizedFunctions
 using ModelingToolkit
