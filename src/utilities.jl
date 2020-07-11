@@ -62,7 +62,29 @@ function extract_dict(dict_item::Dict{Symbol, Tuple}, pars::Array{Symbol})
     d0
 end
 
-
+"""
+This function looks in the path for the initial_condition file. If it finds it it returns it and a true success flag.
+"""
+function parse_ic(path, ic_path)
+    success = true
+    ic = nothing
+    try 
+        mkdir(path)
+        println("[$(now())]: Path does not yet, exist, creating path")
+    catch
+        
+        try 
+            ic = jldopen(ic_path, "r") do file
+                read(file, "ic")
+            end
+            println("[$(now())]: Previous solution found")
+            success = true
+        catch
+            println("[$(now())]: Previous solution not found, warmup required")
+        end
+    end
+    return success, ic
+end
 
 """
 This function creates a default set of distributions for the parameters and values entered
