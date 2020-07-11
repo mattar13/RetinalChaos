@@ -66,7 +66,7 @@ end
 This function looks in the path for the initial_condition file. If it finds it it returns it and a true success flag.
 """
 function parse_ic(path, ic_path)
-    success = true
+    success = false
     ic = nothing
     try 
         mkdir(path)
