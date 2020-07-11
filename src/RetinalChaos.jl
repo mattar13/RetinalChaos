@@ -40,8 +40,8 @@ This function contains everything you need to run a single instance of the model
 """
 function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1}; 
         root::String = "D:\\ModellingData\\", sim_name::String = "default", 
-        wu_time::Float64 = 10.0, 
-        tmax = 100.0, dt::Float64 = 1.0, checkpoint::Float64 = 10.0,    #We will run the solution for 300s with a dt of 1ms, checkpointing every 100s
+        wu_time::Float64 = 60e3, 
+        tmax = 300e3, dt::Float64 = 1.0, checkpoint::Float64 = 100e3,    #We will run the solution for 300s with a dt of 1ms, checkpointing every 100s
         )
     
     path = joinpath(root, sim_name)
@@ -74,7 +74,7 @@ function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1
     tsteps = collect(0.0:dt:tmax)
     jldopen(sim_path, "w") do file
         file["time"] = tsteps
-        file["size"] = (nx, ny, length(tsteps))
+        file["size"] = (size(ic,1), size(ic,2), length(tsteps))
     end
     #We will simulate each step in chunks based on checkpoint
     for t = 1.0:checkpoint:tmax
