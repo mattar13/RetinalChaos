@@ -93,7 +93,7 @@ end
     if eq.stable != []
         @series begin
             label := "Stable"
-            c := :green
+            seriescolor := :green
             marker := :star
             x = []
             y = []
@@ -107,7 +107,7 @@ end
     if eq.unstable != []
         @series begin
             label := "Unstable"
-            c := :red
+            seriescolor := :red
             marker := :star
             x = []
             y = []
@@ -121,7 +121,7 @@ end
     if eq.saddle != []
         @series begin
             label := "Saddle"
-            c := :blue
+            seriescolor := :blue
             markershape = :star
             x = []
             y = []
@@ -135,7 +135,7 @@ end
     if eq.unstable_focus != []
         @series begin
             label := "Unstable Focus"
-            c := :red
+            seriescolor := :red
             x = []
             y = []
             for pt in eq.unstable_focus
@@ -148,7 +148,7 @@ end
     if eq.stable_focus != []
         @series begin
             label := "Stable Focus"
-            c := :green
+            seriescolor := :green
             x = []
             y = []
             for pt in eq.stable_focus
