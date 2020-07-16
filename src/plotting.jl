@@ -439,7 +439,89 @@ function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1
     end
 end
 
-
+@recipe function f(c1::codim_object{1, Float64}; vars = :v)
+    var_idx = vars |> u_find
+    n_points = length(c1.points)
+    
+    plotted_stable = false; plotted_unstable = false; plotted_saddle = false
+    plotted_unstable_focus = false; plotted_stable_focus = false
+    
+    for i in 1:n_points
+        points = c1.points[i][1]
+        eq = c1.equilibria[i]
+        
+        if eq.stable != []
+            @series begin
+                if plotted_stable == false
+                    label := "Stable"
+                    plotted_stable = true
+                else
+                    label := ""
+                end      
+                seriescolor := :green
+                marker := :star
+                seriestype := :scatter
+                [points], [eq.stable[1][var_idx]]
+            end
+        end
+        if eq.unstable != []
+            @series begin
+                if plotted_unstable == false
+                    label := "Unstable"
+                    plotted_unstable = true
+                else
+                    label := ""
+                end   
+                seriescolor := :red
+                marker := :star
+                seriestype := :scatter
+                [points], [eq.unstable[1][var_idx]]
+            end
+        end
+        if eq.saddle != []
+            @series begin
+                if plotted_saddle == false
+                    label := "Saddle"
+                    plotted_saddle = true
+                else
+                    label := ""
+                end   
+                seriescolor := :blue
+                marker := :circle
+                seriestype := :scatter
+                [points], [eq.saddle[1][var_idx]]
+            end
+        end
+        if eq.unstable_focus != []
+            @series begin
+                if plotted_unstable_focus == false
+                    label := "Unstable Focus"
+                    plotted_unstable_focus = true
+                else
+                    label := ""
+                end   
+                seriescolor := :red
+                marker := :circle
+                seriestype := :scatter
+                [points], [eq.unstable_focus[1][var_idx]]
+            end
+        end
+        if eq.stable_focus != []
+            @series begin
+                if plotted_unstable_focus == false
+                    label := "Stable Focus"
+                    plotted_unstable_focus = true
+                else
+                    label := ""
+                end   
+                seriescolor := :green
+                marker := :circle
+                seriestype := :scatter
+                [points], [eq.stable_focus[1][var_idx]]
+            end
+        end
+    end
+end
 
 @recipe function f(c2::codim_object; eq_var = 1, view = :xyz)
        
