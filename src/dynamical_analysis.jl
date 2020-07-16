@@ -129,21 +129,19 @@ end
 
 
 """
-Make a codim object
+Make a 1D codim object
 """
-function codim_map(ui, pi, codim::Symbol;
+function codim_map(prob, codim::Symbol;
         c1_lims = (-10.0, 10.0), resolution = 50, eq_res = 3,
     )
-    uv = copy(ui);
-    pv = copy(pi)
     points_list = Array{Tuple{Float64}}([])
     equilibria_list = Array{equilibria_object{Float64}}([])
     c1_range = LinRange(c1_lims[1], c1_lims[2], resolution)
     for (idx1, c1) in enumerate(c1_range)
-        pv = copy(p0)
-        uv = copy(u0)
-        pv[(codim |> p_find)...] = c1
-        equilibria = find_equilibria(uv, pv; resolution = eq_res)
+        pv = prob.p
+        pv[codim |> p_find] = c1
+        prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+        equilibria = find_equilibria(prob_i; resolution = eq_res)
         points = c1
         #println(points |> typeof)
         push!(points_list, (points,))
