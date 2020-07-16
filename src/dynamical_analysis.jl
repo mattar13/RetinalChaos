@@ -150,11 +150,9 @@ function codim_map(prob, codim::Symbol;
     codim_object((codim,), points_list, equilibria_list)
 end
 
-function codim_map(ui, pi, codim::Tuple{Symbol, Symbol};
+function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol};
         c1_lims = (-10.0, 10.0), c2_lims = (0.0, 10.0), resolution = 50, eq_res = 3,
     )
-    uv = copy(ui);
-    pv = copy(pi)
     points_list = Array{Tuple{Float64, Float64}}([])
     equilibria_list = Array{equilibria_object{Float64}}([])
     c1_range = LinRange(c1_lims[1], c1_lims[2], resolution)
@@ -162,11 +160,11 @@ function codim_map(ui, pi, codim::Tuple{Symbol, Symbol};
     for (idx1, c1) in enumerate(c1_range)
         #println(idx1)
         for (idx2, c2) in enumerate(c2_range)
-            pv = copy(pi)
-            uv = copy(ui)
-            pv[(codim[1] |> p_find)...] = c1
-            pv[(codim[2] |> p_find)...] = c2
-            equilibria = find_equilibria(uv, pv; resolution = eq_res)
+            pv = prob.p
+            pv[codim[1] |> p_find] = c1
+            pv[codim[2] |> p_find] = c2
+            prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+            equilibria = find_equilibria(prob_i; resolution = eq_res)
             points = (c1, c2)
             #println(points |> typeof)
             push!(points_list, points)
@@ -176,11 +174,9 @@ function codim_map(ui, pi, codim::Tuple{Symbol, Symbol};
     codim_object(codim, points_list, equilibria_list)
 end
 
-function codim_map(ui, pi, codim::Tuple{Symbol, Symbol, Symbol};
+function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol, Symbol};
         c1_lims = (-10.0, 10.0), c2_lims = (0.0, 10.0), c3_lims = (0.0, 10.0), resolution = 50, eq_res = 3,
     )
-    uv = copy(ui);
-    pv = copy(pi)
     points_list = Array{Tuple{Float64, Float64, Float64}}([])
     equilibria_list = Array{equilibria_object{Float64}}([])
     c1_range = LinRange(c1_lims[1], c1_lims[2], resolution)
@@ -189,12 +185,12 @@ function codim_map(ui, pi, codim::Tuple{Symbol, Symbol, Symbol};
     for (idx1, c1) in enumerate(c1_range)
         for (idx2, c2) in enumerate(c2_range)
             for (idx3, c3) in enumerate(c3_range)
-                pv = copy(pi)
-                uv = copy(ui)
+                pv = prob.p
                 pv[(codim[1] |> p_find)...] = c1
                 pv[(codim[2] |> p_find)...] = c2
                 pv[(codim[3] |> p_find)...] = c3
-                equilibria = find_equilibria(uv, pv; resolution = eq_res)
+                prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+                equilibria = find_equilibria(prob_i; resolution = eq_res)
                 points = (c1, c2, c3)
                 #println(points |> typeof)
                 push!(points_list, points)
