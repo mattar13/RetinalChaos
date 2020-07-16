@@ -35,6 +35,10 @@ If your initial conditions are for a network, you can add the extra argument for
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> Float64(dict_item[x]), pars)
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
 
+#get the index of the conditions in the list
+u_find(cond::Symbol; list_u::Array{Symbol, 1} = tar_conds) = findall(c -> c == cond, list_u)[1]
+#get the index of the parameter in the list
+p_find(par::Symbol; list_p::Array{Symbol, 1}  = tar_pars) = findall(p -> p == par, list_c)[1]
 """
 When using the Modeling Toolkit, the dictionary needs to be converted into an array of operations
 """
