@@ -39,10 +39,6 @@ extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple)
 u_find(cond::Symbol; list_u::Array{Symbol, 1} = sym_cs) = findall(c -> c == cond, list_u)[1]
 #get the index of the parameter in the list
 p_find(par::Symbol; list_p::Array{Symbol, 1}  = sym_ps) = findall(p -> p == par, list_p)[1]
-#get the index of the conditions in the list
-u_find(cond::Symbol; list_u = tar_conds) = findall(c -> c == cond, list_u)[1]
-#get the index of the parameter in the list
-p_find(par::Symbol; list_p = tar_pars) = findall(p -> p == par, list_p)[1]
 
 """
 When using the Modeling Toolkit, the dictionary needs to be converted into an array of operations
