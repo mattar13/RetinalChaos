@@ -40,6 +40,9 @@ include("pde_models.jl")
 include("1D_models.jl") 
 include("2D_models.jl")    
 
+sym_ps = map(x -> x |> Symbol, T_ode.ps)
+sym_cs = map(x -> x |> Symbol, T_ode.states)
+
 @register M_INF(v, V1, V2)
 @register N_INF(v, V3, V4)
 @register Λ(v, V3, V4)
