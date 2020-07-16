@@ -40,7 +40,12 @@ include("pde_models.jl")
 include("1D_models.jl") 
 include("2D_models.jl")    
 
-
+@register M_INF(v, V1, V2)
+@register N_INF(v, V3, V4)
+@register Λ(v, V3, V4)
+@register Φ(v, κ, V0)
+@register ħ(e, k_d)
+@register h(e, δ)
 
 #Noise models
 noise(du, u, p, t) = du[end] = p[30]
