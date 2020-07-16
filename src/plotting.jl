@@ -168,7 +168,7 @@ end
     if eq.stable != []
         @series begin
             label := ""
-            c := :green
+            seriescolor := :green
             marker := :star
 
             xs = []
@@ -209,7 +209,7 @@ end
     if eq.unstable != []
         @series begin
             label := ""
-            c := :red
+            seriescolor := :red
             marker := :star
             xs = []
             ys = []
@@ -249,7 +249,7 @@ end
     if eq.saddle != []
         @series begin
             label := ""
-            c := :blue
+            seriescolor := :blue
             markershape = :star
             xs = []
             ys = []
@@ -289,7 +289,7 @@ end
     if eq.unstable_focus != []
         @series begin
             label := ""
-            c := :red
+            seriescolor := :red
             xs = []
             ys = []
             zs = []
@@ -328,7 +328,7 @@ end
     if eq.stable_focus != []
         @series begin
             label := "Stable Focus"
-            c := :green
+            seriescolor := :green
             xs = []
             ys = []
             zs = []
@@ -452,7 +452,7 @@ end
             @series begin
                 legend := true
                 label := "Threshold"
-                c := :blue
+                seriescolor := :blue
                 lw := 4.0
                 extract_thresholds(c1_map)
             end
@@ -460,7 +460,7 @@ end
             @series begin
                 legend := true
                 label := "Baselines"
-                c := :green
+                seriescolor := :green
                 lw := 4.0
                 extract_baselines(c1_map)
             end
@@ -469,7 +469,7 @@ end
                 legend := true
                 seriestype := :scatter
                 label := "Stable"
-                c := :green
+                seriescolor := :green
                 marker := :star
                 extract_equilibria(c2, :stable; eq_var = eq_var, view = :xz)
             end
@@ -477,7 +477,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Unstable"
-                c := :red
+                seriescolor := :red
                 marker := :star
                 extract_equilibria(c2, :unstable; eq_var = eq_var, view = :xz)
             end
@@ -486,7 +486,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Saddle"
-                c := :blue
+                seriescolor := :blue
                 marker := :star
                 extract_equilibria(c2, :saddle; eq_var = eq_var, view = :xz)
             end
@@ -495,7 +495,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Stable_focus"
-                c := :green
+                seriescolor := :green
                 marker := :circle
                 extract_equilibria(c2, :stable_focus; eq_var = eq_var, view = :xz)
             end
@@ -505,7 +505,7 @@ end
                 
                 seriestype := :scatter
                 label := "Unstable_focus"
-                c := :red
+                seriescolor := :red
                 marker := :circle
                 extract_equilibria(c2, :unstable_focus; eq_var = eq_var, view = :xz)
             end  
@@ -518,12 +518,12 @@ end
             legend := true
             @series begin
                 seriestype := :heatmap
-                c := :thermal
+                seriescolor := :thermal
                 xspan, yspan, threshmap
             end
             @series begin
                 seriestype := :heatmap
-                c := :black
+                seriescolor := :black
                 xspan, yspan, null_map
             end
         elseif view == :baselines
@@ -532,19 +532,19 @@ end
             legend := true
             @series begin
                 seriestype := :heatmap
-                c := :thermal
+                seriescolor := :thermal
                 xspan, yspan, basemap
             end
             @series begin
                 seriestype := :heatmap
-                c := :black
+                seriescolor := :black
                 xspan, yspan, null_map
             end
         else    
             @series begin
                 seriestype := :scatter
                 label := "Stable"
-                c := :green
+                seriescolor := :green
                 marker := :star
                 extract_equilibria(c2, :stable;eq_var = eq_var, view = view)
             end
@@ -552,7 +552,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Unstable"
-                c := :red
+                seriescolor := :red
                 marker := :star
                 extract_equilibria(c2, :unstable; eq_var = eq_var, view = view)
             end
@@ -560,7 +560,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Saddle"
-                c := :blue
+                seriescolor := :blue
                 marker := :star
                 extract_equilibria(c2, :saddle; eq_var = eq_var, view = view)
             end
@@ -568,7 +568,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Stable_focus"
-                c := :green
+                seriescolor := :green
                 marker := :circle
                 extract_equilibria(c2, :stable_focus; eq_var = eq_var, view = view)
             end
@@ -576,7 +576,7 @@ end
             @series begin
                 seriestype := :scatter
                 label := "Unstable_focus"
-                c := :red
+                seriescolor := :red
                 marker := :circle
                 extract_equilibria(c2, :unstable_focus; eq_var = eq_var, view = view)
             end  
