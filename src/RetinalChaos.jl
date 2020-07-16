@@ -28,11 +28,10 @@ include("fitting.jl")
 include("wave_extraction.jl")
 include("plotting.jl")
 
-export read_JSON
-export run_model
-export append_modeldata
+#We are exporting the minimum functions needed to run a 1D simulation
+export extract_dict, read_JSON #Load the parameter loading functions 
+export SDEProblem, ODEProblem, solve, T_ode, T_sde, SOSRI #Load all the DiffEq Interface
 
-export model_pars, model_conds
 ###### The main simulation loop is here#########################################
 """
 This function contains everything you need to run a single instance of the model,
