@@ -57,7 +57,7 @@ struct equilibria_object{T}
 end
 
 #Conduct a stability analysis of the current
-function find_equilibria(ui, pi;
+function find_equilibria(prob::ODEProblem;
         vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), resolution = 10,
         precision = 2, check_min = 1e-8
     )
@@ -68,19 +68,21 @@ function find_equilibria(ui, pi;
     stable_focus = Array{Array{Float64}}([])
     storage = Array{Array{Float64}}([])
 
-    var_idx = [(vars[1]|>u_find)[1], (vars[2]|>u_find)[1]]
-    copy_u = copy(ui)
+    var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
     for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution))
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], resolution))
             #Iterate through the y range looking for stable points
+            
             #We really may only need to check for stable points if the dU is low
-            copy_u[var_idx] .= (x, y)
-            df(x) = all_in_one(x, pi)
-            res = nlsolve(df, copy_u)
+            uI = prob.u0
+            uI[var_idx] .= (x, y)
+            df(ux) = prob.f(ux, prob.p, 0.0)
+            res = nlsolve(df, uI)
             #println(res)
             equilibria = map(x -> round(x, digits = precision), res.zero)
             check = df(res.zero)
+            
             if equilibria in storage
                 nothing
             elseif any(isnan, res.zero)
@@ -92,7 +94,7 @@ function find_equilibria(ui, pi;
                 #push!(eq_dict[:all], res.zero)
                 #If the equilibria is not in the stable or unstable points
                 #Test it's stability
-                J_mat = ForwardDiff.jacobian(x->all_in_one(x, pi), res.zero)[[var_idx...], [var_idx...]]
+                J_mat = ForwardDiff.jacobian(df, res.zero)[[var_idx...], [var_idx...]]
                 ev = eigvals(J_mat)
 
                 if sign(real(ev[1])) != sign(real(ev[2]))
