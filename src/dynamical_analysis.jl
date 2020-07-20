@@ -25,6 +25,9 @@ function ensemble_func(prob::SDEProblem, i, repeat; pars = 1, conds = nothing, r
     prob = SDEProblem(prob.f, prob.g, new_u, prob.tspan, new_p)
 end
 
+
+
+
 function phase_plane(prob::ODEProblem; vars::Array{Symbol, 1} = [:v, :n], xlims = (-90.0, 10.0), ylims = (-0.10, 5.0), resolution = 100)
     var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
     phase_plane = zeros(resolution, resolution, 2)
