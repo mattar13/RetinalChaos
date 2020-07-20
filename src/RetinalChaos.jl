@@ -72,9 +72,10 @@ function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1
         data_size = (size(ic,1), size(ic,2), length(tsteps))
         #We will simulate each step in chunks based on checkpoint
         println("Saving timsetps and data size")
+        JLD2.@save sim_path tsteps data_size
     end
     
-    JLD2.@save sim_path tsteps data_size
+    
     for t = 1.0:checkpoint:tmax
         #Load the last time and initial condition from the previous solution  
         JLD2.@load ic_path ic last_time
