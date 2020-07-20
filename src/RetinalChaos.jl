@@ -102,4 +102,6 @@ function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1
     ic
 end
 
+export simulation_loop
+
 end
