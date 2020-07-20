@@ -70,7 +70,7 @@ end
 """
 This function looks in the path for the initial_condition file. If it finds it it returns it and a true success flag.
 """
-function parse_ic(path, ic_path)
+function parse_ic(path::String, ic_path::String; data_name::String = "ic")
     success = false
     ic = nothing
     try 
@@ -80,7 +80,7 @@ function parse_ic(path, ic_path)
         
         try 
             ic = jldopen(ic_path, "r") do file
-                read(file, "ic")
+                read(file, data_name)
             end
             println("[$(now())]: Previous solution found")
             success = true
