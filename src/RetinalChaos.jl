@@ -62,7 +62,7 @@ function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1
         JLD2.@save ic_path ic last_time
     end
     
-    is_dataset, data_size = parse_ic(path, sim_path)
+    is_dataset, data_size = parse_ic(path, sim_path; data_name = "data_size")
     println(is_dataset)
     #We only want to create a new file if one does not already exist. Otherwise we want to just append
     if is_dataset == false
@@ -74,8 +74,7 @@ function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1
         println("Saving timsetps and data size")
         JLD2.@save sim_path tsteps data_size
     end
-    
-    
+        
     for t = 1.0:checkpoint:tmax
         #Load the last time and initial condition from the previous solution  
         JLD2.@load ic_path ic last_time
