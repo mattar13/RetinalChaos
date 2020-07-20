@@ -10,17 +10,13 @@ calculate_threshold(vm_arr::AbstractArray where T; Z::Int64 = 4) = sum(vm_arr)/l
 This dispatch calculates the threshold on a JLD file
 """
 function calculate_threshold(filename::String; Z::Int64 = 4)
-    tstamps = jldopen("test.jld", "r") do file
-        read(file, "time")
-    end
-    nx, ny, npoints = jldopen("test.jld", "r") do file
-        read(file, "size")
-    end
+    JLD2.@load filename tsteps data_size
+    nx, ny, npoints = data_size
     n_points = nx*ny*npoints
     avg = 0.0
     covar = 0.0
     thresh = jldopen(filename, "r") do file
-        for t in tstamps
+        for t in tsteps
             if t%10000==0.0
                 #println(t)
             end
@@ -35,7 +31,7 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
         #Calculate the average
         avg /= n_points
         println(avg)
-        for t in tstamps
+        for t in tsteps
             if t%10000==0.0
                 #println(t)
             end
@@ -54,7 +50,6 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
     end
     thresh
 end
-
 """
 This function acts to calculate the distance between points in a single BitArray. 
 Very rarely is the first point part of a spike (in which case there is a fallback), 
