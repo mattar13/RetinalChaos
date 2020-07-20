@@ -92,6 +92,16 @@ function parse_ic(path::String, ic_path::String; data_name::String = "ic")
 end
 
 """
+This function resets the previous time to a specific value
+"""
+function reset_previous_time(previous_loc::String; reset_time::Float64 = 0.0)
+    JLD2.@load previous_loc ic last_time
+    last_time = reset_time
+    JLD2.@save previous_loc ic last_time
+end
+
+
+"""
 This function creates a default set of distributions for the parameters and values entered
 DEFAULT DISTRIBUTION
 value > 0 ? truncated(Normal(value, 0.5), 0.0 )
