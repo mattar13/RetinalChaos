@@ -87,7 +87,7 @@ function trace_plot(sol_array)
 end
 
 
-@recipe function f(eq::equilibria_object)
+@recipe function f(eq::equilibria_object; vars = [:v, :n])
     seriestype := :scatter
     markersize := 8.0
     if eq.stable != []
@@ -98,8 +98,8 @@ end
             x = []
             y = []
             for pt in eq.stable
-                push!(x, pt[1])
-                push!(y, pt[2])
+                push!(x, pt[vars[1]|>u_find])
+                push!(y, pt[vars[2]|>u_find])
             end
             x, y
         end
@@ -112,8 +112,8 @@ end
             x = []
             y = []
             for pt in eq.unstable
-                push!(x, pt[1])
-                push!(y, pt[2])
+                push!(x, pt[vars[1]|>u_find])
+                push!(y, pt[vars[2]|>u_find])
             end
             x, y
         end
@@ -126,8 +126,8 @@ end
             x = []
             y = []
             for pt in eq.saddle
-                push!(x, pt[1])
-                push!(y, pt[2])
+                push!(x, pt[vars[1]|>u_find])
+                push!(y, pt[vars[2]|>u_find])
             end
             x, y
         end
@@ -139,8 +139,8 @@ end
             x = []
             y = []
             for pt in eq.unstable_focus
-                push!(x, pt[1])
-                push!(y, pt[2])
+                push!(x, pt[vars[1]|>u_find])
+                push!(y, pt[vars[2]|>u_find])
             end
             x, y
         end
@@ -152,8 +152,8 @@ end
             x = []
             y = []
             for pt in eq.stable_focus
-                push!(x, pt[1])
-                push!(y, pt[2])
+                push!(x, pt[vars[1]|>u_find])
+                push!(y, pt[vars[2]|>u_find])
             end
             x, y
         end
