@@ -31,13 +31,11 @@ end
 function phase_plane(prob::ODEProblem; vars::Array{Symbol, 1} = [:v, :n], xlims = (-90.0, 10.0), ylims = (-0.10, 5.0), resolution = 100)
     var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
     phase_plane = zeros(resolution, resolution, 2)
-     for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution))
-        for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], resolution))
-            uI = prob.u0
-            uI[var_idx].= (x, y)
-            du = prob.f(uI, prob.p, 0.0)
-            phase_plane[idx_x, idx_y, :] = du[var_idx]
-        end
+     for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution)), (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], resolution))
+        uI = prob.u0
+        uI[var_idx].= (x, y)
+        du = prob.f(uI, prob.p, 0.0)
+        phase_plane[idx_x, idx_y, :] = du[var_idx]
     end
     phase_plane
 end
@@ -77,7 +75,7 @@ function find_equilibria(prob::ODEProblem;
     storage = Array{Array{Float64}}([])
 
     var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
-    for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution))
+    for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution)), 
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], resolution))
             #Iterate through the y range looking for stable points
