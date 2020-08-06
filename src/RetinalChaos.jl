@@ -3,15 +3,18 @@ module RetinalChaos
 using Dates
 import Dates.now
 using JSON2, JLD2
-using DifferentialEquations, ParameterizedFunctions
-using ModelingToolkit
+using DifferentialEquations, ModelingToolkit
 using LinearAlgebra, ForwardDiff, NLsolve
-using Distributions
+using Distributions, StatsBase, Statistics, StatsPlots
+
+#Import all plotting utilities and change the plotting format
+using Plots
+using Plots.Measures
+
+
 using Images, ImageSegmentation
 using ProgressMeter
-#using Logging, TerminalLoggers #For some reason these are causing problems randomly
-#global_logger(TerminalLogger());
-using Plots
+
 using DataFrames, XLSX
 using Loess, StatsBase, Statistics
 
