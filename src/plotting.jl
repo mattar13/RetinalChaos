@@ -1,3 +1,13 @@
+v_color = :deepskyblue
+n_color = :magenta
+c_color = :green
+a_color = :purple
+b_color = :red
+e_color = :blue
+w_color = :gray
+export v_color, n_color, c_color, a_color, b_color, e_color, w_color
+
+
 function frame_draw(sol_array; idx = :all, saveas = :gif)
     threshold = calculate_threshold(sol_array[:,:,1,:])
     spike_arr = sol_array[:,:,1,:] .>= threshold
