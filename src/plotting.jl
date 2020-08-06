@@ -453,7 +453,7 @@ end
     plotted_unstable_focus = false; plotted_stable_focus = false
     
     @series begin
-        if plotted_stable == false
+        if plotted_stable == false && !all(stable_p .|> isnan)
             label := "Stable"
             plotted_stable = true
         else
@@ -465,7 +465,7 @@ end
     end
     
     @series begin
-        if plotted_unstable == false
+        if plotted_unstable == false && !all(unstable_p .|> isnan)
             label := "Unstable"
             plotted_unstable = true
         else
@@ -477,7 +477,7 @@ end
     end
     
     @series begin
-        if plotted_saddle == false
+        if plotted_saddle == false && !all(saddle_p .|> isnan)
             label := "Saddle"
             plotted_saddle = true
         else
@@ -489,7 +489,7 @@ end
     end
     
     @series begin
-        if plotted_stable_focus == false
+        if plotted_stable_focus == false && !all(stable_focus_p .|> isnan)
             label := "Stable Focus"
             plotted_stable_focus = true
         else
@@ -501,7 +501,7 @@ end
     end
     
     @series begin
-        if plotted_unstable_focus == false
+        if plotted_unstable_focus == false && !all(unstable_focus_p .|> isnan)
             label := "Unstable Focus"
             plotted_unstable_focus = true
         else
