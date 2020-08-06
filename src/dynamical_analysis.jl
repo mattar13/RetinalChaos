@@ -59,6 +59,11 @@ struct equilibria_object{T}
     stable_focus::Array{Array{T}}
 end
 
+import Base.length
+#We can import a function that counts all of the equilibria events in the object
+length(eq::equilibria_object) = length(eq.stable) + length(eq.unstable) + length(eq.saddle) + length(eq.unstable_focus) + length(eq.stable_focus)
+
+
 #Conduct a stability analysis of the current
 function find_equilibria(prob::ODEProblem;
         vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), resolution = 10,
