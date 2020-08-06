@@ -75,7 +75,7 @@ function find_equilibria(prob::ODEProblem;
     storage = Array{Array{Float64}}([])
 
     var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
-    for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution)), 
+    for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution)) 
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], resolution))
             #Iterate through the y range looking for stable points
