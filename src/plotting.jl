@@ -441,85 +441,75 @@ end
 
 @recipe function f(c1::codim_object{1, Float64}; vars = :v)
     var_idx = vars |> u_find
-    n_points = length(c1.points)
+    
+    points = map(x -> x[1], c1.points);
+    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria);
+    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria);
+    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria);
+    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria);
+    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria);
     
     plotted_stable = false; plotted_unstable = false; plotted_saddle = false
     plotted_unstable_focus = false; plotted_stable_focus = false
     
-    for i in 1:n_points
-        points = c1.points[i][1]
-        eq = c1.equilibria[i]
-        
-        if eq.stable != []
-            @series begin
-                if plotted_stable == false
-                    label := "Stable"
-                    plotted_stable = true
-                else
-                    label := ""
-                end      
-                seriescolor := :green
-                marker := :star
-                seriestype := :scatter
-                [points], [eq.stable[1][var_idx]]
-            end
-        end
-        if eq.unstable != []
-            @series begin
-                if plotted_unstable == false
-                    label := "Unstable"
-                    plotted_unstable = true
-                else
-                    label := ""
-                end   
-                seriescolor := :red
-                marker := :star
-                seriestype := :scatter
-                [points], [eq.unstable[1][var_idx]]
-            end
-        end
-        if eq.saddle != []
-            @series begin
-                if plotted_saddle == false
-                    label := "Saddle"
-                    plotted_saddle = true
-                else
-                    label := ""
-                end   
-                seriescolor := :blue
-                marker := :circle
-                seriestype := :scatter
-                [points], [eq.saddle[1][var_idx]]
-            end
-        end
-        if eq.unstable_focus != []
-            @series begin
-                if plotted_unstable_focus == false
-                    label := "Unstable Focus"
-                    plotted_unstable_focus = true
-                else
-                    label := ""
-                end   
-                seriescolor := :red
-                marker := :circle
-                seriestype := :scatter
-                [points], [eq.unstable_focus[1][var_idx]]
-            end
-        end
-        if eq.stable_focus != []
-            @series begin
-                if plotted_unstable_focus == false
-                    label := "Stable Focus"
-                    plotted_unstable_focus = true
-                else
-                    label := ""
-                end   
-                seriescolor := :green
-                marker := :circle
-                seriestype := :scatter
-                [points], [eq.stable_focus[1][var_idx]]
-            end
-        end
+    @series begin
+        if plotted_stable == false
+            label := "Stable"
+            plotted_stable = true
+        else
+            label := ""
+        end      
+        seriescolor := :green
+        marker := :star
+        [points], [stable_p]
+    end
+    
+    @series begin
+        if plotted_unstable == false
+            label := "Unstable"
+            plotted_unstable = true
+        else
+            label := ""
+        end      
+        seriescolor := :red
+        marker := :star
+        [points], [unstable_p]
+    end
+    
+    @series begin
+        if plotted_saddle == false
+            label := "Saddle"
+            plotted_saddle = true
+        else
+            label := ""
+        end      
+        seriescolor := :blue
+        marker := :star
+        [points], [saddle_p]
+    end
+    
+    @series begin
+        if plotted_stable_focus == false
+            label := "Stable Focus"
+            plotted_stable_focus = true
+        else
+            label := ""
+        end      
+        seriescolor := :green
+        marker := :circle
+        [points], [stable_focus_p]
+    end
+    
+    @series begin
+        if plotted_unstable_focus == false
+            label := "Unstable Focus"
+            plotted_unstable_focus = true
+        else
+            label := ""
+        end      
+        seriescolor := :red
+        marker := :circle
+        [points], [unstable_focus_p]
     end
 end
 
