@@ -439,7 +439,7 @@ function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1
     end
 end
 
-@recipe function f(c1::codim_object{1, Float64}; vars = :v)
+@recipe function f(c1::codim_object{1, Float64}; vars = :v, scatter = true)
     var_idx = vars |> u_find
     
     points = map(x -> x[1], c1.points);
@@ -460,7 +460,9 @@ end
             label := ""
         end      
         seriescolor := :green
-        marker := :star
+        if scatter
+            marker := :star
+        end
         [points], [stable_p]
     end
     
@@ -472,7 +474,9 @@ end
             label := ""
         end      
         seriescolor := :red
-        marker := :star
+        if scatter
+            marker := :star
+        end
         [points], [unstable_p]
     end
     
@@ -484,7 +488,9 @@ end
             label := ""
         end      
         seriescolor := :blue
-        marker := :star
+        if scatter
+            marker := :star
+        end
         [points], [saddle_p]
     end
     
@@ -496,7 +502,9 @@ end
             label := ""
         end      
         seriescolor := :green
-        marker := :circle
+        if scatter
+            marker := :circle
+        end
         [points], [stable_focus_p]
     end
     
@@ -508,7 +516,9 @@ end
             label := ""
         end      
         seriescolor := :red
-        marker := :circle
+        if scatter
+            marker := :circle
+        end
         [points], [unstable_focus_p]
     end
 end
