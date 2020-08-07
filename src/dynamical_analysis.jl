@@ -74,6 +74,8 @@ function print(eq::equilibria_object; msg = "Existant Equilibrium", vars = [:v])
     eq.stable_focus != [] ? println("Stable Focus Equilibrium: $(eq.stable_focus[1][var_idxs])") : nothing
 end
 
+export print, length
+
 #Conduct a stability analysis of the current
 function find_equilibria(prob::ODEProblem;
         vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), resolution = 10,
