@@ -64,8 +64,8 @@ import Base.print
 length(eq::equilibria_object) = length(eq.stable) + length(eq.unstable) + length(eq.saddle) + length(eq.unstable_focus) + length(eq.stable_focus)
 
 #This function displays information about the equilibrium
-function print(eq::equilibria_object; vars = [:v])
-    println("Existant Equilibrium")
+function print(eq::equilibria_object; msg = "Existant Equilibrium", vars = [:v])
+    println(msg)
     var_idxs = map(vr -> u_find(vr), vars)
     eq.unstable != [] ? println("Unstable Equilibrium: $(eq.unstable[1][var_idxs])") : nothing
     eq.stable != [] ? println("Stable Equilibrium: $(eq.stable[1][var_idxs])") : nothing
