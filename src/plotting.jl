@@ -449,7 +449,7 @@ function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1
     end
 end
 
-@recipe function f(c1::codim_object{1, Float64}; vars = :v, scatter = true)
+@recipe function f(c1::codim_object{1, Float64}; vars = :v, scatter = false)
     var_idx = vars |> u_find
     
     points = map(x -> x[1], c1.points);
