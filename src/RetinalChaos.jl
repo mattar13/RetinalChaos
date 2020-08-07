@@ -5,7 +5,7 @@ import Dates.now
 using JSON2, JLD2
 using DifferentialEquations, ModelingToolkit
 using LinearAlgebra, ForwardDiff, NLsolve
-#using Distributions, StatsBase, Statistics, StatsPlots
+using Distributions, StatsBase, Statistics
 
 #Import all plotting utilities and change the plotting format
 using Plots
