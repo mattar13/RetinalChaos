@@ -31,7 +31,8 @@ using ForwardDiff, LinearAlgebra, NLsolve
 #using Plots
 #import Plots.Measures
 
-using ProgressBar
+#This is for showing the progress of the wave finding function. Which also should be looked at
+#using ProgressMeter
     
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
