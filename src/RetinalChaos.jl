@@ -1,6 +1,7 @@
 module RetinalChaos
 
-#There is no way around it, if I include functions for plotting, I have to 
+#There is no way around it, if I include functions for plotting, I have to include plots
+using Plots
 #Import small functions
 import Base.length
 import Base.print
