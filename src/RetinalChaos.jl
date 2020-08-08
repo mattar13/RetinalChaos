@@ -56,7 +56,7 @@ function simulation_loop(net::Network, u0::Array{Float64,3}, p::Array{Float64, 1
     success, ic = parse_ic(path, ic_path)
     if success == false #Unsuccessful loading of the initial condition leads to needing to warmup
         println("[$(now())]: Beginning simulation '$sim_name'")
-        prob = SDEProblem(net, noise_2D, u0, (0.0, wu_time), p);
+        prob = SDEProblem(net, noise, u0, (0.0, wu_time), p);
         println("[$(now())]: Warming Up solutiuon for $wu_time ms")
         @time sol = solve(prob,SOSRI(),abstol = 0.2, reltol = 2e-2,  maxiters = 1e7, progress = true, save_start = false, save_everystep = false);
         println("[$(now())]: Saving warmed-up solution")
