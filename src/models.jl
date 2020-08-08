@@ -1,6 +1,20 @@
-#Auxillary functions
-M_INF(V, V1, V2) = (1 + tanh((V - V1)/V2))/2;
-N_INF(V, V3, V4) = (1 + tanh((V - V3)/V4))/2;
+"""
+This is the Boltzmann equation for channel gating. 
+Origingally described in Hodgkin & Huxley Et al 1955, then simplified into a hyperbolic form by Morris & Lecar 1980
+
+The equation for this is as follows: 
+
+\$ R\\_{\\infty} = \\frac{1}{2} * (1 + tanh(\\frac{V\\_t - V\\_S}{V\\_H}))\$
+
+For Calcium channel activation we can use: \$M\\_{\\infty}\$
+
+For Potassium channel activation we can use \$N\\_{\\infty}\$
+
+To use this function
+"""
+R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
+
+
 Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 ħ(e, K_d) = (e^2)/(e^2 + K_d)
