@@ -1,25 +1,35 @@
 module RetinalChaos
 
-using Dates
+#Import small functions
+import Base.length
+import Base.print
 import Dates.now
-using JSON2, JLD2
-using DifferentialEquations, ModelingToolkit
-using LinearAlgebra, ForwardDiff, NLsolve
-using Distributions, StatsBase, Statistics
 
-#Import all plotting utilities and change the plotting format
-using Plots
-using Plots.Measures
-
-
-using Images, ImageSegmentation
-using ProgressMeter
-
-using DataFrames, XLSX
-using Loess, StatsBase, Statistics
-
-# We make it so, CuArrays is attempted to be loaded onto a computer. If it cannot, then GPU arrays are disabled
+#Imports if using GPU
 using CuArrays
+
+#These imports deal with modelling and running the models
+using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+#This module takes the longest to load. If possible I would like to keep it commented.
+#using DifferentialEquations
+
+#Imports for reading and writing parameters and solutions
+using JSON2, JLD2
+#Imported for saving statistics to excel. Not necessary at this time. Might remove
+#using DataFrames, XLSX
+
+#Imported for dynamical analysis
+using ForwardDiff, LinearAlgebra, NLsolve
+
+#These imports may not be used. They have to do with analysis of waves, but this has become irrelevant. 
+#using Images, ImageSegmentation
+
+#These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
+#using Distributions, Statistics, StatsBase
+
+#Since almost every notebook makes use of Plots, and we really don't get anything extra by importing it. I will leave this commented
+#using Plots
+#import Plots.Measures
     
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
