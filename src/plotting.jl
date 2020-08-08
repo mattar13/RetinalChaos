@@ -7,94 +7,95 @@ e_color = :blue
 w_color = :gray
 export v_color, n_color, c_color, a_color, b_color, e_color, w_color
 
+# ALL OF THESE SHOULD BE RECIPES SO WE DON'T HAVE TO IMPORT PLOTS WITH THE FXN
+#function frame_draw(sol_array; idx = :all, saveas = :gif)
+#    threshold = calculate_threshold(sol_array[:,:,1,:])
+#    spike_arr = sol_array[:,:,1,:] .>= threshold
+#    burst_arr = extract_burstmap(spike_array);
+#    
+#    nx, ny, var, t = size(sol_array)
+#    if idx == :all
+#        save_name = :Full
+#        anim = @animate for i = 1:2:size(sol_array, 4)
+#            println("Animating frame $i")
+#            p = plot(layout = grid(2, 2), size = (800, 800))
+#            heatmap!(p[1], sol_array[:, :, 1, i], ratio = :equal, grid = false,
+#                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+#                c = :curl, clims = (-70.0, 0.0),
+#            )
+#            heatmap!(p[2], burst_arr[:,:,i], ratio = :equal, grid = false,
+#                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+#                c = :grays, clims = (0.0, 1.0),
+#            )
+#            heatmap!(p[3], sol_array[:, :, 3, i], ratio = :equal, grid = false,
+#                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+#                c = :kgy, clims = (0.0, 1.0),
+#            )
+#            heatmap!(p[4], sol_array[:, :, 6, i], ratio = :equal, grid = false,
+#                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+#                c = :bgy, clims = (0.0, m_ach),
+#            )
+#        end
+#    elseif idx == :spike
+#        save_name = :spike
+#        anim = @animate for i = 1:2:size(sol_array, 4)
+#            println("Animating frame $i")
+#            heatmap(burst_arr[:,:,i], ratio = :equal, grid = false,
+#                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+#                c = :grays, clims = (0.0, 1.0),
+#            )
+#            #contourf!(SDE_sol_arr[:,:,1,i])
+#        end
+#    else
+#        save_name = model_conds[idx]
+#        anim = @animate for i = 1:2:size(sol_array, 4)
+#            println("Animating frame $i")
+#            heatmap(sol_array[:, :, idx, i], ratio = :equal, grid = false,
+#                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+#                c = :curl, clims = (minimum(sol_arr[:, :, idx, i]), maximum(sol_arr[:, :, idx, i]))
+#            )
+#        end
+#    end
+#
+#    if saveas == :mp4
+#        mp4(anim, "$(save_name)t_map.mp4", fps = 50)
+#    elseif saveas == :gif
+#        gif(anim, "$(save_name)t_map.gif", fps = 50)
+#    end
+#end
 
-function frame_draw(sol_array; idx = :all, saveas = :gif)
-    threshold = calculate_threshold(sol_array[:,:,1,:])
-    spike_arr = sol_array[:,:,1,:] .>= threshold
-    burst_arr = extract_burstmap(spike_array);
-    
-    nx, ny, var, t = size(sol_array)
-    if idx == :all
-        save_name = :Full
-        anim = @animate for i = 1:2:size(sol_array, 4)
-            println("Animating frame $i")
-            p = plot(layout = grid(2, 2), size = (800, 800))
-            heatmap!(p[1], sol_array[:, :, 1, i], ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :curl, clims = (-70.0, 0.0),
-            )
-            heatmap!(p[2], burst_arr[:,:,i], ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :grays, clims = (0.0, 1.0),
-            )
-            heatmap!(p[3], sol_array[:, :, 3, i], ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :kgy, clims = (0.0, 1.0),
-            )
-            heatmap!(p[4], sol_array[:, :, 6, i], ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :bgy, clims = (0.0, m_ach),
-            )
-        end
-    elseif idx == :spike
-        save_name = :spike
-        anim = @animate for i = 1:2:size(sol_array, 4)
-            println("Animating frame $i")
-            heatmap(burst_arr[:,:,i], ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :grays, clims = (0.0, 1.0),
-            )
-            #contourf!(SDE_sol_arr[:,:,1,i])
-        end
-    else
-        save_name = model_conds[idx]
-        anim = @animate for i = 1:2:size(sol_array, 4)
-            println("Animating frame $i")
-            heatmap(sol_array[:, :, idx, i], ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-                c = :curl, clims = (minimum(sol_arr[:, :, idx, i]), maximum(sol_arr[:, :, idx, i]))
-            )
-        end
-    end
+#function raster_plot(sol_array)
+#    threshold = calculate_threshold(sol_array[:,:,1,:])
+#    spike_arr = sol_array[:,:,1,:] .>= threshold
+#    nx, ny, t = size(spike_arr)
+#    spike_raster = reshape(spike_arr, (nx * ny, t))
+#    burst_raster = convolve_bursts(spike_raster; dt = 10.0)
+#    raster = reshape(sol_array, (nx * ny, 7, t))
+#    p = plot(layout = grid(7, 1), size = (2000, 2000));
+#    heatmap!(p[1], raster[:, 1, :], c = :curl);
+#    heatmap!(p[2], burst_raster, c = :grayscale);
+#    heatmap!(p[3], raster[:, 2, :], c = :RdPu);
+#    heatmap!(p[4], raster[:, 3, :], c = :kgy);
+#    heatmap!(p[5], 1 .- raster[:, 4, :], c = :BuPu);
+#    heatmap!(p[6], raster[:, 5, :], c = :reds);
+#    heatmap!(p[7], raster[:, 6, :], c = :bgy)
+#    p
+#end
 
-    if saveas == :mp4
-        mp4(anim, "$(save_name)t_map.mp4", fps = 50)
-    elseif saveas == :gif
-        gif(anim, "$(save_name)t_map.gif", fps = 50)
-    end
-end
 
-function raster_plot(sol_array)
-    threshold = calculate_threshold(sol_array[:,:,1,:])
-    spike_arr = sol_array[:,:,1,:] .>= threshold
-    nx, ny, t = size(spike_arr)
-    spike_raster = reshape(spike_arr, (nx * ny, t))
-    burst_raster = convolve_bursts(spike_raster; dt = 10.0)
-    raster = reshape(sol_array, (nx * ny, 7, t))
-    p = plot(layout = grid(7, 1), size = (2000, 2000));
-    heatmap!(p[1], raster[:, 1, :], c = :curl);
-    heatmap!(p[2], burst_raster, c = :grayscale);
-    heatmap!(p[3], raster[:, 2, :], c = :RdPu);
-    heatmap!(p[4], raster[:, 3, :], c = :kgy);
-    heatmap!(p[5], 1 .- raster[:, 4, :], c = :BuPu);
-    heatmap!(p[6], raster[:, 5, :], c = :reds);
-    heatmap!(p[7], raster[:, 6, :], c = :bgy)
-    p
-end
-
-function trace_plot(sol_array)
-    nx, ny, var, t = size(sol_array)
-    raster = reshape(sol_array, (nx * ny, 7, size(sol_array, 4)))
-    pick_ten = rand((1:size(raster, 1)), 10)
-    p = plot(layout = grid(6, 1), cbar = :none, legend = false);
-    plot!(p[1], raster[pick_ten, 1, :]', lw = 4.0, c = :blues, line_z = pick_ten');
-    plot!(p[2], raster[pick_ten, 2, :]', lw = 4.0, c = :PuRd, line_z = pick_ten');
-    plot!(p[3], raster[pick_ten, 3, :]', lw = 4.0, c = :greens, line_z = pick_ten', clims = pick_ten');
-    plot!(p[4], 1 .- raster[pick_ten, 4, :]', lw = 4.0, c = :BuPu, line_z = pick_ten', clims = pick_ten');
-    plot!(p[5], raster[pick_ten, 5, :]', lw = 4.0, c = :reds, line_z = pick_ten', clims = pick_ten');
-    plot!(p[6], raster[pick_ten, 6, :]', lw = 4.0, c = :bgy, line_z = pick_ten', clims = pick_ten')
-    p
-end
+#function trace_plot(sol_array)
+#    nx, ny, var, t = size(sol_array)
+#    raster = reshape(sol_array, (nx * ny, 7, size(sol_array, 4)))
+#    pick_ten = rand((1:size(raster, 1)), 10)
+#    p = plot(layout = grid(6, 1), cbar = :none, legend = false);
+#    plot!(p[1], raster[pick_ten, 1, :]', lw = 4.0, c = :blues, line_z = pick_ten');
+#    plot!(p[2], raster[pick_ten, 2, :]', lw = 4.0, c = :PuRd, line_z = pick_ten');
+#    plot!(p[3], raster[pick_ten, 3, :]', lw = 4.0, c = :greens, line_z = pick_ten', clims = pick_ten');
+#    plot!(p[4], 1 .- raster[pick_ten, 4, :]', lw = 4.0, c = :BuPu, line_z = pick_ten', clims = pick_ten');
+#    plot!(p[5], raster[pick_ten, 5, :]', lw = 4.0, c = :reds, line_z = pick_ten', clims = pick_ten');
+#    plot!(p[6], raster[pick_ten, 6, :]', lw = 4.0, c = :bgy, line_z = pick_ten', clims = pick_ten')
+#    p
+#end
 
 
 @recipe function f(eq::equilibria_object; vars = [:v, :n])
