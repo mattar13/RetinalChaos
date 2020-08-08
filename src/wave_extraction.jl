@@ -390,13 +390,6 @@ function calculate_STTC(spike_array::BitArray{2}; Δt::Float64 = 50.0, dt::Float
     corr_matrix
 end
 
-
-
-
-
-
-
-
 ############# Extracting Wave fronts #######################################################
 """
 Function to extract 3D points
