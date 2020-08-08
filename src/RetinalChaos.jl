@@ -6,7 +6,7 @@ import Base.print
 import Dates.now
 
 #Imports if using GPU
-using CuArrays
+#using CuArrays
 
 #These imports deal with modelling and running the models
 using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
