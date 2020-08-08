@@ -16,7 +16,7 @@ function calculate_threshold(filename::String; Z::Int64 = 4)
     avg = 0.0
     covar = 0.0
     thresh = jldopen(filename, "r") do file
-        for t in tsteps
+        @showprogress 0.5 "Calculating threshold of JLD file." for t in tsteps
             if t%10000==0.0
                 #println(t)
             end
