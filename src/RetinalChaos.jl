@@ -30,6 +30,8 @@ using ForwardDiff, LinearAlgebra, NLsolve
 #Since almost every notebook makes use of Plots, and we really don't get anything extra by importing it. I will leave this commented
 #using Plots
 #import Plots.Measures
+
+using ProgressBar
     
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
