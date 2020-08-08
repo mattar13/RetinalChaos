@@ -1,5 +1,6 @@
 module RetinalChaos
 
+#There is no way around it, if I include functions for plotting, I have to 
 #Import small functions
 import Base.length
 import Base.print
@@ -10,6 +11,7 @@ using CuArrays
 
 #These imports deal with modelling and running the models
 using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+export SDEProblem, ODEProblem, solve
 #This module takes the longest to load. If possible I would like to keep it commented.
 #using DifferentialEquations
 
@@ -45,11 +47,13 @@ include("wave_extraction.jl")
 include("plotting.jl")
 
 #We are exporting the minimum functions needed to run a 1D simulation
+export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
 export extract_dict, read_JSON #Load the parameter loading functions 
-export SDEProblem, ODEProblem, solve, T_ode, T_sde, SOSRI #Load all the DiffEq Interface
 #Export functions related to creating the 2D network
 export Network
 export tar_conds, tar_pars, p_find, u_find
+
+
 ###### The main simulation loop is here#########################################
 """
 This function contains everything you need to run a single instance of the model,
