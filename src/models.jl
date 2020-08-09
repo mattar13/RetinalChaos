@@ -15,7 +15,7 @@ I_n(g_n::T, R, V, E_n::T) where T = -g_n*R*(V-E_n)
 
 """
 This is the Boltzmann equation for channel gating.  
-Origingally described in Hodgkin & Huxley Et al 1955, then simplified into a hyperbolic form by Morris & Lecar 1980
+Origingally described in Hodgkin & Huxley 1955, then simplified into a hyperbolic form by Morris & Lecar 1980
 
 The equation for this is as follows: 
 
@@ -34,6 +34,18 @@ R_INF(V, VS::T, VH::T) where T = (1 + tanh((V - VS)/VH))/2;
 CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
 R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
 
+"""
+This equation related voltage to the rate constant of opening Potassium channels. Described more in detail in Morris Et. al. 1981. 
+
+\$\\Lambda(V_t, V_3, V_4) =  cosh\\left(\\frac{V_t-V_3}{2V_4} \\right)\$
+
+- INPUTS
+    - The membrane voltage (\$V_t\$)
+    - The slope value (\$V_3\$)
+    - The half saturation value (\$V_4\$)
+- OUTPUTS
+    - The potassium rate constant (\$\\Lambda\$)
+"""
 Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 CuArrays.@cufunc Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Λ(V::CuArray, V3, V4) = LAM.(V, V3, V4) 
