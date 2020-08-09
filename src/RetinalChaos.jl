@@ -2,7 +2,7 @@ module RetinalChaos
 
 #There is no way around it, if I include functions for plotting, I have to include plots
 using Plots
-export plot, plot!, @animate #Out of the box, I want to be able to plot
+export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
 #Import some other plotting utilities
 using Colors, LaTeXStrings, StatsPlots, Dates
 using Plots.Measures
