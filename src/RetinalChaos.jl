@@ -3,11 +3,10 @@ module RetinalChaos
 #There is no way around it, if I include functions for plotting, I have to include plots
 using Plots
 export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
+export Plots.font, Plots.Measures
 #Import some other plotting utilities
 using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
 export colormatch, colormap, colorschemes
-
-using Plots.Measures
 
 #Import small functions
 import Base.length
