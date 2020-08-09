@@ -5,12 +5,13 @@ using Plots
 export plot, plot!, @animate #Out of the box, I want to be able to plot
 #Import some other plotting utilities
 using Colors, LaTeXStrings, StatsPlots, Dates
-import Plots.Measures
+using Plots.Measures
 
 #Import small functions
 import Base.length
 import Base.print
 import Dates.now
+export now
 
 #This is for showing the progress of the wave finding function. Which also should be looked at
 using ProgressMeter
