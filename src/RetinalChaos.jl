@@ -2,8 +2,7 @@ module RetinalChaos
 
 #There is no way around it, if I include functions for plotting, I have to include plots
 using Plots
-#We can automatically 
-export plot, @animate
+export plot, @animate #Out of the box, I want to be able to plot
 
 #Import small functions
 import Base.length
@@ -22,13 +21,12 @@ export SDEProblem, ODEProblem, solve
 
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2
-#Imported for saving statistics to excel. Not necessary at this time. Might remove
-#using DataFrames, XLSX
 
 #Imported for dynamical analysis
 using ForwardDiff, LinearAlgebra, NLsolve
 
-
+#Imported for saving statistics to excel. Not necessary at this time. Might remove
+#using DataFrames, XLSX
 
 #These imports may not be used. They have to do with analysis of waves, but this has become irrelevant. 
 #using Images, ImageSegmentation
