@@ -7,12 +7,13 @@ The equation for this is as follows:
 \$ R\\_{\\infty} = \\frac{1}{2} * (1 + tanh(\\frac{V\\_t - V\\_S}{V\\_H}))\$
 
 For Calcium channel activation we can use: \$M\\_{\\infty}\$
-
 For Potassium channel activation we can use \$N\\_{\\infty}\$
 
-To use this function
+To use this function pass in the voltage variable, The slope (\$V\\_S\$) and half saturation (\$V\\_H\$)
 """
 R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
+R_INF(V, VS::Real, VH::Real) = (1 + tanh((V - VS)/VH))/2;
+
 Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 ħ(e, K_d) = (e^2)/(e^2 + K_d)
