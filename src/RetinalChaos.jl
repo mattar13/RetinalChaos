@@ -2,10 +2,16 @@ module RetinalChaos
 
 #There is no way around it, if I include functions for plotting, I have to include plots
 using Plots
+#We can automatically 
+export plot, @animate
+
 #Import small functions
 import Base.length
 import Base.print
 import Dates.now
+
+#This is for showing the progress of the wave finding function. Which also should be looked at
+using ProgressMeter
 
 #Imports if using GPU
 using CuArrays
@@ -13,8 +19,6 @@ using CuArrays
 #These imports deal with modelling and running the models
 using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 export SDEProblem, ODEProblem, solve
-#This module takes the longest to load. If possible I would like to keep it commented.
-#using DifferentialEquations
 
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2
@@ -23,6 +27,8 @@ using JSON2, JLD2
 
 #Imported for dynamical analysis
 using ForwardDiff, LinearAlgebra, NLsolve
+
+
 
 #These imports may not be used. They have to do with analysis of waves, but this has become irrelevant. 
 #using Images, ImageSegmentation
@@ -34,8 +40,7 @@ using ForwardDiff, LinearAlgebra, NLsolve
 #using Plots
 #import Plots.Measures
 
-#This is for showing the progress of the wave finding function. Which also should be looked at
-using ProgressMeter
+
     
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
