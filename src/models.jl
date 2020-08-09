@@ -15,8 +15,7 @@ The equation for this is as follows:
 - For Calcium channel activation: \$V_1 = V_S,  V_2 = V_H,  M_{\\infty} = R_{\\infty}\$
 - For Potassium channel activation: \$V_3 = V_S,  V_4 = V_H,  N_{\\infty} = R_{\\infty}\$
 """
-R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
-R_INF(V, VS::Real, VH::Real) = (1 + tanh((V - VS)/VH))/2;
+R_INF(V, VS::T, VH::T) where T = (1 + tanh((V - VS)/VH))/2;
 
 Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
