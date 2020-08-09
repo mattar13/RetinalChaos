@@ -24,6 +24,8 @@ using CuArrays
 #These imports deal with modelling and running the models
 using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 export SDEProblem, ODEProblem, solve
+#These macros will be useful for extending the model
+export @parameters, @variables, @derivatives, @register
 
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2
@@ -56,6 +58,8 @@ include("fitting.jl")
 include("wave_extraction.jl")
 include("plotting.jl")
 
+# Export functions for dynamical analysis
+export EnsembleProblem, EnsembleThreads, ensemble_func
 #We are exporting the minimum functions needed to run a 1D simulation
 export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
 export extract_dict, read_JSON #Load the parameter loading functions 
