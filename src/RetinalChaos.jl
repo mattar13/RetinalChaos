@@ -4,7 +4,7 @@ module RetinalChaos
 using Plots
 import Plots: font, Measures
 export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
-export font, Measures
+export pyplot, font, Measures
 #Import some other plotting utilities
 using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
 export colormatch, colormap, colorschemes
