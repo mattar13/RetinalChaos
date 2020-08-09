@@ -27,6 +27,8 @@ T_model_eqs = [
 T_noise_eqs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, σ]
 T_ode = ODESystem(T_model_eqs)
 T_sde = SDESystem(T_model_eqs, T_noise_eqs, t, T_ode.states, T_ode.ps)
+sym_ps = map(x -> x |> Symbol, T_ode.ps)
+sym_cs = map(x -> x |> Symbol, T_ode.states)
 
 #Karvourniari Model
 K_model_eqs = [
