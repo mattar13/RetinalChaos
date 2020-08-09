@@ -19,11 +19,11 @@ function (PDE::Network{T, :Default} where T)(dU, U, p, t::Float64)
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
 
     @. dv = (
-              fI(g_leak,  1.0, v, E_leak)
-            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K)
-            + fI(g_ACh, ħ(e, k_d), v, E_ACh)
+              I_n(g_leak,  1.0, v, E_leak)
+            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_K, n , v, E_K)
+            + I_n(g_TREK, b, v, E_K)
+            + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
             + I_app
             + W
         )/C_m
@@ -61,11 +61,11 @@ function (PDE::Network{T, :gTREK} where T)(dU, U, p, t::Float64)
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
 
     @. dv = (
-              fI(g_leak,  1.0, v, E_leak)
-            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K) .* PDE.null
-            + fI(g_ACh, ħ(e, k_d), v, E_ACh)
+              I_n(g_leak,  1.0, v, E_leak)
+            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_K, n , v, E_K)
+            + I_n(g_TREK, b, v, E_K) .* PDE.null
+            + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
             + I_app
             + W
         )/C_m
@@ -103,11 +103,11 @@ function (PDE::Network{T, :gACh} where T)(dU, U, p, t::Float64)
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
 
     @. dv = (
-              fI(g_leak,  1.0, v, E_leak)
-            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K)
-            + fI(g_ACh, ħ(e, k_d), v, E_ACh) .* PDE.null
+              I_n(g_leak,  1.0, v, E_leak)
+            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_K, n , v, E_K)
+            + I_n(g_TREK, b, v, E_K)
+            + I_n(g_ACh, ħ(e, k_d), v, E_ACh) .* PDE.null
             + I_app
             + W
         )/C_m
@@ -145,11 +145,11 @@ function (PDE::Network{T, :ρ} where T)(dU, U, p, t::Float64)
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
 
     @. dv = (
-              fI(g_leak,  1.0, v, E_leak)
-            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, n , v, E_K)
-            + fI(g_TREK, b, v, E_K)
-            + fI(g_ACh, ħ(e, k_d), v, E_ACh)
+              I_n(g_leak,  1.0, v, E_leak)
+            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_K, n , v, E_K)
+            + I_n(g_TREK, b, v, E_K)
+            + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
             + I_app
             + W
         )/C_m
@@ -185,10 +185,10 @@ function (PDE::Network{T, :Lansdell} where T)(dU, U, p, t::Float64)
     (I_app, E_Ca, E_K, E_leak, E_ACh, V1, V2, V3, V4, g_Ca, g_K, g_leak, λ, g_ACh, δ, C_m, τr, τs, τACh, γ, α, β, k, V0, D, μ) = p
 
     @. dv = (
-              fI(g_leak,  1.0, v, E_leak)
-            + fI(g_Ca, M_INF(v, V1, V2), v, E_Ca)
-            + fI(g_K, r , v, E_K)
-            + fI(g_ACh, h(a, δ), v, E_ACh)
+              I_n(g_leak,  1.0, v, E_leak)
+            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_K, r , v, E_K)
+            + I_n(g_ACh, h(a, δ), v, E_ACh)
             + fIn(abs(W), λ, v, E_Ca)
             + I_app
         )/C_m
