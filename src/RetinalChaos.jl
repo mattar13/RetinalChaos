@@ -4,8 +4,8 @@ module RetinalChaos
 using Plots
 export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
 #Import some other plotting utilities
-using Colors, LaTeXStrings, StatsPlots, Dates
-import colormatch, colormap
+using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
+import colormatch, colormap, colorschemes
 
 using Plots.Measures
 
