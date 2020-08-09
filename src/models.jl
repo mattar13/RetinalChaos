@@ -1,4 +1,21 @@
 """
+This function is used to calculate the current. It represents the generalized form: 
+
+\$I_n = -g_n * R * (V_t - E_n)\$
+\$n = (Leak, Ca, K, TREK, ACh)\$
+- INPUTS: 
+    - Maximal conductance (\$g_n\$) 
+    - Gating fraction (\$R_\\infty\$)
+    - Membrane Potential (\$V_t\$) 
+    - Reversal Potential (\$E_n\$)
+- OUTPUTS:
+    - Ionic current of type n (\$I_n\$)
+"""
+fI(g::T, r, v, e::T) where T = -g*r*(v-e)
+
+
+
+"""
 This is the Boltzmann equation for channel gating.  
 Origingally described in Hodgkin & Huxley Et al 1955, then simplified into a hyperbolic form by Morris & Lecar 1980
 
@@ -16,35 +33,23 @@ The equation for this is as follows:
 - For Potassium channel activation: \$V_3 = V_S,  V_4 = V_H,  N_{\\infty} = R_{\\infty}\$
 """
 R_INF(V, VS::T, VH::T) where T = (1 + tanh((V - VS)/VH))/2;
+CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
+R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
+
 
 Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 ħ(e, K_d) = (e^2)/(e^2 + K_d)
 
-CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
+
 CuArrays.@cufunc Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 CuArrays.@cufunc Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 CuArrays.@cufunc ħ(e, K_d) = (e^2)/(e^2 + K_d)
 
-R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
+
 Λ(V::CuArray, V3, V4) = LAM.(V, V3, V4) 
 Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
 ħ(e::CuArray, K_d) = ħ.(e, K_d)
-
-"""
-This function is used to calculate the current. It represents the generalized form: 
-
-\$I_n = -g_n * R * (V_t - E_n)\$
-\$n = (Leak, Ca, K, TREK, ACh)\$
-- INPUTS: 
-    - Maximal conductance (\$g_n\$) 
-    - Gating fraction (\$R_\\infty\$)
-    - Membrane Potential (\$V_t\$) 
-    - Reversal Potential (\$E_n\$)
-- OUTPUTS:
-    - Ionic current of type n (\$I_n\$)
-"""
-fI(g::Real, r, v, e::Real) = -g*r*(v-e)
 
 tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0, :σ, :D, :τw]
 tar_conds = [:v, :n, :c, :a, :b, :e, :W]
@@ -61,13 +66,8 @@ include("2D_models.jl")
 sym_ps = map(x -> x |> Symbol, T_ode.ps)
 sym_cs = map(x -> x |> Symbol, T_ode.states)
 
-@register R_INF(V, VS, VH)
-@register Λ(v, V3, V4)
-@register Φ(v, κ, V0)
-@register ħ(e, k_d)
 
 #Noise models
 noise(du::Array{T,1}, u::Array{T,1}, p::Array{T,1}, t::T) where T = du[end] = p[30]
 noise(du::Array{T,3}, u::Array{T,3}, p::Array{T,1}, t::T) where T = du[:,:,end] .= p[30]
 lansdell_noise(du, u, p, t) = du[:,:,end] .= p[end]
-
