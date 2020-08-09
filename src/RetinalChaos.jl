@@ -3,6 +3,8 @@ module RetinalChaos
 #There is no way around it, if I include functions for plotting, I have to include plots
 using Plots
 export plot, @animate #Out of the box, I want to be able to plot
+#We want to set the default plotting mode to format for journals
+
 
 #Import small functions
 import Base.length
