@@ -1,3 +1,4 @@
+#Here we want to set the default plotting behaviors and fonts
 using Colors, LaTeXStrings, StatsPlots, Dates
 import Plots.Measures
 font_title = Plots.font("Arial", 24)
