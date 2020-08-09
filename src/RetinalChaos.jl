@@ -34,6 +34,9 @@ using JSON2, JLD2
 #Imported for dynamical analysis
 using ForwardDiff, LinearAlgebra, NLsolve
 
+#For Binomial Nullification of parameters
+using Distributions
+
 #Imported for saving statistics to excel. Not necessary at this time. Might remove
 #using DataFrames, XLSX
 
@@ -41,7 +44,7 @@ using ForwardDiff, LinearAlgebra, NLsolve
 #using Images, ImageSegmentation
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
-#using Distributions, Statistics, StatsBase
+#using Statistics, StatsBase
 
 #Since almost every notebook makes use of Plots, and we really don't get anything extra by importing it. I will leave this commented
 #using Plots
