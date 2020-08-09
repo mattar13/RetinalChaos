@@ -5,7 +5,7 @@ using Plots
 export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
 #Import some other plotting utilities
 using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
-import colormatch, colormap, colorschemes
+export colormatch, colormap, colorschemes
 
 using Plots.Measures
 
