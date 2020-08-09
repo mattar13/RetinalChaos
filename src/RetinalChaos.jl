@@ -23,9 +23,10 @@ using CuArrays
 
 #These imports deal with modelling and running the models
 using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
-export SDEProblem, ODEProblem, solve
+export SDEProblem, ODEProblem, solve, SOSRI
 #These macros will be useful for extending the model
 export @parameters, @variables, @derivatives, @register
+export ODESystem, SDESystem
 
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2
