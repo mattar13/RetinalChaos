@@ -12,15 +12,15 @@
 T_model_eqs = [
           d(v)~ (
                     -g_leak*(v-E_leak)
-                  + -g_Ca*((1 + tanh((V - V1)/V2))/2)*(v-E_Ca)
+                  + -g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
                   + -g_K*n*(v-E_K)
                   + -g_TREK*b*(v-E_K)
                   + -g_ACh*ħ(e, k_d)*(v-E_ACh)
                   + I_app
                   + W + 0*σ
                   )/C_m ,
-          d(n) ~ (Λ(v, V3, V4) * ((((1 + tanh((V - V3)/V4))/2) - n)))/τn,
-          d(c) ~ (C_0 + δ*(-g_Ca*((1 + tanh((V - V1)/V2))/2)* (v - E_Ca)) - λ*c)/τc,
+          d(n) ~ (Λ(v, V3, V4) * (R_INF(v, V3, V4) - n))/τn,
+          d(c) ~ (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc,
           d(a) ~ (α*c^4*(1-a)-a)/τa,
           d(b) ~ (β*a^4*(1-b)-b)/τb,
           d(e) ~ (-2*D*e) + (ρ*Φ(v, k, V0) - e)/τACh,
