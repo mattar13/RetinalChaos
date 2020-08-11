@@ -34,8 +34,8 @@ R_INF(V::T, VS::T, VH::T) where T <: Real  = (1 + tanh((V - VS)/VH))/2;
 CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
 R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
 
-M_INF(V, V1, V2) where T <: Real = (1 + tanh((V - V1)/V2))/2;
-N_INF(V, V3, V4) where T <: Real = (1 + tanh((V - V3)/V4))/2;
+M_INF(V, V1, V2)= (1 + tanh((V - V1)/V2))/2;
+N_INF(V, V3, V4) = (1 + tanh((V - V3)/V4))/2;
 
 
 """
