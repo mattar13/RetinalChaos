@@ -2,11 +2,11 @@
 @parameters t g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_sAHP g_ACh k_d E_ACh I_app C_m V3 V4 τn C_0 λ δ τc α τa β τb ρ τACh k V0 σ D τw τr τs δc αs αc αr H_x VS VH
 @variables v(t) n(t) c(t) a(t) b(t) e(t) W(t) r(t) s(t)
 @derivatives d'~t
-@register R_INF(v, V1, V2)
-@register R_INF(v, V3, V4)
-@register Λ(v, V3, V4) 
-@register Φ(v, κ, V_0)
-@register ħ(e, K_d)
+#@register R_INF(v, V1, V2)
+#@register R_INF(v, V3, V4)
+#@register Λ(v, V3, V4) 
+#@register Φ(v, κ, V_0)
+#@register ħ(e, K_d)
 
 T_model_eqs = [
           d(v)~ (
