@@ -20,7 +20,7 @@ function (PDE::Network{T, :Default})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1
 
     @. dv = (
               I_n(g_leak,  1.0, v, E_leak)
-            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_Ca, R_INF(v, V1, V2), v, E_Ca)
             + I_n(g_K, n , v, E_K)
             + I_n(g_TREK, b, v, E_K)
             + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
@@ -28,8 +28,8 @@ function (PDE::Network{T, :Default})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1
             + W
         )/C_m
 
-    @. dn = (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyA, PDE.My, e)
@@ -62,7 +62,7 @@ function (PDE::Network{T, :gTREK})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1},
 
     @. dv = (
               I_n(g_leak,  1.0, v, E_leak)
-            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_Ca, R_INF(v, V1, V2), v, E_Ca)
             + I_n(g_K, n , v, E_K)
             + I_n(g_TREK, b, v, E_K) .* PDE.null
             + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
@@ -70,8 +70,8 @@ function (PDE::Network{T, :gTREK})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1},
             + W
         )/C_m
 
-    @. dn = (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyA, PDE.My, e)
@@ -104,7 +104,7 @@ function (PDE::Network{T, :gACh})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, 
 
     @. dv = (
               I_n(g_leak,  1.0, v, E_leak)
-            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_Ca, R_INF(v, V1, V2), v, E_Ca)
             + I_n(g_K, n , v, E_K)
             + I_n(g_TREK, b, v, E_K)
             + I_n(g_ACh, ħ(e, k_d), v, E_ACh) .* PDE.null
@@ -112,8 +112,8 @@ function (PDE::Network{T, :gACh})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, 
             + W
         )/C_m
 
-    @. dn = (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyA, PDE.My, e)
@@ -146,15 +146,15 @@ function (PDE::Network{T, :ρ})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t:
 
     @. dv = (
               I_n(g_leak,  1.0, v, E_leak)
-            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_Ca, R_INF(v, V1, V2), v, E_Ca)
             + I_n(g_K, n , v, E_K)
             + I_n(g_TREK, b, v, E_K)
             + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
             + I_app
             + W
         )/C_m
-    @. dn = (Λ(v, V3, V4) * ((N_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyA, PDE.My, e)
@@ -186,14 +186,14 @@ function (PDE::Network{T, :Lansdell})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,
 
     @. dv = (
               I_n(g_leak,  1.0, v, E_leak)
-            + I_n(g_Ca, M_INF(v, V1, V2), v, E_Ca)
+            + I_n(g_Ca, R_INF(v, V1, V2), v, E_Ca)
             + I_n(g_K, r , v, E_K)
             + I_n(g_ACh, h(a, δ), v, E_ACh)
             + fIn(abs(W), λ, v, E_Ca)
             + I_app
         )/C_m
 
-    @. dr = (Λ(v, V3, V4)*(N_INF(v, V3, V4) - r) + α*s*(1-r))/τr
+    @. dr = (Λ(v, V3, V4)*(R_INF(v, V3, V4) - r) + α*s*(1-r))/τr
     @. ds = γ*Φ(v, k, V0)-s/τs
     mul!(PDE.MyA, PDE.My, a)
     mul!(PDE.AMx, a, PDE.Mx)
