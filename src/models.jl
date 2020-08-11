@@ -30,6 +30,7 @@ The equation for this is as follows:
 - For Calcium channel activation: \$V_1 = V_S,  V_2 = V_H,  M_{\\infty} = R_{\\infty}\$
 - For Potassium channel activation: \$V_3 = V_S,  V_4 = V_H,  N_{\\infty} = R_{\\infty}\$
 """
+R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2; #This version is not good. Make it more specific
 R_INF(V::T, VS::T, VH::T) where T <: Real  = (1 + tanh((V - VS)/VH))/2;
 CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
 R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
