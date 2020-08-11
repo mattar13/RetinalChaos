@@ -49,15 +49,20 @@ This equation related voltage to the rate constant of opening Potassium channels
 - OUTPUTS
     - The potassium rate constant (\$\\Lambda\$)
 """
+Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Λ(v::T, V3::T, V4::T) where T <: Real = cosh((v-V3)/(2*V4));
 CuArrays.@cufunc Λ(v, V3, V4) = cosh((v-V3)/(2*V4));
 Λ(v::CuArray, V3, V4) = LAM.(v, V3, V4) 
 
 
+
+
+Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 Φ(v::T, κ::T, V_0::T) where T <: Real = 1/(1 + exp(-κ * (v - V_0)))
 CuArrays.@cufunc Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
 
+ħ(e, K_d) = (e^2)/(e^2 + K_d)
 ħ(e::T, K_d::T) where T <: Real = (e^2)/(e^2 + K_d)
 CuArrays.@cufunc ħ(e, K_d) = (e^2)/(e^2 + K_d)
 ħ(e::CuArray, K_d) = ħ.(e, K_d)
