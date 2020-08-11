@@ -34,6 +34,7 @@ R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2; #This version is not good. Make it
 R_INF(V::T, VS::T, VH::T) where T <: Real  = (1 + tanh((V - VS)/VH))/2;
 CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
 R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
+@register R_INF(V, VS, VH)
 
 """
 This equation related voltage to the rate constant of opening Potassium channels. Described more in detail in Morris Et. al. 1981. 
@@ -50,14 +51,17 @@ This equation related voltage to the rate constant of opening Potassium channels
 Λ(V::T, V3::T, V4::T) where T <: Real = cosh((V-V3)/(2*V4));
 CuArrays.@cufunc Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
 Λ(V::CuArray, V3, V4) = LAM.(V, V3, V4) 
+@register Λ(V, V3, V4) 
 
 Φ(V::T, κ::T, V_0::T) where T <: Real = 1/(1 + exp(-κ * (V - V_0)))
 CuArrays.@cufunc Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
+@register Φ(v, κ, V_0)
 
 ħ(e::T, K_d::T) where T <: Real = (e^2)/(e^2 + K_d)
 CuArrays.@cufunc ħ(e, K_d) = (e^2)/(e^2 + K_d)
 ħ(e::CuArray, K_d) = ħ.(e, K_d)
+@register ħ(e, K_d)
 
 tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0, :σ, :D, :τw]
 tar_conds = [:v, :n, :c, :a, :b, :e, :W]
