@@ -71,11 +71,11 @@ include("pde_models.jl")
 include("1D_models.jl") 
 include("2D_models.jl")    
 
-@register R_INF(v, V1, V2)	
-@register R_INF(v, V3, V4)	
-@register Λ(v, V3, V4)	
-@register Φ(v, κ, V0)	
-@register ħ(e, k_d)
+#@register R_INF(v, V1, V2)	
+#@register R_INF(v, V3, V4)	
+#@register Λ(v, V3, V4)	
+#@register Φ(v, κ, V0)	
+#@register ħ(e, k_d)
 
 #Noise models
 noise(du::Array{T,1}, u::Array{T,1}, p::Array{T,1}, t::T) where T <: Real = du[end] = p[30]
