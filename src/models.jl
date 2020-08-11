@@ -11,7 +11,7 @@ This function is used to calculate the current. It represents the generalized fo
 - OUTPUTS:
     - Ionic current of type n (\$I_n\$)
 """
-I_n(g_n::T, R::T, V::T, E_n::T) where T <: Real = -g_n*R*(V-E_n)
+I_n(g_n::T, R::T, v::T, E_n::T) where T <: Real = -g_n*R*(v-E_n)
 
 """
 This is the Boltzmann equation for channel gating.  
@@ -30,9 +30,9 @@ The equation for this is as follows:
 - For Calcium channel activation: \$V_1 = V_S,  V_2 = V_H,  M_{\\infty} = R_{\\infty}\$
 - For Potassium channel activation: \$V_3 = V_S,  V_4 = V_H,  N_{\\infty} = R_{\\infty}\$
 """
-R_INF(V::T, VS::T, VH::T) where T <: Real  = (1 + tanh((V - VS)/VH))/2;
-CuArrays.@cufunc R_INF(V, VS, VH) = (1 + tanh((V - VS)/VH))/2;
-R_INF(V::CuArray, VS, VH) = R_INF.(V, VS, VH)
+R_INF(v::T, VS::T, VH::T) where T <: Real  = (1 + tanh((v - VS)/VH))/2;
+CuArrays.@cufunc R_INF(v, VS, VH) = (1 + tanh((v - VS)/VH))/2;
+R_INF(v::CuArray, VS, VH) = R_INF.(v, VS, VH)
 
 """
 This equation related voltage to the rate constant of opening Potassium channels. Described more in detail in Morris Et. al. 1981. 
@@ -46,12 +46,12 @@ This equation related voltage to the rate constant of opening Potassium channels
 - OUTPUTS
     - The potassium rate constant (\$\\Lambda\$)
 """
-Λ(V::T, V3::T, V4::T) where T <: Real = cosh((V-V3)/(2*V4));
-CuArrays.@cufunc Λ(V, V3, V4) = cosh((V-V3)/(2*V4));
-Λ(V::CuArray, V3, V4) = LAM.(V, V3, V4) 
+Λ(v::T, V3::T, V4::T) where T <: Real = cosh((v-V3)/(2*V4));
+CuArrays.@cufunc Λ(v, V3, V4) = cosh((v-V3)/(2*V4));
+Λ(v::CuArray, V3, V4) = LAM.(v, V3, V4) 
 
 
-Φ(V::T, κ::T, V_0::T) where T <: Real = 1/(1 + exp(-κ * (V - V_0)))
+Φ(v::T, κ::T, V_0::T) where T <: Real = 1/(1 + exp(-κ * (v - V_0)))
 CuArrays.@cufunc Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
 Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
 
