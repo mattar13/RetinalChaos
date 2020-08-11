@@ -3,12 +3,6 @@
 @variables v(t) n(t) c(t) a(t) b(t) e(t) W(t) r(t) s(t)
 @derivatives d'~t
 
-@register R_INF(v, V1, V2)	
-@register R_INF(v, V3, V4)	
-@register Λ(v, V3, V4)	
-@register Φ(v, κ, V0)	
-@register ħ(e, k_d)
-
 T_model_eqs = [
           d(v)~ (
                     -g_leak*(v-E_leak)
