@@ -34,8 +34,8 @@ R_INF(v::T, VS::T, VH::T) where T <: Real  = (1 + tanh((v - VS)/VH))/2;
 CuArrays.@cufunc R_INF(v, VS, VH) = (1 + tanh((v - VS)/VH))/2;
 R_INF(v::CuArray, VS, VH) = R_INF.(v, VS, VH)
 
-M_INF(v, V1, V2) = (1 + tanh((V - V1)/V2))/2;
-N_INF(v, V3, V4) = (1 + tanh((V - V3)/V4))/2;
+M_INF(v, V1, V2) = (1 + tanh((v - V1)/V2))/2;
+N_INF(v, V3, V4) = (1 + tanh((v - V3)/V4))/2;
 
 """
 This equation related voltage to the rate constant of opening Potassium channels. Described more in detail in Morris Et. al. 1981. 
