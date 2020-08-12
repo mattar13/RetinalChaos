@@ -76,8 +76,8 @@ function (PDE::Network{T, :Unwinding})(dU::Array{T,3}, U::Array{T,3}, p::Array{T
     @. db =  (β*a^4*(1-b) - b)/τb
     #mul!(PDE.MyA, PDE.My, e)
     #mul!(PDE.AMx, e, PDE.Mx)
-    PDE.DA = ∇(PDE.DA, e, D)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
+    #PDE.DA = ∇(PDE.DA, e, D)
+    @. de = ∇(de, e, D) + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
