@@ -12,7 +12,7 @@ This is a constructor for the Network object with a version flag option
 """
 Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
 
-function ∇(du::Array{T,2}, u::Array{T, 2}, D::Float64) where T
+function ∇(du::Array{T,2}, u::T2, D::T) where {T, T2}
     nx, ny = size(u)
     #These are boundary conditions for all x's at the first position
     @inbounds for y in 2:ny-1
