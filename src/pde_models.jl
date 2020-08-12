@@ -40,13 +40,13 @@ function ∇(du::Array{T,2}, u::T2, D::T) where {T, T2}
     end
 end
 
-mutable struct Network{A, N} <: Function
-      Mx::Union{Tridiagonal, A}
-      My::Union{Tridiagonal, A}
-      MyA::A
-      AMx::A
-      DA::A
-      null::A
+mutable struct Network{T, N} <: Function
+      Mx::Tridiagonal{T,Array{T,1}}
+      My::Tridiagonal{T,Array{T,1}}
+      MyA::Array{T,2}
+      AMx::Array{T,2}
+      DA::Array{T,2}
+      null::Array{T,2}
 end
 
 """
