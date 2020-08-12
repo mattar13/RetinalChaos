@@ -12,7 +12,48 @@ This is a constructor for the Network object with a version flag option
 """
 Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
 
+function ∇(du::Array{T,2}, u::Array{T, 2}, D::Float64) where T
+    nx, ny = size(u)
+    #These are boundary conditions for all x's at the first position
+    @inbounds for y in 2:ny-1
+        x = 1
+        du[x,y] = D*(2u[x+1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
+    end
+    
+    #These are boundary conditions for all y's at the first position
+    @inbounds for x in 2:nx-1
+        y = 1
+        du[x,y] = D*(u[x-1,y]+u[x+1,y]+ 2u[x,y+1] - 4u[x,y])
+    end
 
+    #These are boundary conditions for x's at the end
+    @inbounds for y in 2:ny-1
+        x = nx
+        du[x,y] = D*(2u[x-1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
+    end
+    
+    #These are boundary conditions for all y's at the first position
+    @inbounds for x in 2:ny-1
+        y = ny
+        du[x,y] = D*(2u[x-1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
+    end
+    
+    @inbounds begin
+        x = 1; y = 1
+        du[x,y]  = D*(2u[x+1,y]+2u[x,y+1] - 4u[x,y])
+        x = 1; y = ny
+        du[x,y]  = D*(2u[x+1,y]+2u[x,y-1] - 4u[x,y])
+        x = nx; y = 1
+        du[x,y]  = D*(2u[x-1,y]+2u[x,y+1] - 4u[x,y])
+        x = nx; y = ny
+        du[x,y]  = D*(2u[x-1,y]+2u[x,y-1] - 4u[x,y])
+    end
+    
+    @inbounds for x in 2:nx-1, y in 2:ny-1
+        du[x,y] = D*(u[x-1,y]+u[x+1,y]+u[x,y-1]+u[x,y+1]-4u[x,y])
+    end
+    du
+end
 
 """
 This constructs the PDE function so that it can be called
