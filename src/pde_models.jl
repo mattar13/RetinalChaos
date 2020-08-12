@@ -1,17 +1,3 @@
-mutable struct Network{A, N} <: Function
-      Mx::Union{Tridiagonal, A}
-      My::Union{Tridiagonal, A}
-      MyA::A
-      AMx::A
-      DA::A
-      null::A
-end
-
-"""
-This is a constructor for the Network object with a version flag option
-"""
-Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
-
 function ∇(du::Array{T,2}, u::T2, D::T) where {T, T2}
     nx, ny = size(u)
     #These are boundary conditions for all x's at the first position
@@ -53,6 +39,22 @@ function ∇(du::Array{T,2}, u::T2, D::T) where {T, T2}
         du[x,y] = D*(u[x-1,y]+u[x+1,y]+u[x,y-1]+u[x,y+1]-4u[x,y])
     end
 end
+
+mutable struct Network{A, N} <: Function
+      Mx::Union{Tridiagonal, A}
+      My::Union{Tridiagonal, A}
+      MyA::A
+      AMx::A
+      DA::A
+      null::A
+end
+
+"""
+This is a constructor for the Network object with a version flag option
+"""
+Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
+
+
 
 """
 This constructs the PDE function so that it can be called
