@@ -10,7 +10,7 @@ end
 """
 This is a constructor for the Network object with a version flag option
 """
-Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA), null_param}(Mx, My, MyA, AMx, DA, null)
+Network(Mx, My, MyA, AMx, DA, null, null_param::Symbol) = Network{typeof(MyA[1]), null_param}(Mx, My, MyA, AMx, DA, null)
 
 
 
