@@ -34,7 +34,7 @@ function (PDE::Network{T, :prototype})(dU::Array{T,3}, U::Array{T,3}, p::Array{T
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
     ∇(DA, e, D) #This function is a mutation so it does not need passed back. 
-    @. de = ∇(de, e, D) + (ρ*Φ(v, k, V0) - e)/τACh
+    @. de = DA + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
