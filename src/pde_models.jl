@@ -52,7 +52,6 @@ function ∇(du::Array{T,2}, u::T2, D::T) where {T, T2}
     @inbounds for x in 2:nx-1, y in 2:ny-1
         du[x,y] = D*(u[x-1,y]+u[x+1,y]+u[x,y-1]+u[x,y+1]-4u[x,y])
     end
-    du
 end
 
 """
