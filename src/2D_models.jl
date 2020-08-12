@@ -1,45 +1,4 @@
-function ∇(du::Array{T,2}, u::Array{T, 2}, D::Float64) where T
-    nx, ny = size(u)
-    #These are boundary conditions for all x's at the first position
-    @inbounds for y in 2:ny-1
-        x = 1
-        du[x,y] = D*(2u[x+1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
-    end
-    
-    #These are boundary conditions for all y's at the first position
-    @inbounds for x in 2:nx-1
-        y = 1
-        du[x,y] = D*(u[x-1,y]+u[x+1,y]+ 2u[x,y+1] - 4u[x,y])
-    end
 
-    #These are boundary conditions for x's at the end
-    @inbounds for y in 2:ny-1
-        x = nx
-        du[x,y] = D*(2u[x-1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
-    end
-    
-    #These are boundary conditions for all y's at the first position
-    @inbounds for x in 2:ny-1
-        y = ny
-        du[x,y] = D*(2u[x-1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
-    end
-    
-    @inbounds begin
-        x = 1; y = 1
-        du[x,y]  = D*(2u[x+1,y]+2u[x,y+1] - 4u[x,y])
-        x = 1; y = ny
-        du[x,y]  = D*(2u[x+1,y]+2u[x,y-1] - 4u[x,y])
-        x = nx; y = 1
-        du[x,y]  = D*(2u[x-1,y]+2u[x,y+1] - 4u[x,y])
-        x = nx; y = ny
-        du[x,y]  = D*(2u[x-1,y]+2u[x,y-1] - 4u[x,y])
-    end
-    
-    @inbounds for x in 2:nx-1, y in 2:ny-1
-        du[x,y] = D*(u[x-1,y]+u[x+1,y]+u[x,y-1]+u[x,y+1]-4u[x,y])
-    end
-    du
-end
 #Version -1: Testing Unwinding and Inbounds
 function (PDE::Network{T, :Unwinding})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
     v = view(U, :, :, 1)
