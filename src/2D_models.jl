@@ -1,6 +1,6 @@
 
 #Version -1: Testing Unwinding and Inbounds
-function (PDE::Network{T, :prototype})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
+function (PDE::Network{T, :prototype})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T, DA::Array{T,2}) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
