@@ -53,38 +53,6 @@ function (PDE::Network{T, :test1})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1},
     nothing
 end
 
-#Version test2: Testing Unwinding and Inbounds
-function (PDE::Network{T, :test2})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T, DA::Array{T,2}) where T <: Real
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    W = view(U, :, :, 7)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
-
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
-
-    fV!(dv, v, n, b, e, W, I_app, g_leak, E_leak, g_Ca, E_Ca, g_K, E_K, g_TREK, g_ACh, E_ACh, V1, V2, k_d, C_m)
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    ∇(DA, e, D) #This function is a mutation so it does not need passed back. 
-    @. de = DA + (ρ*Φ(v, k, V0) - e)/τACh
-    @. dW = -W/τw
-    nothing
-end
-
-
 #Version 0: Model without nullout
 function (PDE::Network{T, :Default})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
     v = view(U, :, :, 1)
