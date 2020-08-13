@@ -1,12 +1,16 @@
-function I_calc!(dv, v, n, b, e, W, I_app, g_leak, E_leak, g_Ca, E_Ca, g_K, E_K, g_TREK, g_ACh, E_ACh, V1, V2, k_d) 
-    @. dv = (
-        -g_leak*(v-E_leak) 
-        -g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-        -g_K*n*(v-E_K)
-        -g_TREK*b*(v-E_K)
-        -g_ACh*ħ(e, k_d)*(v-E_ACh)
-        +I_app+W
-        )
+function fV!(dv, v, n, b, e, W, I_app, g_leak, E_leak, g_Ca, E_Ca, g_K, E_K, g_TREK, g_ACh, E_ACh, V1, V2, k_d, C_m) where T <: Real 
+    for i = 1:length(v)
+        dv[i] = (
+            I_n(g_leak,  1.0, v[i], E_leak)
+            + I_n(g_Ca, R_INF(v[i], V1, V2), v[i], E_Ca)
+            + I_n(g_K, n[i] , v[i], E_K)
+            + I_n(g_TREK, b[i], v[i], E_K)
+            + I_n(g_ACh, ħ(e[i], k_d), v[i], E_ACh)
+            + I_app
+            + W[i]
+            )/C_m
+    end
+    dv
 end
 
 #Version test3: Testing Unwinding and Inbounds
@@ -69,16 +73,7 @@ function (PDE::Network{T, :test2})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1},
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
 
-    @. dv = (
-              I_n(g_leak,  1.0, v, E_leak)
-            + I_n(g_Ca, R_INF(v, V1, V2), v, E_Ca)
-            + I_n(g_K, n , v, E_K)
-            + I_n(g_TREK, b, v, E_K)
-            + I_n(g_ACh, ħ(e, k_d), v, E_ACh)
-            + I_app
-            + W
-        )/C_m
-
+    fV!(dv, v, n, b, e, W, I_app, g_leak, E_leak, g_Ca, E_Ca, g_K, E_K, g_TREK, g_ACh, E_ACh, V1, V2, k_d, C_m)
     @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
