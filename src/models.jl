@@ -12,6 +12,7 @@ This function is used to calculate the current. It represents the generalized fo
     - Ionic current of type n (\$I_n\$)
 """
 I_n(g_n::T, R::T, v::T, E_n::T) where T <: Real = -g_n*R*(v-E_n)
+I_n(g_n, R::T, v, E_n) where T <: Real = -g_n*R*(v-E_n)
 
 """
 This is the Boltzmann equation for channel gating.  
