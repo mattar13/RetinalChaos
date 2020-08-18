@@ -14,7 +14,7 @@ function fV!(dv, v, n, b, e, W, I_app, g_leak, E_leak, g_Ca, E_Ca, g_K, E_K, g_T
 end
 
 #Version test3: Testing Unwinding and Inbounds
-function (PDE::Network{T, :test1})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T, DA::Array{T,2}) where T <: Real
+function (PDE::Network{T, :test1})(dU, U, p, t, DA)
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -54,7 +54,7 @@ function (PDE::Network{T, :test1})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1},
 end
 
 #Version 0: Model without nullout
-function (PDE::Network{T, :Default})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
+function (PDE::Network{T, :Default})(dU, U, p, t)
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -96,7 +96,7 @@ function (PDE::Network{T, :Default})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1
 end
 
 #Version 1: gTREK nullout
-function (PDE::Network{T, :gTREK})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
+function (PDE::Network{T, :gTREK})(dU, U, p, t)
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -138,7 +138,7 @@ function (PDE::Network{T, :gTREK})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1},
 end
 
 #Version 2: gACh nullout
-function (PDE::Network{T, :gACh})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
+function (PDE::Network{T, :gACh})(dU, U, p, t)
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -180,7 +180,7 @@ function (PDE::Network{T, :gACh})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, 
 end
 
 #Version 3 :Acetylcholine release nullout
-function (PDE::Network{T, :ρ})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
+function (PDE::Network{T, :ρ})(dU, U, p, t)
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -224,7 +224,7 @@ lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca
 lansdell_conds = [:v, :r, :s, :a, :W]
 
 #This is the Lansdell version of the SAC model
-function (PDE::Network{T, :Lansdell})(dU::Array{T,3}, U::Array{T,3}, p::Array{T,1}, t::T) where T <: Real
+function (PDE::Network{T, :Lansdell})(dU, U, p, t)
     v = view(U, :, :, 1)
     r = view(U, :, :, 2)
     s = view(U, :, :, 3)
