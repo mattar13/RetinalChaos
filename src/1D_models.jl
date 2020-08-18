@@ -1,5 +1,5 @@
 ######################Modelling Toolkit for Tarchick Model
-@parameters t g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_sAHP g_ACh k_d E_ACh I_app C_m V3 V4 τn C_0 λ δ τc α τa β τb ρ τACh k V0 σ D τw τr τs δc αs αc αr H_x VS VH
+@parameters t g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_sAHP g_ACh k_d E_ACh I_app C_m V3 V4 τn C_0 λ δ τc α τa β τb ρ τACh k V0 σ D τw τr τs δc αs αc αr H_x VS VH g_n, R, E_n
 @variables v(t) n(t) c(t) a(t) b(t) e(t) W(t) r(t) s(t)
 @derivatives d'~t
 
