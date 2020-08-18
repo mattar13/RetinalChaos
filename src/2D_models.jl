@@ -1,5 +1,5 @@
 #Version 0: Model without nullout
-function (PDE::Network{T, :Default}) (dU, U, p, t) where T <: Real
+function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
