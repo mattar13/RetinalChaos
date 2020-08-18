@@ -80,6 +80,7 @@ include("pde_models.jl")
 include("1D_models.jl") 
 include("2D_models.jl")    
 
+@register I_n(g_n, R, v, E_n) 
 @register M_INF(v, V1, V2)
 @register N_INF(v, V3, V4)
 @register Λ(v, V3, V4)
