@@ -92,6 +92,6 @@ include("2D_models.jl")
 @register ħ(e, k_d)
 
 #Noise models
-noise(du::Array{T,1}, u::Array{T,1}, p::Array{T,1}, t::T) where T <: Real = du[end] = p[30]
-noise(du::Array{T,3}, u::Array{T,3}, p::Array{T,1}, t::T) where T <: Real = du[:,:,end] .= p[30]
+noise(du::Array{T,1}, u::Array{T,1}, p, t::T) where T <: Real = du[end] = p[30]
+noise(du::Array{T,3}, u::Array{T,3}, p, t::T) where T <: Real = du[:,:,end] .= p[30]
 lansdell_noise(du, u, p, t) = du[:,:,end] .= p[end]
