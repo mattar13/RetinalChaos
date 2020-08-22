@@ -1,4 +1,4 @@
-function ∇(du::Array{T,2}, u::T2, D::T) where {T, T2}
+function ∇(du, u, D)
     nx, ny = size(u)
     #These are boundary conditions for all x's at the first position
     @inbounds for y in 2:ny-1
