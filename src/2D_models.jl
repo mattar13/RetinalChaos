@@ -32,8 +32,8 @@ function (PDE::Network{T, :Unrolled})(dU, U, p, t) where T <: Real
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
-    @. de = (ρ*Φ(v, k, V0) - e)/τACh
-    ∇(de, e, D)
+    ∇(DE, e, D)
+    @. de = DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
