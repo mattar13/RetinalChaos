@@ -105,7 +105,7 @@ function (PDE::Network{T, :gTREK})(dU, U, p, t) where T <: Real
             - g_leak*(v-E_leak)
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
             - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K)
+            - g_TREK*b*(v-E_K) *PDE.null
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
             + I_app
             + W
@@ -148,7 +148,7 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh)
+            - g_ACh*ħ(e, k_d)*(v-E_ACh) * PDE.null
             + I_app
             + W
         )/C_m
