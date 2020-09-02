@@ -1,45 +1,4 @@
 #Version 0: Model without nullout
-function (PDE::Network{T, :Unrolled})(dU, U, p, t) where T <: Real
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    W = view(U, :, :, 7)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
-
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw, DE) = p
-
-    @. dv = (
-            - g_leak*(v-E_leak)
-            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-            - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            + I_app
-            + W
-        )/C_m
-
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    ∇(DE, e, D)
-    @. de = DE + (ρ*Φ(v, k, V0) - e)/τACh
-    @. dW = -W/τw
-    nothing
-end
-
-
-#Version 0: Model without nullout
 function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
@@ -105,7 +64,7 @@ function (PDE::Network{T, :gTREK})(dU, U, p, t) where T <: Real
             - g_leak*(v-E_leak)
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
             - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K) *PDE.null
+            - g_TREK*b*(v-E_K) .*PDE.null
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
             + I_app
             + W
@@ -148,7 +107,7 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh) * PDE.null
+            - g_ACh*ħ(e, k_d)*(v-E_ACh) .* PDE.null
             + I_app
             + W
         )/C_m
@@ -201,7 +160,49 @@ function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
     mul!(PDE.MyA, PDE.My, e)
     mul!(PDE.AMx, e, PDE.Mx)
     @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0)*PDE.null - e)/τACh
+    @. de = PDE.DA + (ρ*Φ(v, k, V0).*PDE.null - e)/τACh
+    @. dW = -W/τw
+    nothing
+end
+
+#A model with sparse current injections simulating the presence of ipRGCs
+function (PDE::Network{T, :ipRGC})(dU, U, p, t) where T <: Real
+    v = view(U, :, :, 1)
+    n = view(U, :, :, 2)
+    c = view(U, :, :, 3)
+    a = view(U, :, :, 4)
+    b = view(U, :, :, 5)
+    e = view(U, :, :, 6)
+    W = view(U, :, :, 7)
+
+    dv = view(dU, :, :, 1)
+    dn = view(dU, :, :, 2)
+    dc = view(dU, :, :, 3)
+    da = view(dU, :, :, 4)
+    db = view(dU, :, :, 5)
+    de = view(dU, :, :, 6)
+    dW = view(dU, :,:,7)
+
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
+
+    @. dv = (
+            - g_leak*(v-E_leak)
+            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
+            - g_K*n*(v-E_K)
+            - g_TREK*b*(v-E_K)
+            - g_ACh*ħ(e, k_d)*(v-E_ACh)
+            + I_app.*PDE.null
+            + W
+        )/C_m
+
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+    @. da =  (α*c^4*(1-a) - a)/τa
+    @. db =  (β*a^4*(1-b) - b)/τb
+    mul!(PDE.MyA, PDE.My, e)
+    mul!(PDE.AMx, e, PDE.Mx)
+    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
+    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
