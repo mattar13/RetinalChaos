@@ -191,7 +191,7 @@ function (PDE::Network{T, :ipRGC})(dU, U, p, t) where T <: Real
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            + I_app.*PDE.null
+            + (I_app.*PDE.null)
             + W
         )/C_m
 
