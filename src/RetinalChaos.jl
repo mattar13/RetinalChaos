@@ -1,7 +1,5 @@
 module RetinalChaos
 
-
-
 #Import small functions
 import Base.length
 import Base.print
