@@ -47,7 +47,7 @@ include("utilities.jl")
 include("dynamical_analysis.jl")
 include("fitting.jl")
 include("wave_extraction.jl")
-#include("plotting.jl")
+export_plotting() = include("plotting.jl")
 
 # Export functions for dynamical analysis
 export EnsembleProblem, EnsembleThreads, ensemble_func
