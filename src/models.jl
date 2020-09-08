@@ -13,7 +13,7 @@ This function is used to calculate the current. It represents the generalized fo
 """
 I_n(g_n, R, v, E_n)= -g_n*R*(v-E_n)
 I_n(g_n::T, R::T, v::T, E_n::T) where T <: Real = -g_n*R*(v-E_n)
-
+export I_n
 """
 This is the Boltzmann equation for channel gating.  
 Origingally described in Hodgkin & Huxley 1955, then simplified into a hyperbolic form by Morris & Lecar 1980
@@ -35,6 +35,7 @@ R_INF(v, VS, VH)  = (1 + tanh((v - VS)/VH))/2;
 R_INF(v::T, VS::T, VH::T) where T <: Real  = (1 + tanh((v - VS)/VH))/2;
 CuArrays.@cufunc R_INF(v, VS, VH) = (1 + tanh((v - VS)/VH))/2;
 R_INF(v::CuArray, VS, VH) = R_INF.(v, VS, VH)
+export R_INF
 
 M_INF(v::T, V1::T, V2::T) where T = (1 + tanh((v - V1)/V2))/2;
 N_INF(v::T, V3::T, V4::T) where T = (1 + tanh((v - V3)/V4))/2;
@@ -55,7 +56,7 @@ This equation related voltage to the rate constant of opening Potassium channels
 Λ(v::T, V3::T, V4::T) where T <: Real = cosh((v-V3)/(2*V4));
 CuArrays.@cufunc Λ(v, V3, V4) = cosh((v-V3)/(2*V4));
 Λ(v::CuArray, V3, V4) = LAM.(v, V3, V4) 
-
+export Λ
 """
 NEED DOC
 """
