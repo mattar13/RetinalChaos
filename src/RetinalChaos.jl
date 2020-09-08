@@ -9,26 +9,26 @@ import Dates.now
 export now
 
 #This is for showing the progress of the wave finding function. Which also should be looked at
-@time using ProgressMeter
+using ProgressMeter
 
 #Imports if using GPU
-@time using CuArrays
+using CuArrays
 
 #These imports deal with modelling and running the models
-@time using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 export SDEProblem, ODEProblem, solve, SOSRI
 #These macros will be useful for extending the model
 export @parameters, @variables, @derivatives, @register
 export ODESystem, SDESystem
 
 #Imports for reading and writing parameters and solutions
-@time using JSON2, JLD2
+using JSON2, JLD2
 
 #Imported for dynamical analysis
-@time using ForwardDiff, LinearAlgebra, NLsolve
+using ForwardDiff, LinearAlgebra, NLsolve
 
 #For Binomial Nullification of parameters
-@time using Distributions
+using Distributions
 
 #Imported for saving statistics to excel. Not necessary at this time. Might remove
 #using DataFrames, XLSX
