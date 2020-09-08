@@ -7,15 +7,16 @@ import Base.length
 import Base.print
 import Dates.now
 export now
+println("Started Importing") #For some reason importing this package is taking forever.
 
 #This is for showing the progress of the wave finding function. Which also should be looked at
-using ProgressMeter
+@time using ProgressMeter
 
 #Imports if using GPU
-using CuArrays
+@time using CuArrays
 
 #These imports deal with modelling and running the models
-using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+@time using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 export SDEProblem, ODEProblem, solve, SOSRI
 #These macros will be useful for extending the model
 export @parameters, @variables, @derivatives, @register
