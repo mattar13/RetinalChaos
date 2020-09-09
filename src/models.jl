@@ -1,4 +1,5 @@
 """
+I = I_N(g_n, R, V_t, E_n)
 This function is used to calculate the current. It represents the generalized form: 
 
 \$I_n = -g_n * R * (V_t - E_n)\$
@@ -15,6 +16,7 @@ I_n(g_n, R, v, E_n)= -g_n*R*(v-E_n)
 I_n(g_n::T, R::T, v::T, E_n::T) where T <: Real = -g_n*R*(v-E_n)
 export I_n
 """
+R_INF(v_t, VS, VH)
 This is the Boltzmann equation for channel gating.  
 Origingally described in Hodgkin & Huxley 1955, then simplified into a hyperbolic form by Morris & Lecar 1980
 
@@ -41,6 +43,7 @@ M_INF(v::T, V1::T, V2::T) where T = (1 + tanh((v - V1)/V2))/2;
 N_INF(v::T, V3::T, V4::T) where T = (1 + tanh((v - V3)/V4))/2;
 
 """
+Λ(v_t, VS, VH)
 This equation related voltage to the rate constant of opening Potassium channels. Described more in detail in Morris Et. al. 1981. 
 
 \$\\Lambda(V_t, V_3, V_4) =  cosh\\left(\\frac{V_t-V_3}{2V_4} \\right)\$
