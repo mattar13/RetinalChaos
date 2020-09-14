@@ -43,7 +43,7 @@ check_version() = println("Version 1.0")
 include("models.jl")
 include("utilities.jl")
 include("dynamical_analysis.jl")
-include("fitting.jl")
+#include("fitting.jl") 
 include("wave_extraction.jl")
 export_plotting() = include("plotting.jl")
 
