@@ -21,7 +21,7 @@ function ∇(du, u, D)
     #These are boundary conditions for all y's at the first position
     @inbounds for x in 2:ny-1
         y = ny
-        du[x,y] = D*(2u[x-1,y] + u[x,y+1] + u[x,y-1] - 4u[x,y])
+        du[x,y] = D*(u[x-1,y] + u[x+1,y] + 2u[x,y-1] - 4u[x,y])
     end
     
     @inbounds begin
