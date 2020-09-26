@@ -60,29 +60,18 @@ end
 This function returns all the time stamps in a spike or burst array
 """
 function get_timestamps(spike_array::BitArray{1}; dt = 1.0, verbose = 0)
-    intervals = count_intervals(spike_array) .* dt
-    durations = count_intervals(spike_array .!= 1.0) .* dt
-    first_point = (findfirst(x -> x==1, spike_array)-1|>Float64) * dt
-    current_point = first_point
-    #If we land on the rare occasion where the last point of the spike array is true, we will have an incomplete final interval and interval and duration will be the same. 
-    if length(intervals) == length(durations)
-        points = Tuple[]
-        for idx = 1:length(intervals)
-            current_point += durations[idx] 
-            push!(points, (current_point, current_point + durations[idx]))
-            current_point += intervals[idx] 
+    idx_array = findall(x -> x==1, spike_array)
+    points = Tuple[]
+    start_point = idx_array[1]
+    end_point = idx_array[2]
+    for i in 1:length(idx_array)-1
+        if (idx_array[i+1] - idx_array[i]) != 1
+            end_point = idx_array[i]
+            push!(points, (start_point, end_point))
+            start_point = idx_array[i+1]
         end
-        return points        
-    else
-        points = Tuple[(current_point, current_point+durations[1])]
-        current_point += durations[1]
-        for idx = 1:length(intervals)
-            current_point += intervals[idx] 
-            push!(points, (current_point, current_point + durations[idx+1]))
-            current_point += durations[idx+1] 
-        end
-        return points
-    end 
+    end
+    points
 end
 
 function get_timestamps(spike_array::BitArray{2}; dt = 1.0)
