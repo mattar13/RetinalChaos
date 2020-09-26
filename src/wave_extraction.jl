@@ -181,119 +181,12 @@ function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0, 
         if verbose >= 1
             println("No spikes detected")
         end
-        return fill(NaN, 6)
+        return fill(NaN, 3)
     else
         timestamps = get_timestamps(spike_array; dt = dt);
         durations = map(x -> x[2]-x[1], timestamps)
         burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = (verbose>=2), dt = dt);
-        
-        avg_spike_dur = sum(durations)/length(durations)
-        std_spike_dur = std(durations)
-        avg_burst_dur = sum(dur_list)/length(dur_list);
-        std_burst_dur = std(dur_list);
-        avg_ibi = sum(ibi_list)/length(ibi_list)
-        std_ibi = std(ibi_list)      
-
-        if verbose >= 1
-            println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
-            println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
-            println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
-        end
-        
-        if mode == 1
-            return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
-        elseif mode == 2
-            #Mode 2 returns lists of spike durations, bursts and ibis
-            return durations, dur_list, ibi_list
-        end
-
-    end
-end
-
-function timescale_analysis(vm_trace::Array{Float64,3}; dt = 10.0, verbose = 0, mode = 1)
-    nx, ny, tsteps = size(vm_trace);
-    thresh = calculate_threshold(vm_trace)
-    spike_array = vm_trace .> thresh;
-    spike_durations = Float64[]
-    burst_durations = Float64[]
-    IBIs = Float64[]
-    for x = 1:nx
-        for y = 1:ny
-            if !any(spike_array[x,y,:] .== 1.0)
-                if verbose >= 1
-                    println("No spikes detected")
-                end
-            else
-                timestamps = get_timestamps(spike_array[x,y,:]; dt = dt);
-                durations = map(x -> x[2]-x[1], timestamps);
-                push!(spike_durations, durations...)
-                burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array[x,y,:]; verbose = (verbose>=2), dt = dt);
-                if dur_list != nothing
-                    push!(burst_durations, dur_list...)
-                    push!(IBIs, ibi_list...)
-                end
-            end
-        end
-    end
-    avg_spike_dur = sum(spike_durations)/length(spike_durations)
-    std_spike_dur = std(spike_durations)
-    avg_burst_dur = sum(burst_durations)/length(burst_durations);
-    std_burst_dur = std(burst_durations);
-    avg_ibi = sum(IBIs)/length(IBIs)
-    std_ibi = std(IBIs)
-    if verbose >= 1
-        println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
-        println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
-        println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
-    end
-    if mode == 1
-        return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
-    elseif mode == 2
-        #Mode 2 returns lists of spike durations, bursts and ibis
-        return spike_durations, burst_durations, IBIs
-    end
-end
-
-#This dispatch calculates the timescale analysis on a already thresholded array
-function timescale_analysis(spike_array::BitArray{3}; dt = 1.0, verbose = 0, mode = 1)
-    nx, ny, tsteps = size(spike_array);
-    spike_durations = Float64[]
-    burst_durations = Float64[]
-    IBIs = Float64[]
-    for x = 1:nx
-        for y = 1:ny
-            if !any(spike_array[x,y,:] .== 1.0)
-                if verbose >= 1
-                    println("No spikes detected")
-                end
-            else
-                timestamps = get_timestamps(spike_array[x,y,:]; dt = dt);
-                durations = map(x -> x[2]-x[1], timestamps);
-                push!(spike_durations, durations...)
-                burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array[x,y,:]; verbose = (verbose>=2), dt = dt);
-                if dur_list != nothing
-                    push!(burst_durations, dur_list...)
-                    push!(IBIs, ibi_list...)
-                end
-            end
-        end
-    end
-    avg_spike_dur = sum(spike_durations)/length(spike_durations)
-    std_spike_dur = std(spike_durations)
-    avg_burst_dur = sum(burst_durations)/length(burst_durations);
-    std_burst_dur = std(burst_durations);
-    avg_ibi = sum(IBIs)/length(IBIs)
-    std_ibi = std(IBIs)
-    if verbose >= 1
-        println("The average spike duration is $(round(avg_spike_dur, digits = 2)) ms +- $(round(std_spike_dur, digits = 2)) ms")
-        println("The average burst duration is $(round(avg_burst_dur;digits = 2)) ms +- $(round(std_burst_dur;digits = 2)) ms")
-        println("The average interburst interval is $(round(avg_ibi;digits = 2)) ms +- $(round(std_ibi;digits = 2)) ms")
-    end
-    if mode == 1
-        return [avg_spike_dur, std_spike_dur, avg_burst_dur, std_burst_dur, avg_ibi, std_ibi]
-    elseif mode == 2
-        #Mode 2 returns lists of spike durations, bursts and ibis
-        return spike_durations, burst_durations, IBIs
+        return durations, dur_list, ibi_list
     end
 end
 
