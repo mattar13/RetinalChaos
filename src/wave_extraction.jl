@@ -85,13 +85,24 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0, verbose = 0)
     end 
 end
 
+function get_timestamps(spike_array::BitArray{2}; dt = 1.0)
+    nx, tsteps = size(spike_array)
+    timestamps = Tuple[]
+    for x = 1:nx
+        stamps = get_timestamps(spike_array[x,:]; dt = dt)
+        push!(timestamps, stamps)
+    end
+    timestamps
+end
+
+
 function get_timestamps(spike_array::BitArray{3}; dt = 1.0)
     nx, ny, tsteps = size(spike_array)
     timestamps = Tuple[]
     for x = 1:nx
         for y = 1:ny
             stamps = get_timestamps(spike_array[x,y,:]; dt = dt)
-            push!(timestamps, (x, y, stamps))
+            push!(timestamps, stamps)
         end
     end
     timestamps
@@ -178,6 +189,24 @@ end
 function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0, mode = 1)
     sim_thresh = calculate_threshold(vm_trace)
     spike_array = (vm_trace .> sim_thresh);
+    if !any(spike_array .== 1.0)
+        if verbose >= 1
+            println("No spikes detected")
+        end
+        return fill(NaN, 3)
+    else
+        timestamps = get_timestamps(spike_array; dt = dt);
+        durations = map(x -> x[2]-x[1], timestamps)
+        burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = (verbose>=2), dt = dt);
+        return durations, dur_list, ibi_list
+    end
+end
+
+function timescale_analysis(sol::RODESolution; dt = 1.0, verbose = 0)
+    #This dispatch calculated the timescale analysis based on the solution
+    sim_thresh = sol |> calculate_threshold
+    t_series = sol.t[1]:dt:sol.t[end]
+    spike_array = reshape(hcat(map(t -> sol(t).> sim_thresh, t_series)...), length(sol(1)), length(t_series))
     if !any(spike_array .== 1.0)
         if verbose >= 1
             println("No spikes detected")
