@@ -68,42 +68,6 @@ function extract_dict(dict_item::Dict{Symbol, Tuple}, pars::Array{Symbol})
 end
 
 """
-This function looks in the path for the initial_condition file. If it finds it it returns it and a true success flag.
-"""
-function parse_ic(path::String, ic_path::String; data_name::String = "ic")
-    success = false
-    ic = nothing
-    try 
-        mkdir(path)
-        println("[$(now())]: Path does not yet, exist, creating path")
-    catch
-        
-        try 
-            ic = jldopen(ic_path, "r") do file
-                read(file, data_name)
-            end
-            println("[$(now())]: Previous solution found")
-            success = true
-        catch
-            println("[$(now())]: Previous solution not found, warmup required")
-        end
-    end
-    return success, ic
-end
-
-"""
-This function resets the previous time to a specific value
-"""
-function reset_previous_time(previous_loc::String; reset_time::Float64 = 0.0)
-    JLD2.@load previous_loc ic last_time
-    last_time = reset_time
-    JLD2.@save previous_loc ic last_time
-end
-
-
-###############################################Opening and interacting with .abf files
-
-"""
 This function walks through the directory and locates any .abf file. 
 The extension can be changed with the keyword argument extension
 """
