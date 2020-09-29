@@ -87,7 +87,11 @@ function parse_abf(super_folder::String; extension::String = ".abf", verbose = f
     file_list
 end
 
-function extract_abf(abf_path; verbose = false, v_offset = -25.0)
+"""
+This function walks through the directory and locates any .abf file. 
+The extension can be changed with the keyword argument extension
+"""
+function extract_abf(abf_path; swps = -1, chs = ["Vm_prime","Vm_prime4", "IN 7"], verbose = false, v_offset = -25.0, sweep_sort = false)
     if length(abf_path |> splitpath) > 1
         full_path = abf_path
     else
@@ -95,30 +99,56 @@ function extract_abf(abf_path; verbose = false, v_offset = -25.0)
     end
     #extract the abf file by using pyABF
     exp_data = pyABF.ABF(full_path)
-    #if the data is segmented into sweeps (which Jordans data is) concatenate all sweeps
-    if length(exp_data.sweepList) > 1
-        data = Float64[]
-        time = Float64[]
-        previous_time = 0.0
-        for sweepNumber in exp_data.sweepList
-            exp_data.setSweep(sweepNumber = sweepNumber, channel = 0);
-            push!(data, exp_data.sweepY...);
-            push!(time, (exp_data.sweepX.+previous_time)...);
-            previous_time = time[end]
-        end
-        dt = time[2]*1000
+    n_data_sweeps = n_sweeps = length(exp_data.sweepList)
+    n_data_channels = n_channels = length(exp_data.channelList)
+    n_data_points = n_points = length(exp_data.sweepX)
+    
+    if isa(swps, Int) && swps != -1
+        data_sweeps = [swps-1]
+        n_data_sweeps = 1
+    elseif isa(swps, AbstractArray)
+        data_sweeps = swps.-1
+        n_data_sweeps = length(swps)
     else
-        exp_data.setSweep(sweepNumber = 0, channel = 0);
-        data = Float64.(exp_data.sweepY);
-        time = Float64.(exp_data.sweepX);
-        dt = time[2]*1000
+        data_sweeps = exp_data.sweepList
+    end
         
+    if isa(chs, Int) && chs != -1
+        data_channels = [chs-1]
+        n_data_channels = 1
+    elseif isa(chs, Array{Int64,1})
+        data_channels = chs.-1
+        n_data_channels = length(chs)
+    elseif isa(chs, Array{String, 1})
+        data_channels = map(ch_name -> findall(x -> x == ch_name, exp_data.adcNames)[1], chs) .- 1
+        n_data_channels = length(chs)
+    else
+        data_channels = exp_data.channelList
+    end 
+    
+    data_array = zeros(n_data_sweeps, n_data_points, n_data_channels)
+    
+    if verbose 
+        print("Data output size will be:")
+        println(size(data_array))
+        println("$n_sweeps Sweeps available: $(exp_data.sweepList)")
+        println("$n_channels Channels available: $(exp_data.channelList)")
     end
-    if verbose
-        println("Data extracted from $full_path")
-        println("Data from time stamp $(t[1]) s to $(t[end]+dt) s with dt = $dt ms")
-        println("Data was acquired at $(1/dt/1000) Hz")
-        println("$(length(t)) data points")
+    t = Float64.(exp_data.sweepX);
+    dt = t[2]
+    for (swp_idx, swp) in enumerate(data_sweeps), (ch_idx, ch) in enumerate(data_channels)
+        exp_data.setSweep(sweepNumber = swp, channel = ch);
+        data = Float64.(exp_data.sweepY);
+        t = Float64.(exp_data.sweepX);
+        dt = t[2]
+        if verbose
+            println("Data extracted from $full_path")
+            println("Data from Channel $(ch) Sweep $(swp)")
+            println("Data from time stamp $(t[1]) s to $(t[end]+dt) s with dt = $dt ms")
+            println("Data was acquired at $(1/dt/1000) Hz")
+            println("$n_data_points data points")
+        end
+        data_array[swp_idx, :, ch_idx] = data
     end
-    data, time, dt
+    t, data_array, dt
 end
