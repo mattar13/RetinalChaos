@@ -48,7 +48,7 @@ export extract_dict, read_JSON #Load the parameter loading functions
 #Export functions related to creating the 2D network
 export Network
 export tar_conds, tar_pars, p_find, u_find
-println("Fininshed Importing")
+#println("Fininshed Importing")
 
 end
 
