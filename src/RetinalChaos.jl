@@ -52,7 +52,7 @@ println("Fininshed Importing")
 
 end
 
-module RetinalPlots
-println("Plotting utilities loaded")
+#module RetinalPlots
+#println("Plotting utilities loaded")
 #include("plotting.jl")
-end
+#end
