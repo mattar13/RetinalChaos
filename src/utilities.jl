@@ -1,6 +1,5 @@
 #Used for loading Phys data
 using PyCall
-pyABF = pyimport("pyabf")
 
 #Reading and writing JSON files
 """
@@ -101,6 +100,8 @@ function extract_abf(abf_path; swps = -1, chs = ["Vm_prime","Vm_prime4", "IN 7"]
     else
         full_path = joinpath(pwd(), abf_path)   
     end
+    
+    pyABF = pyimport("pyabf")
     #extract the abf file by using pyABF
     exp_data = pyABF.ABF(full_path)
     n_data_sweeps = n_sweeps = length(exp_data.sweepList)
