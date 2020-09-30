@@ -28,12 +28,6 @@ using ForwardDiff, LinearAlgebra, NLsolve
 #For Binomial Nullification of parameters
 using Distributions
 
-#Imported for saving statistics to excel. Not necessary at this time. Might remove
-#using DataFrames, XLSX
-
-#These imports may not be used. They have to do with analysis of waves, but this has become irrelevant. 
-#using Images, ImageSegmentation
-
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
 #using Statistics, StatsBase
     
@@ -45,7 +39,6 @@ include("utilities.jl")
 include("dynamical_analysis.jl")
 #include("fitting.jl") 
 include("wave_extraction.jl")
-export_plotting() = include("plotting.jl")
 
 # Export functions for dynamical analysis
 export EnsembleProblem, EnsembleThreads, ensemble_func
@@ -57,4 +50,9 @@ export Network
 export tar_conds, tar_pars, p_find, u_find
 println("Fininshed Importing")
 
+end
+
+module RetinalPlots
+println("Plotting utilities loaded")
+#include("plotting.jl")
 end
