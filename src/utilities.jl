@@ -1,3 +1,7 @@
+#Used for loading Phys data
+using PyCall
+pyABF = pyimport("pyabf")
+
 #Reading and writing JSON files
 """
 This file writes either a named tuple or a dictionary into a JSON file
