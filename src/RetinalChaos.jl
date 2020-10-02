@@ -1,5 +1,6 @@
 module RetinalChaos
 
+println("Testing with VScode")
 #Import small functions
 import Base.length
 import Base.print
