@@ -84,9 +84,9 @@ lansdell_conds = [:v, :r, :s, :a, :W]
 #This function is used to get each time step within the simulation
 get_timesteps(sol) = [sol.t[i] - sol.t[i-1] for i = 2:length(sol.t)]
 
-include("pde_models.jl")
-include("1D_models.jl") 
-include("2D_models.jl")    
+include("pde_models.jl") #Includes all utilities for diffusion
+include("1D_models.jl") #Includes all 1D models
+include("2D_models.jl") #Includes all 2D models
 
 @register I_n(g_n, R, v, E_n) 
 @register M_INF(v, V1, V2)
