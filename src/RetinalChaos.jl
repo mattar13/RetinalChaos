@@ -14,7 +14,9 @@ using ProgressMeter
 using CuArrays
 
 #These imports deal with modelling and running the models
-using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+#Apparently using the default algorithims only works with using DifferentialEquations
+#using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+using DifferentialEquations, ModelingToolkit
 export SDEProblem, ODEProblem, solve, SOSRI
 #These macros will be useful for extending the model
 export @parameters, @variables, @derivatives, @register
