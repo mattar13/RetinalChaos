@@ -67,11 +67,11 @@ function get_timestamps(spike_array::BitArray{1}; dt = 1.0, verbose = 0)
     for i in 1:length(idx_array)-1
         if (idx_array[i+1] - idx_array[i]) != 1
             end_point = idx_array[i]
-            push!(points, (start_point, end_point))
+            push!(points, (start_point*dt, end_point*dt))
             start_point = idx_array[i+1]
         end
     end
-    points .* dt
+    points
 end
 
 function get_timestamps(spike_array::BitArray{2}; dt = 1.0)
