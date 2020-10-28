@@ -21,8 +21,6 @@ a_color = :purple
 b_color = :red
 ach_color = :blue
 
-#TODO: find out how to properly use xticks
-
 #%% Setting up basic Settings
 #Read JSON files for initial conditions and parameters
 u0 = read_JSON(joinpath(pars_path,"conds.json")) |> extract_dict;
@@ -133,7 +131,7 @@ fig1 = plot(fig1_A, fig1_B, fig1_C,
 )
 
 #Files need to be in .tiff or .eps format
-savefig(fig1, joinpath(figs_path, "Figure1_ModelDynamics.svg"))
+savefig(fig1, joinpath(figs_path, "Figure1_ModelDynamics.pdf"))
 println("Figure 1 generated")
 
 #%% Figure 2
