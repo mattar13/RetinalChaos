@@ -216,7 +216,7 @@ function extract_burstmap(spike_array::BitArray{3})
     burst_map = zeros(size(spike_array))
     burst_data = max_interval_algorithim(spike_array; dt = 1.0)
     for (x,y,data) in burst_data
-        if data[1] != nothing
+        if !isnothing(data[1])
             for (rng_start, rng_stop) in data[1]
                 burst_map[x, y, Int(rng_start):Int(rng_stop)] .= 1.0
             end

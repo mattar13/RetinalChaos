@@ -50,7 +50,7 @@ function extract_dict(dict_item::Dict{Symbol, Float64})
     par_set = nothing
     idx = 1
     for key in keys(dict_item)
-        if par_set == nothing
+        if isnothing(par_set)
             par_set = [Variable(key) => dict_item[key]]
         else
             push!(par_set, (Variable(key)=> dict_item[key]))

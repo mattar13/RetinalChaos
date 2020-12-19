@@ -5,13 +5,13 @@ This function normalizes values to a range between values
 """
 function normalize(a; old_rng = (nothing, nothing), rng = (0, 1))
 
-    if old_rng[1] == nothing
+    if isnothing(old_rng[1])
         min = minimum(a)
     else
         min = old_rng[1]
     end
 
-    if old_rng[2] == nothing
+    if isnothing(old_rng[2])
         max = maximum(a)
     else
         max = old_rng[2]
