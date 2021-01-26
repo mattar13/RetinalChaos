@@ -6,12 +6,13 @@ import Base.length
 import Base.print
 import Dates.now
 export now
-
 #This is for showing the progress of the wave finding function. Which also should be looked at
 using ProgressMeter
+println("Small functions importer")
 
 #Imports if using GPU
 using CuArrays
+println("GPU utilities imported")
 
 #These imports deal with modelling and running the models
 #Apparently using the default algorithims only works with using DifferentialEquations
@@ -22,9 +23,11 @@ export SDEProblem, ODEProblem, solve, SOSRI
 export @parameters, @variables, @derivatives, @register
 export ODESystem, SDESystem
 
+println("Modelling utilities imported")
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2
 
+println("Extra utilities imported")
 #Imported for dynamical analysis
 using ForwardDiff, LinearAlgebra, NLsolve
 
