@@ -1,3 +1,4 @@
-println("Testing!")
+#I will put all of the testing stuff here
 using RetinalChaos
-println("Package built successfully!")
+
+#%% Testing model components
