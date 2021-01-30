@@ -1,6 +1,5 @@
 module RetinalChaos
 
-println("Testing with VScode")
 #Import small functions
 import Base.length
 import Base.print
@@ -8,14 +7,11 @@ import Dates.now
 export now
 #This is for showing the progress of the wave finding function. Which also should be looked at
 using ProgressMeter
-println("Small functions importer")
+println("Small functions imported")
 
 #Imports if using GPU
 using CuArrays
-println("GPU utilities imported")
 
-#These imports deal with modelling and running the models
-#Apparently using the default algorithims only works with using DifferentialEquations
 #using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 using DifferentialEquations, ModelingToolkit
 export SDEProblem, ODEProblem, solve, SOSRI
@@ -40,7 +36,9 @@ using Distributions
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
+#println("Importing Models")
 include("models.jl")
+
 include("utilities.jl")
 include("dynamical_analysis.jl")
 #include("fitting.jl") 
@@ -49,7 +47,7 @@ include("wave_extraction.jl")
 # Export functions for dynamical analysis
 export EnsembleProblem, EnsembleThreads, ensemble_func
 #We are exporting the minimum functions needed to run a 1D simulation
-export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
+export T_ode, T_sde_func, SOSRI #Load all the DiffEq Interface
 export extract_dict, read_JSON #Load the parameter loading functions 
 #Export functions related to creating the 2D network
 export Network
