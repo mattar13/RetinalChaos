@@ -47,7 +47,7 @@ include("wave_extraction.jl")
 # Export functions for dynamical analysis
 export EnsembleProblem, EnsembleThreads, ensemble_func
 #We are exporting the minimum functions needed to run a 1D simulation
-export T_ode, T_sde_func, SOSRI #Load all the DiffEq Interface
+export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
 export extract_dict, read_JSON #Load the parameter loading functions 
 #Export functions related to creating the 2D network
 export Network
