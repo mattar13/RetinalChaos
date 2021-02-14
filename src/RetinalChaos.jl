@@ -50,7 +50,7 @@ export EnsembleProblem, EnsembleThreads, ensemble_func
 export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
 export extract_dict, read_JSON #Load the parameter loading functions 
 #Export functions related to creating the 2D network
-export Network
+export Network, noise
 export tar_conds, tar_pars, p_find, u_find
 #println("Fininshed Importing")
 
