@@ -1,16 +1,4 @@
-#Here we want to set the default plotting behaviors and fonts
-#There is no way around it, if I include functions for plotting, I have to include plots
-using Plots
-export Plots #This will allow us plotting right out of the get go. 
-import Plots: font, Measures
-export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
-export pyplot, font, Measures
-#Import some other plotting utilities
-using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
-export colormatch, colormap, colorschemes
-println("Plotting Imported")
-
-
+#Using this will set the default plotting font
 font_title = Plots.font("Arial", 24)
 font_axis = Plots.font("Arial", 12)
 font_legend = Plots.font("Arial", 8)
