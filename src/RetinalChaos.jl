@@ -15,6 +15,7 @@ using CuArrays
 #using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 using DifferentialEquations, ModelingToolkit
 export SDEProblem, ODEProblem, solve, SOSRI
+export EnsembleProblem, EnsembleThreads
 #These macros will be useful for extending the model
 export @parameters, @variables, @derivatives, @register
 export ODESystem, SDESystem
@@ -38,25 +39,32 @@ check_version() = println("Version 1.0")
 
 #println("Importing Models")
 include("models.jl")
-
-include("utilities.jl")
-include("dynamical_analysis.jl")
-#include("fitting.jl") 
-include("wave_extraction.jl")
-
-# Export functions for dynamical analysis
-export EnsembleProblem, EnsembleThreads, ensemble_func
-#We are exporting the minimum functions needed to run a 1D simulation
 export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
-export extract_dict, read_JSON #Load the parameter loading functions 
 #Export functions related to creating the 2D network
 export Network, noise
 export tar_conds, tar_pars, p_find, u_find
+
+include("utilities.jl")
+export extract_dict, read_JSON #Load the parameter loading functions 
+
+# Export functions for dynamical analysis
+include("dynamical_analysis.jl")
+export ensemble_func
+
+#include("fitting.jl") 
+include("wave_extraction.jl")
+export calculate_threshold
+export get_timestamps, max_interval_algorithim, timescale_analysis
+#We are exporting the minimum functions needed to run a 1D simulation
 #println("Fininshed Importing")
 
-end
+#Include all the plotting utilities
+include("plotting.jl")
+using Plots
+export pyplot, font, Measures
+export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
+#Import some other plotting utilities
+using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
+export colormatch, colormap, colorschemes
 
-#module RetinalPlots
-#println("Plotting utilities loaded")
-#include("plotting.jl")
-#end
+end
