@@ -52,15 +52,16 @@ include("dynamical_analysis.jl")
 export ensemble_func
 
 #include("fitting.jl") 
+
 include("wave_extraction.jl")
 export calculate_threshold
 export get_timestamps, max_interval_algorithim, timescale_analysis
-#We are exporting the minimum functions needed to run a 1D simulation
 #println("Fininshed Importing")
 
 #Include all the plotting utilities
-include("plotting.jl")
 using Plots
+export Plots
+include("plotting.jl")
 export pyplot, font, Measures
 export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
 #Import some other plotting utilities
