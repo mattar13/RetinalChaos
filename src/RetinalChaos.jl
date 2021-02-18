@@ -50,6 +50,8 @@ export extract_dict, read_JSON #Load the parameter loading functions
 # Export functions for dynamical analysis
 include("dynamical_analysis.jl")
 export ensemble_func
+export find_equilibria
+export codim_map
 
 #include("fitting.jl") 
 
