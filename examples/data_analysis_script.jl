@@ -1,7 +1,9 @@
 #%% Running and analyzing the model using RetinalChaos.jl
 using RetinalChaos
 using Dates
+using StatsBase, Statistics
 #Setup the fonts and stuff
+
 font_title = font("Arial", 24)
 font_axis = font("Arial", 12)
 font_legend = font("Arial", 8)
@@ -34,6 +36,7 @@ prob = ODEProblem(T_ode, u0, tspan, p);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 @time sol = solve(prob); 
 
+
 #%%
 #to do the analysis we should set a specific dt
 dt = 0.1 #set the time differential
@@ -44,9 +47,47 @@ spike_array = (v_t .> sim_thresh)
 timestamps = get_timestamps(spike_array; dt = dt)
 burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array, dt = dt);
 ts_analysis = timescale_analysis(v_t, dt = dt)
+spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
 
-spike_dur = sum(ts_analysis[2])/length(ts_analysis[2])
+#%% This figure tells us how the dt affects the data analysis
+dt_rng = range(0.005, 0.10, length = 50)
+spike_durs = Float64[]; spike_dur_stds = Float64[]
+burst_durs = Float64[]; burst_dur_stds = Float64[]
+IBI_durs = Float64[]; IBI_dur_stds = Float64[]
 
+for dt in dt_rng
+    println("testing dt= $dt")
+    t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
+    v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
+    print("Analysis took:")
+    @time ts_analysis = timescale_analysis(v_t, dt = dt)
+
+    spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
+    spike_dur_std = std(ts_analysis[1])
+    push!(spike_durs, spike_dur)
+    push!(spike_dur_stds, spike_dur_std)
+    
+    burst_dur = sum(ts_analysis[2])/length(ts_analysis[2])
+    burst_dur_std = std(ts_analysis[2])
+    push!(burst_durs, burst_dur)
+    push!(burst_dur_stds, burst_dur_std)
+
+    IBI_dur = sum(ts_analysis[3])/length(ts_analysis[3])
+    IBI_dur_std = std(ts_analysis[3])  
+    push!(IBI_durs, IBI_dur)
+    push!(IBI_dur_stds, IBI_dur_std)
+end
+#%%
+xticks
+sfig1 = plot(dt_rng, spike_durs, label = "",
+    xlabel = ["" "" "dt (ms)"], ylabel = ["Spike dur (ms)" "Burst dur (ms)" "IBI (ms)"], 
+    xaxis = :log, 
+    layout = (3,1))
+plot!(sfig1[2], dt_rng, burst_durs, label = "")
+plot!(sfig1[3], dt_rng, IBI_durs, label = "")
+sfig1
+#%%
+savefig(sfig1, joinpath(save_figs, "Supp_fig1.png"))
 #%% Make figure 1
 xlims = (burst_idxs[2][1], burst_idxs[2][1]+200)
 elapsed_time = xlims[2]-xlims[1]
@@ -84,19 +125,30 @@ fig1_C = plot(sol, vars = [:c, :a, :b, :v], legend = :none,
 
 fig1 = plot(fig1_A, fig1_B, fig1_C, layout = grid(3,1, heights = [0.2, 0.3, 0.5]), size = (1000, 1000))
 #%% Doing a timescale_analysis
-#what other data do we want to include in this figure? 
-test_rng = range(0.5, 2.0, length = 15)
+
+test_rng = range(0.5, 2.0, length = 10)
+p = read_JSON(params_file) |> extract_dict;
+u0 = read_JSON(conds_file) |> extract_dict;
+tspan = (0.0, 600.0)
+prob = ODEProblem(T_ode, u0, tspan, p_dict |> extract_dict);
+
 #Walk through each parameter
-for (idx, par) in enumerate(tar_pars[1:2])
-    #generate a range of parameters, then test each one
-    p_dict = read_JSON(params_file) 
-    u0 = read_JSON(conds_file) |> extract_dict;
-    tspan = (0.0, 60e3)
+for (idx, par) in enumerate(T_ode.ps[1:2])
+    println("Simulating test range for parameters: $par")
     #Setup an ensemble function to test each parameter
-    prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par = idx, rng = test_rng * p_dict[par])
-    prob = EnsembleProblem(prob_func, u0, tspan, p);
+    par_rng = test_rng * p_dict[Symbol(par)]
+    prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, idx, par_rng)
+    ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
+    
     print("Time it took to simulate $(tspan[2]/1000)s:")
-    @time sol = solve(prob, EnsembleThreads(), trajectories = length(test_rng)); 
+    @time sim = solve(ensemble_prob, EnsembleThreads(), trajectories = length(test_rng)); 
+    for sol in sim
+        println(sol |> length)
+        dt = 0.1 #set the time differential
+        t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
+        v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
+    end
 end
 
-
+#%%
+findall(x -> x ∈ [:I_app, :g_Leak], tar_pars)
