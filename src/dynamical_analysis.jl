@@ -3,15 +3,14 @@ This function is a work of progress. Things I want it to include
 - Using the symbols to declare the changing parameter or initial condition
 - Changing multiple parameters at once
 """
-function ensemble_func(prob::ODEProblem, i, repeat; pars = 1, conds = nothing, rng = LinRange(0.5, 15.0, 100))
-    new_p = prob.p
-    new_u = prob.u0
-    if isa(pars, Real)
-        new_p[pars] = rng[i]
-    elseif isa(conds, Real)        
-        new_u[conds] = rng[i]        
+function ensemble_func(prob::ODEProblem, i, repeat, idx, val_rng; run_func_on = :pars)
+    if run_func_on == :pars
+        prob.p[idx] = val_rng[i]
+        prob
+    elseif run_func_on == :conds
+        prob.u0 = val_rng[i]
+        prob
     end
-    prob = ODEProblem(prob.f, new_u, prob.tspan, new_p)
 end
 
 function ensemble_func(prob::SDEProblem, i, repeat; pars = 1, conds = nothing, rng = LinRange(0.5, 15.0, 100))
