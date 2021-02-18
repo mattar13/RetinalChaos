@@ -3,11 +3,17 @@ This function is a work of progress. Things I want it to include
 - Using the symbols to declare the changing parameter or initial condition
 - Changing multiple parameters at once
 """
-function ensemble_func(prob::ODEProblem, i, repeat, idx, val_rng; run_func_on = :pars)
+function ensemble_func(prob::ODEProblem, i, repeat, idx, val_rng; run_func_on = :pars, verbose = false)
     if run_func_on == :pars
+        if verbose
+            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
+        end
         prob.p[idx] = val_rng[i]
         prob
     elseif run_func_on == :conds
+        if verbose
+            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
+        end
         prob.u0 = val_rng[i]
         prob
     end
