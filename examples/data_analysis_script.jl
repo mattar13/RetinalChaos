@@ -36,8 +36,6 @@ prob = ODEProblem(T_ode, u0, tspan, p);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 @time sol = solve(prob); 
 
-
-#%%
 #to do the analysis we should set a specific dt
 dt = 0.1 #set the time differential
 t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
@@ -49,45 +47,6 @@ burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array, 
 ts_analysis = timescale_analysis(v_t, dt = dt)
 spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
 
-#%% This figure tells us how the dt affects the data analysis
-dt_rng = range(0.005, 0.10, length = 50)
-spike_durs = Float64[]; spike_dur_stds = Float64[]
-burst_durs = Float64[]; burst_dur_stds = Float64[]
-IBI_durs = Float64[]; IBI_dur_stds = Float64[]
-
-for dt in dt_rng
-    println("testing dt= $dt")
-    t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
-    v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
-    print("Analysis took:")
-    @time ts_analysis = timescale_analysis(v_t, dt = dt)
-
-    spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
-    spike_dur_std = std(ts_analysis[1])
-    push!(spike_durs, spike_dur)
-    push!(spike_dur_stds, spike_dur_std)
-    
-    burst_dur = sum(ts_analysis[2])/length(ts_analysis[2])
-    burst_dur_std = std(ts_analysis[2])
-    push!(burst_durs, burst_dur)
-    push!(burst_dur_stds, burst_dur_std)
-
-    IBI_dur = sum(ts_analysis[3])/length(ts_analysis[3])
-    IBI_dur_std = std(ts_analysis[3])  
-    push!(IBI_durs, IBI_dur)
-    push!(IBI_dur_stds, IBI_dur_std)
-end
-#%%
-xticks
-sfig1 = plot(dt_rng, spike_durs, label = "",
-    xlabel = ["" "" "dt (ms)"], ylabel = ["Spike dur (ms)" "Burst dur (ms)" "IBI (ms)"], 
-    xaxis = :log, 
-    layout = (3,1))
-plot!(sfig1[2], dt_rng, burst_durs, label = "")
-plot!(sfig1[3], dt_rng, IBI_durs, label = "")
-sfig1
-#%%
-savefig(sfig1, joinpath(save_figs, "Supp_fig1.png"))
 #%% Make figure 1
 xlims = (burst_idxs[2][1], burst_idxs[2][1]+200)
 elapsed_time = xlims[2]-xlims[1]
@@ -152,3 +111,41 @@ end
 
 #%%
 findall(x -> x ∈ [:I_app, :g_Leak], tar_pars)
+
+#%% This supplemental figure compares the dt to the analysis accuracy
+dt_rng = range(0.005, 0.10, length = 50)
+spike_durs = Float64[]; spike_dur_stds = Float64[]
+burst_durs = Float64[]; burst_dur_stds = Float64[]
+IBI_durs = Float64[]; IBI_dur_stds = Float64[]
+
+for dt in dt_rng
+    println("testing dt= $dt")
+    t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
+    v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
+    print("Analysis took:")
+    @time ts_analysis = timescale_analysis(v_t, dt = dt)
+
+    spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
+    spike_dur_std = std(ts_analysis[1])
+    push!(spike_durs, spike_dur)
+    push!(spike_dur_stds, spike_dur_std)
+    
+    burst_dur = sum(ts_analysis[2])/length(ts_analysis[2])
+    burst_dur_std = std(ts_analysis[2])
+    push!(burst_durs, burst_dur)
+    push!(burst_dur_stds, burst_dur_std)
+
+    IBI_dur = sum(ts_analysis[3])/length(ts_analysis[3])
+    IBI_dur_std = std(ts_analysis[3])  
+    push!(IBI_durs, IBI_dur)
+    push!(IBI_dur_stds, IBI_dur_std)
+end
+#%%
+xticks
+sfig1 = plot(dt_rng, spike_durs, label = "",
+    xlabel = ["" "" "dt (ms)"], ylabel = ["Spike dur (ms)" "Burst dur (ms)" "IBI (ms)"], 
+    xaxis = :log, 
+    layout = (3,1))
+plot!(sfig1[2], dt_rng, burst_durs, label = "")
+plot!(sfig1[3], dt_rng, IBI_durs, label = "")
+savefig(sfig1, joinpath(save_figs, "Supp_fig1.png"))
