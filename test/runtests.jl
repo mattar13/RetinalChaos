@@ -41,9 +41,9 @@ net = Network(nx, ny; μ = 0.65)
 var = 1 #This is the variable we are interested in
 save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
 
-PDEprob = SDEProblem(net, noise, u0_network, (0.0, 60e3), p)
+PDEprob = SDEProblem(net, noise, u0_network, (0.0, 6.0), p)
 #%% This next step is quite lengthy, so before running this, make sure you have time
-@time PDEsol = solve(PDEprob, SOSRI(), save_idxs = save_idxs)
+@time PDEsol = solve(PDEprob, SOSRI(), save_idxs = save_idxs, progress = true, progress_steps = 1)
 #%% Animation
 t_rng = collect(0.0:500.0:60e3)
 anim = @animate for t = t_rng
