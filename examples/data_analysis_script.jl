@@ -83,34 +83,6 @@ fig1_C = plot(sol, vars = [:c, :a, :b, :v], legend = :none,
 )
 
 fig1 = plot(fig1_A, fig1_B, fig1_C, layout = grid(3,1, heights = [0.2, 0.3, 0.5]), size = (1000, 1000))
-#%% Doing a timescale_analysis
-
-test_rng = range(0.5, 2.0, length = 10)
-p = read_JSON(params_file) |> extract_dict;
-u0 = read_JSON(conds_file) |> extract_dict;
-tspan = (0.0, 600.0)
-prob = ODEProblem(T_ode, u0, tspan, p_dict |> extract_dict);
-
-#Walk through each parameter
-for (idx, par) in enumerate(T_ode.ps[1:2])
-    println("Simulating test range for parameters: $par")
-    #Setup an ensemble function to test each parameter
-    par_rng = test_rng * p_dict[Symbol(par)]
-    prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, idx, par_rng)
-    ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
-    
-    print("Time it took to simulate $(tspan[2]/1000)s:")
-    @time sim = solve(ensemble_prob, EnsembleThreads(), trajectories = length(test_rng)); 
-    for sol in sim
-        println(sol |> length)
-        dt = 0.1 #set the time differential
-        t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
-        v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
-    end
-end
-
-#%%
-findall(x -> x ∈ [:I_app, :g_Leak], tar_pars)
 
 #%% This supplemental figure compares the dt to the analysis accuracy
 dt_rng = range(0.005, 0.10, length = 50)
@@ -140,8 +112,6 @@ for dt in dt_rng
     push!(IBI_durs, IBI_dur)
     push!(IBI_dur_stds, IBI_dur_std)
 end
-#%%
-xticks
 sfig1 = plot(dt_rng, spike_durs, label = "",
     xlabel = ["" "" "dt (ms)"], ylabel = ["Spike dur (ms)" "Burst dur (ms)" "IBI (ms)"], 
     xaxis = :log, 
