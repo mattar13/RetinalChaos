@@ -186,6 +186,10 @@ function timescale_analysis(vm_trace::Array{Float64,1}; dt = 10.0, verbose = 0, 
     else
         timestamps = get_timestamps(spike_array; dt = dt);
         durations = map(x -> x[2]-x[1], timestamps)
+        if durations == Any[]
+            #This essentially means that no spikes are detected, therefore no bursts occur
+            return fill(NaN, 3)
+        end
         burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array; verbose = (verbose>=2), dt = dt);
         return durations, dur_list, ibi_list
     end
