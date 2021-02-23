@@ -1,5 +1,22 @@
-using RetinalChaos
 #%% This shows all the different things you can do with the dynamical analysis of the model
+using RetinalChaos
+#Set up the plotting
+font_title = font("Arial", 24)
+font_axis = font("Arial", 12)
+font_legend = font("Arial", 8)
+pyplot(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
+
+#Set up the file root and default parameters
+param_root = "params\\"
+params_file = joinpath(param_root, "params.json")
+conds_file = joinpath(param_root, "conds.json")
+
+#save everything in the figures folder
+save_figs = "figures\\"
+if isdir(save_figs) == false
+    #The directory does not exist, we have to make it 
+    mkdir(save_figs)
+end
 
 #%% Supplemental figure, Bifurcation analysis of voltage injections
 p_dict = read_JSON(params_file) 
