@@ -1,6 +1,6 @@
 #%% Running and analyzing the model using RetinalChaos.jl
 using RetinalChaos
-import RetinalChaos: Φ, diffuse
+import RetinalChaos: Φ, diffuse, ħ
 using Dates
 using StatsBase, Statistics
 #Setup the fonts and stuff
@@ -100,11 +100,8 @@ plot(sol, vars = [:v, :e], layout = grid(2, 1))
 
 v_rng = LinRange(-90.0, 10.0, 100);
 AChi = 0.0
-ρ = p[:ρ]
-k = p[:k]
-println(k)
-V0 = p_dict[:V0]
-τACh = p_dict[:τACh]
+ρ = p[:ρ]; k = p[:k]
+V0 = p[:V0]; τACh = p[:τACh]
 fach(v) = (ρ * Φ(v, k, V0)) - (AChi)/τACh
 ACh_rng = map(fach, v_rng);
 
@@ -139,7 +136,93 @@ title!(fig2_A[1], "A", titlepos = :left)
 nx, ny = (50, 50)
 c1x, c1y = (round(Int, nx/2), round(Int, ny/4))
 c2x, c2y = (round(Int, nx/2), round(Int, ny/4*3))
-D = p_dict[:D]
+D = p[:D]
 lattice = zeros(nx, ny)
 lattice[c1x, c1y] = 0.6
 bp_model = Network(nx, ny)
+
+time_range = collect(0:(xlims[end]-xlims[1]))
+println(length(time_range))
+lattice_c = zeros(nx, ny, length(time_range))
+for (idx, t) in enumerate(time_range)
+    #Each step, the cell releases 0.005 ACh
+    if idx == 1
+        lattice_c[c1x, c1y, idx] = sol(t+xlims[1])[6]
+    else
+        lattice_c[:, :, idx] = diffuse(lattice_c[:,:,idx-1], D, bp_model)
+        lattice_c[c1x, c1y, idx] = sol(t+xlims[1])[6]
+    end
+end
+
+fig2_B = plot(xlims = (0, nx), ylims = (0, ny), layout = grid(1, length(frame_stops)), size = (1000, 250), 
+    margin = 1mm
+)
+upper_lim = 0.08
+for (idx, frame) in enumerate(frame_stops)
+    frame_idx = Int(frame-xlims[1])
+    #p = plot(xlims = (0.1, nx), ylims = (0.1, ny), 
+    #    xaxis = false, yaxis = false)
+    if idx == length(frame_stops)
+        heatmap!(fig2_B[idx], lattice_c[:,:,frame_idx], c = :thermal, clims = (0.0, upper_lim), 
+            aspect_ratio = :equal, grid = false,
+            xaxis = false, yaxis = false
+        )
+        scatter!(fig2_B[idx], [c1y], [c1x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :cyan)), label = "")
+        scatter!(fig2_B[idx], [c1y], [c1x], marker = :circle, c = :cyan, markersize = 10.0, label = "")
+        scatter!(fig2_B[idx], [c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
+        scatter!(fig2_B[idx], [c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
+        annotate!(fig2_B[idx], [40], [3], "t = $(time_range[frame_idx+1]/1000)s", :white)
+    else
+        heatmap!(fig2_B[idx], lattice_c[:,:,frame_idx], c = :thermal, clims = (0.0, upper_lim), 
+            aspect_ratio = :equal, grid = false, colorbar = false, 
+            xaxis = false, yaxis = false
+        )
+        scatter!(fig2_B[idx], [c1y], [c1x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :cyan)), label = "")
+        scatter!(fig2_B[idx], [c1y], [c1x], marker = :circle, c = :cyan, markersize = 10.0, label = "")
+        scatter!(fig2_B[idx], [c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
+        scatter!(fig2_B[idx], [c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
+        annotate!(fig2_B[idx], [40], [3], "t=$(time_range[frame_idx+1]/1000)s", :white)
+    end
+end
+fig2_B
+title!(fig2_B[1], "B", title_pos = :left);
+
+ach_rng = LinRange(0.001, 10e4, 100)
+k_d = p[:k_d]; g_ACh = p[:g_ACh]; E_ACh = p[:E_ACh]
+i_rng = map(a -> ħ(a, k_d), ach_rng);
+
+ach_external = lattice_c[c1x, c1y+1, :];
+i_synaptic = map(a ->ħ(a, k_d), ach_external);
+
+fig2_Ca = plot(layout = (2,1))
+plot!(fig2_Ca[1], sol, vars = [:e], c = :blue, label = "Cell 1 release",
+    xlims = xlims, 
+    xticks = xticks, 
+    ylabel = "\$E_t\$ (mM)",
+    xlabel = ""
+)
+plot!(fig2_Ca[1], time_range.+xlims[1], ach_external, label = "Cell 2 Extracellular", 
+    c = :red, lw = 3.0, legend = :topleft)
+
+ach_rel = map(t->sol(t)[6], frame_stops)
+ach_ext = map(t->lattice_c[c1x, c1y+1, Int(t-xlims[1])], frame_stops)
+plot!(fig2_Ca[1], frame_stops, ach_rel, label = "",
+    seriestype = :scatter, marker = :star, markersize = 10.0)
+plot!(fig2_Ca[1], frame_stops, ach_ext, label = "",
+    seriestype = :scatter, marker = :star, markersize = 10.0)
+
+plot!(fig2_Ca[2], time_range./1000.0, i_synaptic, label = "", 
+    c = :purple, lw = 2.0,
+    ylabel = "Norm. Current", xlabel = "time (s)", ylims = (0,1)
+)
+
+
+fig2_Cb = plot(ach_rng, i_rng, label = "",
+    xlabel = "Extracellular [ACh] (mM)", ylabel = "Normalized Current", 
+    title = "Induced \$I_{ACh}\$", titlefontsize = 12.0, 
+    c = :green, lw = 3.0, 
+)
+fig2_C = plot(fig2_Ca, fig2_Cb, layout = grid(1,2, widths = [0.75, 0.25]))
+title!(fig2_C[1], "C", titlepos = :left)
+
+fig2 = plot(fig2_A, fig2_B, fig2_C, layout = grid(3, 1), size = (1000,1000))
