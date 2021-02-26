@@ -65,8 +65,9 @@ using Plots
 export Plots
 include("plotting.jl")
 export pyplot, font, Measures
-export plot, plot!, grid, @animate #Out of the box, I want to be able to plot
-export savefig
+
+export plot, plot!, grid, stroke, @animate #Out of the box, I want to be able to plot
+export title!, heatmap!, scatter!, annotate!, savefig
 #Import some other plotting utilities
 using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
 export colormatch, colormap, colorschemes
