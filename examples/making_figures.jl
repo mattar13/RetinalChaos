@@ -225,3 +225,5 @@ fig2_C = plot(fig2_Ca, fig2_Cb, layout = grid(1,2, widths = [0.75, 0.25]))
 title!(fig2_C[1], "C", titlepos = :left)
 
 fig2 = plot(fig2_A, fig2_B, fig2_C, layout = grid(3, 1), size = (1000,1000))
+
+#%% Figure 3

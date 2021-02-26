@@ -165,8 +165,8 @@ function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
     nothing
 end
 
-#A model with sparse current injections simulating the presence of ipRGCs
-function (PDE::Network{T, :PC})(dU, U, p, t) where T <: Real
+#A model with sparse current injections simulatiing a proportion of the cells being activators
+function (PDE::Network{T, :Sparse_Activity})(dU, U, p, t) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -191,7 +191,7 @@ function (PDE::Network{T, :PC})(dU, U, p, t) where T <: Real
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            + PDE.null
+            + PDE.null * I_app
             + W
         )/C_m
 

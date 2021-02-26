@@ -57,3 +57,5 @@ sfig1 = plot(dt_rng, spike_durs, label = "",
 plot!(sfig1[2], dt_rng, burst_durs, label = "")
 plot!(sfig1[3], dt_rng, IBI_durs, label = "")
 savefig(sfig1, joinpath(save_figs, "Supp_fig1.png"))
+
+#%% 
