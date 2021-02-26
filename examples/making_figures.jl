@@ -24,15 +24,14 @@ end
 
 #%% Making Figure 1
 #Set up parameters and other items
-p_dict = read_JSON(params_file) 
-p_dict[:I_app] = 10.0
-p_dict[:g_ACh] = 0.0
-p = p_dict |> extract_dict;
+p = read_JSON(params_file) 
+p[:I_app] = 10.0
+p[:g_ACh] = 0.0
 #Setup initial conditions
-u0 = read_JSON(conds_file) |> extract_dict;
+u0 = read_JSON(conds_file);
 #Setup figure 1 problem
 tspan = (0.0, 60e3)
-prob = ODEProblem(T_ode, u0, tspan, p);
+prob = ODEProblem(T_ode, u0 |> extract_dict, tspan, p |> extract_dict);
 #Run the simulation
 print("Time it took to simulate $(tspan[2]/1000)s:")
 @time sol = solve(prob); 
@@ -86,8 +85,8 @@ fig1_C = plot(sol, vars = [:c, :a, :b, :v], legend = :none,
 fig1 = plot(fig1_A, fig1_B, fig1_C, layout = grid(3,1, heights = [0.2, 0.3, 0.5]), size = (1000, 1000))
 
 #%% Figure2 Acetylcholine Propagation dynamics
-p = read_JSON("params.json") 
-u0 = read_JSON("conds.json");
+p = read_JSON(params_file) 
+u0 = read_JSON(conds_file);
 p[:I_app] = 2.0
 p[:D] = 0.01
 tspan = (0.0, 60e3);
@@ -112,7 +111,7 @@ fig2_Aa = plot(sol,
     vars = [:v, :e], 
     ylabel = ["\$V_t\$ (mV)" "\$E_t\$ (mM)"], 
     xlabel = ["" "time (s)"], 
-    c = [v_color ach_color], lw = 2.0,
+    c = [v_color a_color], lw = 2.0,
     legend = :none, 
     layout = grid(2, 1), 
     xlims = xlims, 
@@ -125,7 +124,7 @@ plot!(fig2_Aa[2], frame_stops, ach_stops, label = "Frame stops",
     seriestype = :scatter, marker = :star, markersize = 10.0)
 
 fig2_Ab = plot(v_rng, ACh_rng, 
-    c = ach_color, linestyle = :dot, lw = 4.0, 
+    c = a_color, linestyle = :dot, lw = 4.0, 
     title = "Acetylcholine Release", titlefontsize = 12.0,
     xlabel = "\$V_t\$ (mV)",ylabel = "Inst. \$E_t\$ (mM/s)", label = "")
 
@@ -155,7 +154,7 @@ for (idx, t) in enumerate(time_range)
 end
 
 fig2_B = plot(xlims = (0, nx), ylims = (0, ny), layout = grid(1, length(frame_stops)), size = (1000, 250), 
-    margin = 1mm
+    #margin = 1mm
 )
 upper_lim = 0.08
 for (idx, frame) in enumerate(frame_stops)
