@@ -7,43 +7,47 @@ println("Testing opening parameters")
 param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
-p = read_JSON(params_file) |> extract_dict
-u0_single = read_JSON(conds_file) |> extract_dict
-tspan = (0.0, 1000.0)
+p = read_JSON(params_file)
+u0_single = read_JSON(conds_file)
 println("Model components opened properly")
 
 #%% Testing running Single cell ODE and SDEs
 println("Testing ODE")
-ODEprob = ODEProblem(T_ode, u0_single, tspan, p);
+ODEprob = ODEProblem(T_ode, u0_single|>extract_dict, tspan, p|>extract_dict);
+print("ODE run takes:")
 @time ODEsol = solve(ODEprob, progress = true);
 println("Ordinary Differential Equation working")
-
+plot(ODEsol)
 #%% SDE
-tspan = (0.0, 120e3)
+tspan = (0.0, 60e3)
 println("Testing SDE")
-SDEprob = SDEProblem(T_sde, u0_single, tspan, p);
+SDEprob = SDEProblem(T_sde, u0_single|>extract_dict, tspan, p|>extract_dict);
+print("SDE run takes:")
 @time SDEsol = solve(SDEprob, SOSRI(), progress = true, save_idxs = [1]);
 println("Stochastic Differential Equation working")
-#%%
-using Plots
-plot(SDEsol)
+plot(SDEsol);
+println("Plotting Solution successful")
 #%% Running a wave model
 dx = 0.01; nx = 64; ny = 64;
 #In a network all of the parameters and conditions need to be read differently
-p_dict = read_JSON(params_file)
-p = extract_dict(p_dict, tar_pars);
 
-u_dict = read_JSON(conds_file);
-u0_network = extract_dict(u_dict, tar_conds, (nx, ny));
+p_dict = read_JSON(params_file); #Open the parameters as a dictionary
+p = extract_dict(p_dict, tar_pars); #Extract the parameters into a usuable form
+
+u_dict = read_JSON(conds_file); #Open the conditions as a dictionary
+u0_network = extract_dict(u_dict, tar_conds, (nx, ny)); #Extract the conditions into a usuable form
+
 #Establish the PDE network
 net = Network(nx, ny; μ = 0.65)
-
 var = 1 #This is the variable we are interested in
 save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
-
+#Make the problem
 PDEprob = SDEProblem(net, noise, u0_network, (0.0, 6.0), p)
+
 #%% This next step is quite lengthy, so before running this, make sure you have time
+print("SDE/PDE run takes:")
 @time PDEsol = solve(PDEprob, SOSRI(), save_idxs = save_idxs, progress = true, progress_steps = 1)
+
 #%% Animation
 t_rng = collect(0.0:500.0:60e3)
 anim = @animate for t = t_rng
@@ -54,5 +58,5 @@ anim = @animate for t = t_rng
             c = :curl, clims = (-70.0, 0.0),
     )
 end
+println("Animation successful")
 #%%
-gif(anim, "plot.gif", fps = 20)
