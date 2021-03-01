@@ -19,19 +19,27 @@ if isdir(save_figs) == false
 end
 
 #%% Supplemental figure, Bifurcation analysis of voltage injections
-p_dict = read_JSON(params_file) 
-p_dict[:I_app] = 0.0 #Set initial applied current to 0
-p_dict[:g_ACh] = 0.0 #Remove g_ACh influence
-p_dict[:g_TREK] = 0.0 #Remove g_TREK influence
-p = p_dict |> extract_dict;
-u0 = read_JSON(conds_file) |> extract_dict;
+p = read_JSON(params_file) 
+u0 = read_JSON(conds_file)
+p[:I_app] = 0.0 #Set initial applied current to 0
+p[:g_ACh] = 0.0 #Remove g_ACh influence
+p[:g_TREK] = 0.0 #Remove g_TREK influence
 tspan = (0.0, 30e3);
-prob_eq = ODEProblem(T_ode, u0, tspan, p)
+prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
+
+#%% Codim 1 analysis
 codim1 = (:I_app)
 c1_lims = (-50.0, 20.0)
-#%%
 print("Codimensional analysis time to complete:")
 @time c1_map = codim_map(prob_eq, codim1, c1_lims = c1_lims, eq_res = 10)
+
+#%% Codim 2 analysis
+codim2 = (:g_K, :g_Ca)
+c1_lims = (1.0,20.0); c2_lims = (1.0, 20.0) 
+print("Codimensional analysis time to complete:")
+@time c2_map = codim_map(prob_eq, codim2, c1_lims = c1_lims, c2_lims = c2_lims);
+#%%
+plot(c2_map, view = :yx)
 #%%
 plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
 
