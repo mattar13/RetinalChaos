@@ -6,6 +6,7 @@ params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
 #%% Set up initial conditions
+nx = 96; ny = 96
 p = read_JSON(params_file)
 p[:g_Ca] = 10.0
 p[:g_K] = 5.0
