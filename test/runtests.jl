@@ -9,6 +9,7 @@ params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 p = read_JSON(params_file)
 u0_single = read_JSON(conds_file)
+tspan = (0.0, 60.0)
 println("Model components opened properly")
 
 #%% Testing running Single cell ODE and SDEs
@@ -19,7 +20,6 @@ print("ODE run takes:")
 println("Ordinary Differential Equation working")
 plot(ODEsol)
 #%% SDE
-tspan = (0.0, 60e3)
 println("Testing SDE")
 SDEprob = SDEProblem(T_sde, u0_single|>extract_dict, tspan, p|>extract_dict);
 print("SDE run takes:")
@@ -42,7 +42,7 @@ net = Network(nx, ny; μ = 0.65)
 var = 1 #This is the variable we are interested in
 save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
 #Make the problem
-PDEprob = SDEProblem(net, noise, u0_network, (0.0, 6.0), p)
+PDEprob = SDEProblem(net, noise, u0_network, tspan, p)
 
 #%% This next step is quite lengthy, so before running this, make sure you have time
 print("SDE/PDE run takes:")
