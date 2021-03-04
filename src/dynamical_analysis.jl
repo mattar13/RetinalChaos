@@ -19,18 +19,18 @@ function ensemble_func(prob::ODEProblem, i, repeat, idx, val_rng; run_func_on = 
     end
 end
 
-function ensemble_func(prob::SDEProblem, i, repeat; pars = 1, conds = nothing, rng = LinRange(0.5, 15.0, 100))
+function ensemble_func(prob::SDEProblem, i, repeat, idx, val_rng; run_func_on = :pars, verbose = false)
     if run_func_on == :pars
         if verbose
             println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
         end
-        prob.p[idx] = val_rng[i]
+        prob.p[idx] .= val_rng[i]
         prob
     elseif run_func_on == :conds
         if verbose
             println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
         end
-        prob.u0 = val_rng[i]
+        prob.u0[idx] .= val_rng[i]
         prob
     end
 end
