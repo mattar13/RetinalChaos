@@ -22,6 +22,43 @@ if isdir(save_figs) == false
     mkdir(save_figs)
 end
 
+#%% Running a noise single trace stepping through parameters
+test_rng = range(0.0, 0.5, length = 100) #this ranges from halving the parameter to doubling it
+p = read_JSON(params_file); #Because of my catch, we can keep these as dictionaries 
+u0 = read_JSON(conds_file);
+
+tspan = (0.0, 60e3)
+prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+#print("Time it took to simulate $(tspan[2]/1000)s:")
+#@time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
+#plot(sol, vars = [:v, :W], layout = grid(2,1))
+#%%
+par_idx = findall(x -> x==:σ, Symbol.(T_sde.ps))
+prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
+ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
+print("Running a ensemble simulation for :")
+@time sim = solve(ensemble_prob, SOSRI(), abstol = 0.2, reltol = 2e-2, maxiters = 1e7, trajectories = length(test_rng), EnsembleThreads());
+#%%
+results = zeros(3, length(test_rng))
+trace_plot = plot(legend = false)
+for (sol_idx, sol) in enumerate(sim)
+    plot!(trace_plot, sol, vars = [:v, :W], line_z = sol_idx, c = :jet, zlim = (1, length(sim)), layout = grid(2,1))
+    #println(sol |> length)
+    dt = 0.1 #set the time differential according to supp figure 1
+    t_rng = collect(sol.t[1]:dt:sol.t[end]) #set the time range
+    v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
+    ts_analysis = timescale_analysis(v_t, dt = dt)
+    for i = 1:length(ts_analysis)
+        results[i, sol_idx] = sum(ts_analysis[i])/length(ts_analysis[i])
+    end
+end
+trace_plot
+#%%
+p1 = plot(test_rng, results[1, :])
+p2 = plot(test_rng, results[2, :])
+p3 = plot(test_rng, results[3, :])
+sfig1 = plot(p1, p2, p3, layout = grid(3,1))
+sfig1
 #%% This supplemental figure compares the dt to the analysis accuracy
 dt_rng = range(0.005, 0.10, length = 50)
 spike_durs = Float64[]; spike_dur_stds = Float64[]
@@ -50,7 +87,7 @@ for dt in dt_rng
     push!(IBI_durs, IBI_dur)
     push!(IBI_dur_stds, IBI_dur_std)
 end
-sfig1 = plot(dt_rng, spike_durs, label = "",
+sfig2 = plot(dt_rng, spike_durs, label = "",
     xlabel = ["" "" "dt (ms)"], ylabel = ["Spike dur (ms)" "Burst dur (ms)" "IBI (ms)"], 
     xaxis = :log, 
     layout = (3,1))
