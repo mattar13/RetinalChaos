@@ -1,5 +1,4 @@
 # This file contains some seperate data analysis and experiments I am running.
-
 using RetinalChaos
 using Dates
 using StatsBase, Statistics
@@ -25,13 +24,15 @@ end
 #%% Running a noise single trace stepping through parameters
 test_rng = range(0.0, 0.5, length = 100) #this ranges from halving the parameter to doubling it
 p = read_JSON(params_file); #Because of my catch, we can keep these as dictionaries 
+p[:g_K] = 5.0
+p[:g_Ca] = 10.0
 u0 = read_JSON(conds_file);
 
 tspan = (0.0, 60e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
-#print("Time it took to simulate $(tspan[2]/1000)s:")
-#@time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
-#plot(sol, vars = [:v, :W], layout = grid(2,1))
+print("Time it took to simulate $(tspan[2]/1000)s:")
+@time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
+plot(sol, vars = [:v, :W], layout = grid(2,1))
 #%%
 par_idx = findall(x -> x==:σ, Symbol.(T_sde.ps))
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
