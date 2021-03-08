@@ -196,7 +196,7 @@ for (idx, frame) in enumerate(frame_stops)
 end
 title!(fig2_B[1], "B", title_pos = :left)
 
-#%%
+#%% Plotting Acetylcholine extracellular conc vs 
 plot(a -> ħ(a, p[:k_d]), 0.001, 6.0)
 #%%
 ach_external = lattice_c[c1x, c1y+1, :];
