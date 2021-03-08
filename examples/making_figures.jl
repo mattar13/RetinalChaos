@@ -105,9 +105,7 @@ sim_thresh = calculate_threshold(v_t)
 spike_array = (v_t .> sim_thresh)
 burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array, dt = dt);
 burst_lims = burst_idxs[2]
-# Define where the frame stops are placed
 
-# Figure 2 A
 dx_lims = 2000.0
 xlims = (burst_lims[1]-2000, burst_lims[2]+2000)
 elapsed_time = xlims[2]-xlims[1]
@@ -116,10 +114,10 @@ xticks = (collect(xlims[1]:dx_lims:xlims[2]), (collect(0:dx_lims/1000:elapsed_ti
 #This is for drawing the diffusion frames
 frame_stops = LinRange(burst_lims[1], burst_lims[2], 3)
 ach_stops = map(t->sol(t)[6], frame_stops)
-
+# Figure 2A
 fig2_Aa = plot(sol, vars = [:v, :e], layout = grid(2, 1), plotdensity = Int64(200e3),
     c = [v_color e_color], legend = false, 
-    xlabel = ["" "Time (s)"], ylabel = ["\$V_t\$ (mV)" "\$E_t\$"], 
+    xlabel = ["" "Time (s)"], ylabel = ["\$V_t\$ (mV)" "\$E_t\$ (nM)"], 
     xlims = xlims, xticks = xticks
 )
 #Plot the frame stops
@@ -128,16 +126,24 @@ plot!(fig2_Aa[2], frame_stops, ach_stops, label = "Frame stops",
 fig2_Ab = plot(v -> Φ(v, p[:k], p[:V0]), -90, 10, legend = false, xlabel = "\$V_t\$", ylabel = "\$\\Phi\$ (Normalized ACh release)")
 fig2_A = plot(fig2_Aa, fig2_Ab, layout = grid(1,2))
 title!(fig2_A[1], "A", titlepos = :left)
-#%%
 
+#Make the diffusion model
 nx, ny = (50, 50)
-c1x, c1y = (round(Int, nx/2), round(Int, ny/4))
+c1x, c1y = (round(Int, nx/2), round(Int, ny/2))
 c2x, c2y = (round(Int, nx/2), round(Int, ny/4*3))
 D = p[:D] #this is the dX per dt
 lattice = zeros(nx, ny)
 lattice[c1x, c1y] = 0.6
-bp_model = Network(nx, ny)
-
+#%%
+bp_model = Network(nx, ny, μ = 0.15)
+#%% Plot the binomial Nullification
+binom = heatmap(bp_model.null, ratio = :equal, grid = false,
+        xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+        c = :grays, clims = (0.0, 1.0), 
+)
+title!(binom, "μ = 0.15")
+savefig(binom, "figures\\binomial_15.png")
+#%%
 dt = 1.0
 time_range = collect(xlims[1]:dt:xlims[2])
 lattice_c = zeros(nx, ny, length(time_range))
@@ -145,22 +151,25 @@ for (idx, t) in enumerate(time_range)
     if idx == 1
         lattice_c[c1x, c1y, idx] = sol(t)[6]
     else
-        println(sol(t)[6])
         lattice_c[:, :, idx] = diffuse(lattice_c[:,:,idx-1], D, bp_model)
         lattice_c[c1x, c1y, idx] = sol(t)[6]
     end
 end
-println(length(time_range))
+
 #%% This is a supplemental gif for what diffusion looks like
 d_frame = 17
-anim = @animate for fr = 1:d_frame:length(time_range)
-    println("Animating frame $fr")
-    frame_i = lattice_c[:,:, fr]
+anim = @animate for frame = 1:d_frame:length(time_range)
+    println("Animating frame $frame")
+    frame_i = lattice_c[:,:, frame]
     heatmap(frame_i, ratio = :equal, grid = false,
             xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-            c = :jet, clims = (0.0, maximum(lattice_c)), 
+            c = :thermal, clims = (0.0, 0.10), 
     )
-    #contour!(frame_i)
+    scatter!([c1y], [c1x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :cyan)), label = "")
+    scatter!([c1y], [c1x], marker = :circle, c = :cyan, markersize = 10.0, label = "")
+    #scatter!([c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
+    #scatter!([c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
+    annotate!([40], [3], "t = $(frame/1000) ms", :white)
 end
 gif(anim, "figures\\ACh_Release.gif", fps = 1000/d_frame)
 #%%
@@ -174,13 +183,13 @@ for (idx, frame) in enumerate(frame_stops)
     println(time)
     if idx == length(frame_stops)
         heatmap!(fig2_B[idx], lattice_c[:,:,frame_idx], c = :thermal, clims = (0.0, upper_lim), 
-            aspect_ratio = :equal, grid = false,
+            aspect_ratio = :equal, grid = false, colorbar_title = "\$E_t\$ (nM)",
             xaxis = false, yaxis = false
         )
         scatter!(fig2_B[idx], [c1y], [c1x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :cyan)), label = "")
         scatter!(fig2_B[idx], [c1y], [c1x], marker = :circle, c = :cyan, markersize = 10.0, label = "")
-        scatter!(fig2_B[idx], [c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
-        scatter!(fig2_B[idx], [c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
+        #scatter!(fig2_B[idx], [c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
+        #scatter!(fig2_B[idx], [c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
         annotate!(fig2_B[idx], [40], [3], "t = $(time) ms", :white)
     else
         heatmap!(fig2_B[idx], lattice_c[:,:,frame_idx], c = :thermal, clims = (0.0, upper_lim), 
@@ -189,19 +198,20 @@ for (idx, frame) in enumerate(frame_stops)
         )
         scatter!(fig2_B[idx], [c1y], [c1x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :cyan)), label = "")
         scatter!(fig2_B[idx], [c1y], [c1x], marker = :circle, c = :cyan, markersize = 10.0, label = "")
-        scatter!(fig2_B[idx], [c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
-        scatter!(fig2_B[idx], [c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
+        #scatter!(fig2_B[idx], [c2y], [c2x], marker = :hexagon, m = (125.0, :transparent, stroke(3.0, :red)), label = "")
+        #scatter!(fig2_B[idx], [c2y], [c2x], marker = :circle, c = :red, markersize = 10.0, label = "")
         annotate!(fig2_B[idx], [40], [3], "t=$(time) ms", :white)
     end
 end
 title!(fig2_B[1], "B", title_pos = :left)
 
 #%% Plotting Acetylcholine extracellular conc vs 
-plot(a -> ħ(a, p[:k_d]), 0.001, 6.0)
+
 #%%
 ach_external = lattice_c[c1x, c1y+1, :];
-i_synaptic = map(a ->ħ(a, k_d), ach_external);
+i_synaptic = map(a ->ħ(a, p[:k_d]), ach_external);
 
+#%%
 fig2_Ca = plot(layout = (2,1))
 plot!(fig2_Ca[1], sol, vars = [:e], c = :blue, label = "Cell 1 release",
     xlims = xlims, 
@@ -211,7 +221,7 @@ plot!(fig2_Ca[1], sol, vars = [:e], c = :blue, label = "Cell 1 release",
 )
 plot!(fig2_Ca[1], time_range.+xlims[1], ach_external, label = "Cell 2 Extracellular", 
     c = :red, lw = 3.0, legend = :topleft)
-
+#%%
 ach_rel = map(t->sol(t)[6], frame_stops)
 ach_ext = map(t->lattice_c[c1x, c1y+1, Int(t-xlims[1])], frame_stops)
 plot!(fig2_Ca[1], frame_stops, ach_rel, label = "",
@@ -225,11 +235,8 @@ plot!(fig2_Ca[2], time_range./1000.0, i_synaptic, label = "",
 )
 
 
-fig2_Cb = plot(ach_rng, i_rng, label = "",
-    xlabel = "Extracellular [ACh] (mM)", ylabel = "Normalized Current", 
-    title = "Induced \$I_{ACh}\$", titlefontsize = 12.0, 
-    c = :green, lw = 3.0, 
-)
+fig2_Cb = plot(a -> ħ(a, p[:k_d]), 0.001, 6.0, xlabel = "\$E_t\$ (nM)", ylabel = "nAChR Activation (H)")
+
 fig2_C = plot(fig2_Ca, fig2_Cb, layout = grid(1,2, widths = [0.75, 0.25]))
 title!(fig2_C[1], "C", titlepos = :left)
 
