@@ -41,6 +41,7 @@ export R_INF
 
 M_INF(v::T, V1::T, V2::T) where T = (1 + tanh((v - V1)/V2))/2;
 N_INF(v::T, V3::T, V4::T) where T = (1 + tanh((v - V3)/V4))/2;
+H_INF(v::T, V5::T, V6::T) where T = (1 + tanh((v - V5)/V6))/2;
 
 """
 Λ(v_t, VS, VH)
@@ -91,6 +92,7 @@ include("2D_models.jl") #Includes all 2D models
 @register I_n(g_n, R, v, E_n) 
 @register M_INF(v, V1, V2)
 @register N_INF(v, V3, V4)
+@register H_INF(v, V5, V6)
 @register Λ(v, V3, V4)
 @register Φ(v, κ, V0)
 @register ħ(e, k_d)
