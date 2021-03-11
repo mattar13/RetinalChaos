@@ -9,7 +9,7 @@ params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 p = read_JSON(params_file)
 u0_single = read_JSON(conds_file)
-tspan = (0.0, 60.0)
+tspan = (0.0, 60e3)
 println("Model components opened properly")
 
 #%% Testing running Single cell ODE and SDEs
@@ -60,3 +60,16 @@ anim = @animate for t = t_rng
 end
 println("Animation successful")
 #%%
+
+#Lets build a new parameter and new part of the model
+#1 What is the boltzmann equation 
+#parameters 
+V5 = -75
+V6 = -6
+plot(v -> R_INF(v, V5, V6), -120, 40)
+#%% We can use the R_INF equation
+iHCN = map(u -> R_INF(u[1], V5, V6), SDEsol)
+#%%
+p1 = plot(SDEsol, vars = [:v])
+p2 = plot(SDEsol.t, iHCN)
+plot(p1, p2, layout = grid(2,1))
