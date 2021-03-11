@@ -1,5 +1,17 @@
 ######################Modelling Toolkit for Tarchick Model
-@parameters t g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_sAHP g_ACh k_d E_ACh I_app C_m V3 V4 τn C_0 λ δ τc α τa β τb ρ τACh k V0 σ D τw τr τs δc αs αc αr H_x VS VH g_n R E_n
+@parameters t 
+#Register parameters for ionic currents 
+@parameters g_leak E_leak #Leaky currents
+@parameters g_Ca V1 V2 E_Ca #Cav currents
+@parameters g_K V3 V4 E_K #Kv currents
+@parameters g_TREK g_sAHP #TREK and sAHP currents
+@parameters g_ACh k_d E_ACh #Acetylcholine current parameters
+@parameters g_HCN V5 V6 E_HCN
+@parameters I_app C_m  #Extras
+@parameters τn τc τa τb τACh τw τr τs #Time constants
+@parameters C_0 V0
+@parameters λ δ α β ρ k σ D #Relationships in my model
+@parameters δc αs αc αr H_x VS VH g_n R E_n #Relationships in other models
 @variables v(t) n(t) c(t) a(t) b(t) e(t) W(t) r(t) s(t)
 @derivatives d'~t
 
@@ -10,8 +22,9 @@ T_model_eqs = [
                   + -g_K*n*(v-E_K)
                   + -g_TREK*b*(v-E_K)
                   + -g_ACh*ħ(e, k_d)*(v-E_ACh)
+                  + -g_HCN*H_INF(v, V5, V6)*(v-E_HCN) #Add the HCN channels here
                   + I_app
-                  + W + 0*σ
+                  + W + 0*σ #This 
                   )/C_m ,
           d(n) ~ (Λ(v, V3, V4) * (N_INF(v, V3, V4) - n))/τn,
           d(c) ~ (C_0 + δ*(-g_Ca*M_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc,
