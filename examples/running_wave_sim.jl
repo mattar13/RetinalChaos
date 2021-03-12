@@ -7,11 +7,15 @@ conds_file = joinpath(param_root, "conds.json")
 
 
 #%% Set up initial conditions
-nx = 96; ny = 96
+nx = 125; ny = 125
 p = read_JSON(params_file);
+p[:g_Ca] = 10.0
+p[:g_K] = 10.0
+p[:σ] = 1.0
+p[:τw] = 1.0
 p = extract_dict(p, tar_pars);
 u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
-net = Network(nx, ny; μ = 0.25, version = :ρ) #μ is the probability a cell is capable of being active
+net = Network(nx, ny; μ = 0.40, version = :gHCN) #μ is the probability a cell is capable of being active
 var = 1 #This is the variable we are interested in
 save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
 #%% Lets warm up the solution first
@@ -35,4 +39,4 @@ anim = @animate for t = t_rng
     )
 end
 #%%
-gif(anim, "examples\\rho_warmed_up.gif", fps = 20)
+gif(anim, "examples\\gHCN_warmed_up.gif", fps = 20)
