@@ -11,14 +11,14 @@ p = read_JSON(params_file)
 u0_single = read_JSON(conds_file)
 tspan = (0.0, 60e3)
 println("Model components opened properly")
-
 #%% Testing running Single cell ODE and SDEs
 println("Testing ODE")
 ODEprob = ODEProblem(T_ode, u0_single|>extract_dict, tspan, p|>extract_dict);
 print("ODE run takes:")
 @time ODEsol = solve(ODEprob, progress = true);
 println("Ordinary Differential Equation working")
-plot(ODEsol)
+#%%
+plot!(ODEsol, vars = [:v])
 #%% SDE
 println("Testing SDE")
 SDEprob = SDEProblem(T_sde, u0_single|>extract_dict, tspan, p|>extract_dict);
@@ -73,3 +73,8 @@ iHCN = map(u -> R_INF(u[1], V5, V6), SDEsol)
 p1 = plot(SDEsol, vars = [:v])
 p2 = plot(SDEsol.t, iHCN)
 plot(p1, p2, layout = grid(2,1))
+#%%
+#Find out the order of parameters in the new HCN model
+for p in T_ode.ps
+    println(p)
+end

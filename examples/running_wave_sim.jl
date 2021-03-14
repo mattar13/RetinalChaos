@@ -5,14 +5,12 @@ param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
-
+println("File set up")
 #%% Set up initial conditions
-nx = 125; ny = 125
+nx = 64; ny = 64
 p = read_JSON(params_file);
-p[:g_Ca] = 10.0
-p[:g_K] = 10.0
-p[:σ] = 1.0
-p[:τw] = 1.0
+p[:g_HCN] = 0.75
+p[:g_ACh] = 0.0
 p = extract_dict(p, tar_pars);
 u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
 net = Network(nx, ny; μ = 0.40, version = :gHCN) #μ is the probability a cell is capable of being active
@@ -21,17 +19,29 @@ save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variabl
 #%% Lets warm up the solution first
 PDEprob = SDEProblem(net, noise, u0_network, (0.0, 60e3), p)
 print("Warming up solution:")
-@time PDEsol = solve(PDEprob, SOSRI(), save_everystep = false, progress = true, progress_steps = 1)
-#%% extract the last solution and use it as the initial condition for future models 
+@time PDEsol = solve(PDEprob, SOSRA(), 
+    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+    save_everystep = false, progress = true, progress_steps = 1
+    )
+# extract the last solution and use it as the initial condition for future models 
 # This may take a long time to run
+print("Running model:")
 ui_network = PDEsol[end]
-PDEprob = SDEProblem(net, noise, ui_network, (0.0, 300e3), p)
-@time PDEsol = solve(PDEprob, SOSRI(), save_idxs = save_idxs, progress = true, progress_steps = 1)
-
+PDEprob = SDEProblem(net, noise, ui_network, (0.0, 120e3), p)
+@time PDEsol = solve(PDEprob, SOSRA(), 
+    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+    save_idxs = save_idxs, progress = true, progress_steps = 1
+    )
+#%%
+plt = plot()
+for i in 1:size(PDEsol, 1)
+    plot!(plt, PDEsol.t, PDEsol[i,:])
+end
+plt
 #%% Plot as a .gif
-t_rng = collect(10e3:50.0:PDEsol.t[end])
+t_rng = collect(1.0:50.0:PDEsol.t[end])
 anim = @animate for t = t_rng
-    #println("Animating frame $t")
+    println("Animating frame $t")
     frame_i = reshape(PDEsol(t), (nx, ny))
     heatmap(frame_i, ratio = :equal, grid = false,
             xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
@@ -40,3 +50,5 @@ anim = @animate for t = t_rng
 end
 #%%
 gif(anim, "examples\\gHCN_warmed_up.gif", fps = 20)
+#%%
+contour(net.null)

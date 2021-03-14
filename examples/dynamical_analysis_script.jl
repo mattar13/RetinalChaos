@@ -29,26 +29,26 @@ prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 
 #%% Codim 1 analysis
 codim1 = (:I_app)
-c1_lims = (-50.0, 20.0)
+c1_lims = (-40.0, 1.0)
 print("Codimensional analysis time to complete:")
 @time c1_map = codim_map(prob_eq, codim1, c1_lims = c1_lims, eq_res = 10)
-
-#%% Codim 2 analysis
-codim2 = (:g_K, :g_Ca)
-c1_lims = (1.0,20.0); c2_lims = (1.0, 20.0) 
-print("Codimensional analysis time to complete:")
-@time c2_map = codim_map(prob_eq, codim2, c1_lims = c1_lims, c2_lims = c2_lims);
-#%%
-plot(c2_map, view = :yx)
-#%%
 plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
+
+#%% Codim 3 analysis
+codim3 = (:g_K, :g_Ca, :I_app)
+c1_lims = (1.0,20.0); c2_lims = (1.0, 20.0); c3_lims = (-50.0, 1.0) 
+print("Codimensional analysis time to complete:")
+@time c3_map = codim_map(prob_eq, codim3, c1_lims = c1_lims, c2_lims = c2_lims, resolution = 20);
+c3_map.equilibria |> length
+#%%
+plot(c3_map, view = :zxy)
 
 #%% Supplemental figure. Analysis of parameter change
 test_rng = range(0.5, 2.0, length = 100) #this ranges from halving the parameter to doubling it
 p = read_JSON(params_file); #Because of my catch, we can keep these as dictionaries 
 u0 = read_JSON(conds_file);
 #We can set the initial voltage sensitivty here 
-p[:I_app] = 10.0
+p[:σ] = 10.0 
 tspan = (0.0, 60e3)
 prob = ODEProblem(T_ode, u0, tspan, p);
 results = zeros(length(T_ode.ps), length(test_rng), 3)
