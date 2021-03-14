@@ -24,22 +24,36 @@ println("Script settings loaded")
 
 #%% Running a comparison between HCN+ cell and HCN- cell
 p_HCNp = read_JSON(params_file)
-p_HCNp[:g_HCN] = 5.0
-p_HCNp[:g_Ca] = 10.0
-p_HCNp[:g_K] = 10.0
+p_HCNp[:g_HCN] = 0.75
+p_HCNp[:g_ACh] = 0.0
+p_HCNp[:τa] = 15e3
+p_HCNp[:τb] = 15e3
+
 p_HCNn = read_JSON(params_file)
-p_HCNn[:g_HCN] = 0.0 #Negate the HCN channels conductance 
-p_HCNn[:g_Ca] = 10.0
-p_HCNn[:g_K] = 10.0
-u0 = read_JSON(conds_file); tspan = (0.0, 60e3)
+p_HCNn[:g_HCN] = 0.0 
+p_HCNn[:g_ACh] = 0.0
+p_HCNn[:τa] = 15e3
+p_HCNn[:τb] = 15e3
+
+u0 = read_JSON(conds_file); tspan = (0.0, 120e3)
 HCNp_prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p_HCNp|>extract_dict);
 HCNn_prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p_HCNn|>extract_dict);
 @time HCNp_sol = solve(HCNp_prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
 @time HCNn_sol = solve(HCNn_prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
 #%%
-plot(HCNp_sol, vars = [:v, :c], layout = grid(2,1))
-plot!(HCNn_sol, vars = [:v, :c])
-
+ones()
+#%%
+plot(HCNp_sol, vars = [:v], label = "HCN+", lw = 1.0, 
+    xlabel = "Time (s)", ylabel = "Voltage (mV)",
+    yticks = collect(-80:10:0),
+    xticks = (collect(0:10e3:tspan[end]), Int64.(collect(0:10:tspan[end]/1000)))
+)
+plot!(HCNn_sol, vars = [:v], label = "HCN-", lw = 1.0, grid = false,
+    xlabel = "Time (s)", ylabel = "Voltage (mV)",
+    yticks = collect(-80:10:0),
+    xticks = (collect(0:10e3:tspan[end]), Int64.(collect(0:10:tspan[end]/1000)))
+)
+savefig("figures\\HCN_Activation.png")
 #%% Lets do some noise testing
 p = read_JSON(params_file);
 p[:σ] = 0.5
@@ -52,11 +66,6 @@ plot(sol, vars = [:v, :W], layout = grid(2,1))
 
 #%% Running a noise single trace stepping through parameters
 p = read_JSON(params_file); #Because of my catch, we can keep these as dictionaries 
-p[:g_HCN] = 0.0 
-p[:g_Ca] = 10.0
-p[:g_K] = 10.0
-p[:σ] = 1.0
-p[:τw] = 1.0
 u0 = read_JSON(conds_file);
 tspan = (0.0, 60e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
