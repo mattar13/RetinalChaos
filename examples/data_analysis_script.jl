@@ -20,21 +20,52 @@ if isdir(save_figs) == false
     #The directory does not exist, we have to make it 
     mkdir(save_figs)
 end
+println("Script settings loaded")
+
+#%% Running a comparison between HCN+ cell and HCN- cell
+p_HCNp = read_JSON(params_file)
+p_HCNp[:g_HCN] = 5.0
+p_HCNp[:g_Ca] = 10.0
+p_HCNp[:g_K] = 10.0
+p_HCNn = read_JSON(params_file)
+p_HCNn[:g_HCN] = 0.0 #Negate the HCN channels conductance 
+p_HCNn[:g_Ca] = 10.0
+p_HCNn[:g_K] = 10.0
+u0 = read_JSON(conds_file); tspan = (0.0, 60e3)
+HCNp_prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p_HCNp|>extract_dict);
+HCNn_prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p_HCNn|>extract_dict);
+@time HCNp_sol = solve(HCNp_prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
+@time HCNn_sol = solve(HCNn_prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
+#%%
+plot(HCNp_sol, vars = [:v, :c], layout = grid(2,1))
+plot!(HCNn_sol, vars = [:v, :c])
+
+#%% Lets do some noise testing
+p = read_JSON(params_file);
+p[:σ] = 0.5
+u0 = read_JSON(conds_file);
+tspan = (0.0, 30e3)
+prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+print("Time it took to simulate $(tspan[2]/1000)s:")
+@time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
+plot(sol, vars = [:v, :W], layout = grid(2,1))
 
 #%% Running a noise single trace stepping through parameters
-test_rng = range(0.0, 0.5, length = 100) #this ranges from halving the parameter to doubling it
 p = read_JSON(params_file); #Because of my catch, we can keep these as dictionaries 
-p[:g_K] = 5.0
+p[:g_HCN] = 0.0 
 p[:g_Ca] = 10.0
+p[:g_K] = 10.0
+p[:σ] = 1.0
+p[:τw] = 1.0
 u0 = read_JSON(conds_file);
-
 tspan = (0.0, 60e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 @time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
 plot(sol, vars = [:v, :W], layout = grid(2,1))
 #%%
-par_idx = findall(x -> x==:σ, Symbol.(T_sde.ps))
+test_rng = range(1.0, 20.0, length = 100) #this ranges from halving the parameter to doubling it
+par_idx = findall(x -> x==:g_K, Symbol.(T_sde.ps))
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
 ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
 print("Running a ensemble simulation for :")
