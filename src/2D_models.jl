@@ -60,7 +60,7 @@ function (PDE::Network{T, :gHCN})(dU, U, p, t) where T <: Real
     dW = view(dU, :,:,7)
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
-
+    
     @. dv = (
             - g_leak*(v-E_leak)
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
@@ -231,14 +231,14 @@ function (PDE::Network{T, :PC_ρ})(dU, U, p, t) where T <: Real
     dW = view(dU, :,:,7)
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
-
+    
     @. dv = (
             - g_leak*(v-E_leak)
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            - g_HCN*H_INF(v, V5, V6)*(v-E_HCN)
+            #- g_HCN*H_INF(v, V5, V6)*(v-E_HCN)
             + PDE.null
             + W
         )/C_m
