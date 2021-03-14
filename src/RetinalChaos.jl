@@ -39,7 +39,7 @@ check_version() = println("Version 1.0")
 
 #println("Importing Models")
 include("models.jl")
-export T_ode, T_sde, SOSRI #Load all the DiffEq Interface
+export T_ode, T_sde, SOSRI, SOSRA #Load all the DiffEq Interface
 #Export functions related to creating the 2D network
 export Network, noise
 export tar_conds, tar_pars, p_find, u_find
@@ -68,7 +68,7 @@ export pyplot, font, Measures
 
 export plot, plot!, grid, stroke, @animate #Out of the box, I want to be able to plot
 export title!, heatmap!, scatter!, annotate!, savefig
-export heatmap, contourf, contour!, hline!, vline!, gif, mov
+export heatmap, contour, contour!, hline!, vline!, gif, mov
 #Import some other plotting utilities
 using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
 export colormatch, colormap, colorschemes
