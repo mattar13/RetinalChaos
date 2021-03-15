@@ -9,8 +9,6 @@ println("File set up")
 #%% Set up initial conditions
 nx = 64; ny = 64
 p = read_JSON(params_file);
-p[:g_HCN] = 0.75
-p[:g_ACh] = 0.50
 p[:τa] = 15e3
 p[:τb] = 15e3
 p = extract_dict(p, tar_pars);
