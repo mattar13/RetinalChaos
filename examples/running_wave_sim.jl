@@ -9,8 +9,8 @@ println("File set up")
 #%% Set up initial conditions
 nx = 64; ny = 64
 p = read_JSON(params_file);
-p[:τa] = 15e3
-p[:τb] = 15e3
+#p[:τa] = 15e3
+#p[:τb] = 15e3
 p = extract_dict(p, tar_pars);
 u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
 net = Network(nx, ny; μ = 0.40, version = :gHCN) #μ is the probability a cell is capable of being active
