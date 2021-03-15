@@ -7,7 +7,7 @@ conds_file = joinpath(param_root, "conds.json")
 
 println("File set up")
 #%% Set up initial conditions
-nx = 64; ny = 64
+nx = 125; ny = 125
 p = read_JSON(params_file);
 #p[:τa] = 15e3
 #p[:τb] = 15e3
