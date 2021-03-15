@@ -19,7 +19,7 @@ save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variabl
 #%% Lets warm up the solution first
 PDEprob = SDEProblem(net, noise, u0_network, (0.0, 60e3), p)
 print("Warming up solution:")
-@time PDEsol = solve(PDEprob, SOSRA(), 
+@time PDEsol = solve(PDEprob, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
     save_everystep = false, progress = true, progress_steps = 1
     )
@@ -28,7 +28,7 @@ print("Warming up solution:")
 print("Running model:")
 ui_network = PDEsol[end]
 PDEprob = SDEProblem(net, noise, ui_network, (0.0, 120e3), p)
-@time PDEsol = solve(PDEprob, SOSRA(), 
+@time PDEsol = solve(PDEprob, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
     save_idxs = save_idxs, progress = true, progress_steps = 1
     )
