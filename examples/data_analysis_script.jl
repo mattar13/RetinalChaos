@@ -63,6 +63,7 @@ prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 @time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
 plot(sol, vars = [:v, :W], layout = grid(2,1))
+
 #%%
 test_rng = range(1.0, 20.0, length = 100) #this ranges from halving the parameter to doubling it
 par_idx = findall(x -> x==:g_K, Symbol.(T_sde.ps))
