@@ -10,7 +10,9 @@ println("File set up")
 nx = 64; ny = 64
 p = read_JSON(params_file);
 p[:g_HCN] = 0.75
-p[:g_ACh] = 0.0
+p[:g_ACh] = 0.50
+p[:τa] = 15e3
+p[:τb] = 15e3
 p = extract_dict(p, tar_pars);
 u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
 net = Network(nx, ny; μ = 0.40, version = :gHCN) #μ is the probability a cell is capable of being active
@@ -34,9 +36,10 @@ PDEprob = SDEProblem(net, noise, ui_network, (0.0, 120e3), p)
     )
 #%%
 plt = plot()
-for i in 1:size(PDEsol, 1)
+for i in 1:20
+    println(i)
     plot!(plt, PDEsol.t, PDEsol[i,:])
-end
+end 
 plt
 #%% Plot as a .gif
 t_rng = collect(1.0:50.0:PDEsol.t[end])
@@ -49,6 +52,6 @@ anim = @animate for t = t_rng
     )
 end
 #%%
-gif(anim, "examples\\gHCN_warmed_up.gif", fps = 20)
+gif(anim, "examples\\gHCN_warmed_up2.gif", fps = 20)
 #%%
 contour(net.null)
