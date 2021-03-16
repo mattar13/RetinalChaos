@@ -59,22 +59,5 @@ anim = @animate for t = t_rng
     )
 end
 println("Animation successful")
-#%%
 
-#Lets build a new parameter and new part of the model
-#1 What is the boltzmann equation 
-#parameters 
-V5 = -75
-V6 = -6
-plot(v -> R_INF(v, V5, V6), -120, 40)
-#%% We can use the R_INF equation
-iHCN = map(u -> R_INF(u[1], V5, V6), SDEsol)
-#%%
-p1 = plot(SDEsol, vars = [:v])
-p2 = plot(SDEsol.t, iHCN)
-plot(p1, p2, layout = grid(2,1))
-#%%
-#Find out the order of parameters in the new HCN model
-for p in T_ode.ps
-    println(p)
-end
+#%% Testing Area
