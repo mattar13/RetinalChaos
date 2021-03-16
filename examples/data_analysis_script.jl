@@ -54,44 +54,8 @@ plot!(HCNn_sol, vars = [:v], label = "HCN-", lw = 1.0, grid = false,
     xticks = (collect(0:10e3:tspan[end]), Int64.(collect(0:10:tspan[end]/1000)))
 )
 savefig("figures\\HCN_Activation.png")
-#%% Lets do some noise testing
-p = read_JSON(params_file);
-#p[:g_HCN] = 0.0
-u0 = read_JSON(conds_file);
-tspan = (0.0, 120e3)
-prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
-print("Time it took to simulate $(tspan[2]/1000)s:")
-@time sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7); 
-plot(sol, vars = [:v, :W], layout = grid(2,1))
 
-#%%
-test_rng = range(0.0, 10.0, length = 25) #this ranges from halving the parameter to doubling it
-par_idx = findall(x -> x==:g_HCN, Symbol.(T_sde.ps))
-prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
-ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
-print("Running a ensemble simulation for :")
-@time sim = solve(ensemble_prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, trajectories = length(test_rng), EnsembleThreads());
-trace_plot = plot(legend = false)
-for (sol_idx, sol_i) in enumerate(sim)
-    plot!(trace_plot, sol_i, vars = [:v], line_z = test_rng[sol_idx], c = :jet, zlim = (1, length(sim)), layout = grid(2,1), colorbar = true)    
-end
-trace_plot
-#%%
-results = zeros(3, length(test_rng))
-for (sol_idx, sol) in enumerate(sim)
-    dt = 0.1 #set the time differential according to supp figure 1
-    t_rng = collect(sol.t[1]:dt:sol.t[end]) #set the time range
-    v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
-    ts_analysis = timescale_analysis(v_t, dt = dt)
-    for i = 1:length(ts_analysis)
-        results[i, sol_idx] = sum(ts_analysis[i])/length(ts_analysis[i])
-    end
-end
-p1 = plot(test_rng, results[1, :])
-p2 = plot(test_rng, results[2, :])
-p3 = plot(test_rng, results[3, :])
-sfig1 = plot(p1, p2, p3, layout = grid(3,1))
-sfig1
+
 
 #%% This supplemental figure compares the dt to the analysis accuracy
 dt_rng = range(0.005, 0.10, length = 50)
