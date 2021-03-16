@@ -52,7 +52,7 @@ end
 """
 This is a constructor for the Network object with a version flag option
 """
-Network(Mx::Tridiagonal{T,Array{T,1}}, My::Tridiagonal{T,Array{T,1}}, MyA::Array{T,2}, AMx::Array{T,2}, DA::Array{T,2}, null, null_param::Symbol) where T = Network{T, null_param}(Mx, My, MyA, AMx, DA, null)
+Network(Mx::Tridiagonal{T,Array{T,1}}, My::Tridiagonal{T,Array{T,1}}, MyE::Array{T,2}, EMx::Array{T,2}, DE::Array{T,2}, null, null_param::Symbol) where T = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
 
 
 
