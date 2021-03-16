@@ -542,7 +542,7 @@ end
 
 @recipe function f(c2::codim_object; eq_var = 1, view = :xyz)
        
-    legend := :none
+    #legend := :none
     
     markersize := 8.0
     #Plotting begins here
