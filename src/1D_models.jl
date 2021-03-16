@@ -6,7 +6,7 @@
 @parameters g_K V3 V4 E_K #Kv currents
 @parameters g_TREK g_sAHP #TREK and sAHP currents
 @parameters g_ACh k_d E_ACh #Acetylcholine current parameters
-@parameters g_HCN V5 V6 E_HCN
+@parameters g_HCN V5 V6 E_HCN gcAMP
 @parameters I_app C_m  #Extras
 @parameters τn τc τa τb τACh τw τr τs #Time constants
 @parameters C_0 V0
@@ -22,7 +22,7 @@ T_model_eqs = [
                   + -g_K*n*(v-E_K)
                   + -g_TREK*b*(v-E_K)
                   + -g_ACh*ħ(e, k_d)*(v-E_ACh)
-                  + -g_HCN*H_INF(v, V5, V6)*(v-E_HCN) #Add the HCN channels here
+                  + -g_HCN*(H_INF(v, V5, V6)/gcAMP)*(v-E_HCN) #Add the HCN channels here
                   + I_app
                   + W + 0*σ #This 
                   )/C_m ,
