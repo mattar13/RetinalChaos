@@ -89,13 +89,12 @@ plot(c2_map, view = :yx, xlabel = "I_app", ylabel = "g_HCN", legend = true)
 
 #%% Testing noise plots
 p = read_JSON(params_file);
-p[:g_HCN] = 0.0
 u0 = read_JSON(conds_file);
-tspan = (0.0, 120e3)
+tspan = (0.0, 300e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 #Iterate through the 
-test_rng = range(1.0, 15.0, length = 25) #this ranges from halving the parameter to doubling it
+test_rng = range(10.0, 20.0, length = 25) #this ranges from halving the parameter to doubling it
 par_idx = findall(x -> x==:g_K, Symbol.(T_sde.ps))
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
 ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
@@ -122,11 +121,10 @@ sfig1 = plot(trace_plot, p1, p2, p3, layout = grid(4,1, heights = [0.70, 0.10, 0
 
 #%% Testing synchrony of bursts
 p = read_JSON(params_file);
-p[:g_HCN] = 0.0
+p[:σ] = 0.1
 u0 = read_JSON(conds_file);
 tspan = (0.0, 300e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
 plot(sol, vars = [:v])
-
