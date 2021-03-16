@@ -67,8 +67,3 @@ p[:g_ACh] = 0.0
 u0 = read_JSON(conds_file); tspan = (0.0, 120e3)
 HCNp_prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p_HCNp|>extract_dict);
 @time HCNp_sol = solve(HCNp_prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
-
-#%%
-mA =
-bA 
-f(A) = 
