@@ -43,9 +43,9 @@ end
 mutable struct Network{T, N} <: Function
       Mx::Tridiagonal{T,Array{T,1}}
       My::Tridiagonal{T,Array{T,1}}
-      MyA::Array{T,2}
-      AMx::Array{T,2}
-      DA::Array{T,2}
+      MyE::Array{T,2}
+      EMx::Array{T,2}
+      DE::Array{T,2}
       null::Array{T,2}
 end
 
@@ -59,7 +59,7 @@ Network(Mx::Tridiagonal{T,Array{T,1}}, My::Tridiagonal{T,Array{T,1}}, MyA::Array
 """
 This constructs the PDE function so that it can be called
 """
-function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gACh,
+function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gHCN,
         DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0))
     #Set up x diffusion steps
     x_dv = repeat([DX[1]], nx)
@@ -76,27 +76,27 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, ve
     pushfirst!(y_uv, abs(DY[1]))
     Mx = Tridiagonal(x_lv, x_dv, x_uv)
     My = Tridiagonal(y_lv, y_dv, y_uv)
-    MyA = zeros(ny, nx);
-    AMx = zeros(ny, nx);
-    DA = zeros(ny, nx);
+    MyE = zeros(ny, nx);
+    EMx = zeros(ny, nx);
+    DE = zeros(ny, nx);
     d = Binomial(1, μ)
     null = Float64.(rand(d, (ny, nx)))
     if gpu
         gMx = CuArray(Float32.(Mx))
         gMy = CuArray(Float32.(Mx))
-        gAMx = CuArray(Float32.(Mx))
-        gMyA = CuArray(Float32.(Mx))
-        gDA = CuArray(Float32.(Mx))
+        gEMx = CuArray(Float32.(Mx))
+        gMyE = CuArray(Float32.(Mx))
+        gDE = CuArray(Float32.(Mx))
         gNull = CuArray(Float32.(null))
-        return Network(gMx, gMy, gMyA, gAMx, gDA, gNull, version)
+        return Network(gMx, gMy, gMyE, gEMx, gDE, gNull, version)
     else
-        return Network(Mx, My, MyA, AMx, DA, null, version)
+        return Network(Mx, My, MyE, EMx, DE, null, version)
     end
 end
 
 function diffuse(lattice, D, PDE::Network)
-    mul!(PDE.MyA, PDE.My, lattice)
-    mul!(PDE.AMx, lattice, PDE.Mx)
-    DA = D*(PDE.MyA + PDE.AMx)
-    return lattice + DA
+    mul!(PDE.MyE, PDE.My, lattice)
+    mul!(PDE.EMx, lattice, PDE.Mx)
+    DE = D*(PDE.MyE + PDE.EMx)
+    return lattice + DE
 end

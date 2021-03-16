@@ -33,10 +33,10 @@ function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyA, PDE.My, e)
-    mul!(PDE.AMx, e, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
+    mul!(PDE.MyE, PDE.My, e)
+    mul!(PDE.EMx, e, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
@@ -76,10 +76,10 @@ function (PDE::Network{T, :gHCN})(dU, U, p, t) where T <: Real
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyA, PDE.My, e)
-    mul!(PDE.AMx, e, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
+    mul!(PDE.MyE, PDE.My, e)
+    mul!(PDE.EMx, e, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
@@ -119,10 +119,10 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyA, PDE.My, e)
-    mul!(PDE.AMx, e, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
+    mul!(PDE.MyE, PDE.My, e)
+    mul!(PDE.EMx, e, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
 end
@@ -161,59 +161,16 @@ function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyA, PDE.My, e)
-    mul!(PDE.AMx, e, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0).*PDE.null - e)/τACh
+    mul!(PDE.MyE, PDE.My, e)
+    mul!(PDE.EMx, e, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. de = PDE.DE + (ρ*Φ(v, k, V0).*PDE.null - e)/τACh
     @. dW = -W/τw
     nothing
 end
 
-#A model with sparse current injections simulatiing a proportion of the cells being activators
-function (PDE::Network{T, :Sparse_Activity})(dU, U, p, t) where T <: Real
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    W = view(U, :, :, 7)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
-
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
-
-    @. dv = (
-            - g_leak*(v-E_leak)
-            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-            - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            - g_HCN*H_INF(v, V5, V6)*(v-E_HCN)
-            + PDE.null * I_app
-            + W
-        )/C_m
-
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyA, PDE.My, e)
-    mul!(PDE.AMx, e, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0) - e)/τACh
-    @. dW = -W/τw
-    nothing
-end
-
-#A model with sparse current injections simulating the presence of ipRGCs
-function (PDE::Network{T, :PC_ρ})(dU, U, p, t) where T <: Real
+#A model of stage I waves (gap junctionally coupled)
+function (PDE::Network{T, :StageI})(dU, U, p, t) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -232,28 +189,33 @@ function (PDE::Network{T, :PC_ρ})(dU, U, p, t) where T <: Real
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
     
+    #Diffusion of current
+
     @. dv = (
             - g_leak*(v-E_leak)
             - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            #- g_HCN*H_INF(v, V5, V6)*(v-E_HCN)
-            + PDE.null
+            - g_HCN*H_INF(v, V5, V6)*(v-E_HCN)
+            + I_app
             + W
-        )/C_m
+        ) #Keep V as a current at first
+    
+    mul!(PDE.MyE, PDE.My, v)
+    mul!(PDE.EMx, v, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
+
 
     @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
     @. da =  (α*c^4*(1-a) - a)/τa
     @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyA, PDE.My, e)
-    mul!(PDE.AMx, e, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. de = PDE.DA + (ρ*Φ(v, k, V0).*PDE.null - e)/τACh
+    @. de = 0 #Acetylcholine is not changing
     @. dW = -W/τw
     nothing
 end
+
 lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
 lansdell_conds = [:v, :r, :s, :a, :W]
 
