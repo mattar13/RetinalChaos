@@ -9,11 +9,9 @@ println("File set up")
 #%% Set up initial conditions
 nx = 125; ny = 125
 p = read_JSON(params_file);
-#p[:τa] = 15e3
-#p[:τb] = 15e3
 p = extract_dict(p, tar_pars);
 u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
-net = Network(nx, ny; μ = 0.40, version = :gHCN) #μ is the probability a cell is capable of being active
+net = Network(nx, ny; μ = 0.40, version = :gACh) #μ is the probability a cell is capable of being active
 var = 1 #This is the variable we are interested in
 save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
 #%% Lets warm up the solution first
