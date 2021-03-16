@@ -16,7 +16,7 @@ function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
     de = view(dU, :, :, 6)
     dW = view(dU, :,:,7)
 
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, gcAMP, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
     @. dv = (
             - g_leak*(v-E_leak)
@@ -59,7 +59,7 @@ function (PDE::Network{T, :gHCN})(dU, U, p, t) where T <: Real
     de = view(dU, :, :, 6)
     dW = view(dU, :,:,7)
 
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, gcAMP, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
     
     @. dv = (
             - g_leak*(v-E_leak)
@@ -102,7 +102,7 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
     de = view(dU, :, :, 6)
     dW = view(dU, :,:,7)
 
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, gcAMP, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
     @. dv = (
             - g_leak*(v-E_leak)
@@ -145,7 +145,7 @@ function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
     de = view(dU, :, :, 6)
     dW = view(dU, :,:,7)
 
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, gcAMP, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
     @. dv = (
             - g_leak*(v-E_leak)
@@ -187,7 +187,7 @@ function (PDE::Network{T, :StageI})(dU, U, p, t) where T <: Real
     de = view(dU, :, :, 6)
     dW = view(dU, :,:,7)
 
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, gcAMP, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
     
     #Diffusion of current
     mul!(PDE.MyE, PDE.My, v)
