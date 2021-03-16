@@ -35,7 +35,7 @@ function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyE, PDE.My, e)
     mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
     @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
@@ -78,7 +78,7 @@ function (PDE::Network{T, :gHCN})(dU, U, p, t) where T <: Real
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyE, PDE.My, e)
     mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
     @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
@@ -121,7 +121,7 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyE, PDE.My, e)
     mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
     @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
     @. dW = -W/τw
     nothing
@@ -163,7 +163,7 @@ function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
     @. db =  (β*a^4*(1-b) - b)/τb
     mul!(PDE.MyE, PDE.My, e)
     mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
     @. de = PDE.DE + (ρ*Φ(v, k, V0).*PDE.null - e)/τACh
     @. dW = -W/τw
     nothing
@@ -190,6 +190,9 @@ function (PDE::Network{T, :StageI})(dU, U, p, t) where T <: Real
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, g_HCN, V5, V6, E_HCN, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, σ, D, τw) = p
     
     #Diffusion of current
+    mul!(PDE.MyE, PDE.My, v)
+    mul!(PDE.EMx, v, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
 
     @. dv = (
             - g_leak*(v-E_leak)
@@ -197,15 +200,11 @@ function (PDE::Network{T, :StageI})(dU, U, p, t) where T <: Real
             - g_K*n*(v-E_K)
             - g_TREK*b*(v-E_K)
             - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            - g_HCN*H_INF(v, V5, V6)*(v-E_HCN)
+            - g_HCN*H_INF(v, V5, V6)*(v-E_HCN) .* PDE.null
             + I_app
             + W
-        ) #Keep V as a current at first
-    
-    mul!(PDE.MyE, PDE.My, v)
-    mul!(PDE.EMx, v, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
-
+            + PDE.DE
+        ) /C_m
 
     @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
     @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
@@ -247,10 +246,10 @@ function (PDE::Network{T, :Lansdell})(dU, U, p, t) where T <: Real
 
     @. dr = (Λ(v, V3, V4)*(R_INF(v, V3, V4) - r) + α*s*(1-r))/τr
     @. ds = γ*Φ(v, k, V0)-s/τs
-    mul!(PDE.MyA, PDE.My, a)
-    mul!(PDE.AMx, a, PDE.Mx)
-    @. PDE.DA = D*(PDE.MyA + PDE.AMx)
-    @. da = PDE.DA + β*Φ(v, k, V0)-a/τACh
+    mul!(PDE.MyE, PDE.My, a)
+    mul!(PDE.EMx, a, PDE.Mx)
+    @. PDE.DE = D*(PDE.MyA + PDE.AMx)
+    @. da = PDE.DE + β*Φ(v, k, V0)-a/τACh
     @. dW = -W
     nothing
 end
