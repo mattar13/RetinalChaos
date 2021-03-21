@@ -6,7 +6,6 @@
 @parameters g_K V3 V4 E_K #Kv currents
 @parameters g_TREK g_sAHP #TREK and sAHP currents
 @parameters g_ACh k_d E_ACh #Acetylcholine current parameters
-@parameters g_HCN V5 V6 E_HCN gcAMP
 @parameters I_app C_m  #Extras
 @parameters τn τc τa τb τACh τw τr τs #Time constants
 @parameters C_0 V0
