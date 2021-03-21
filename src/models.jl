@@ -76,10 +76,10 @@ NEED DOC
 CuArrays.@cufunc ħ(e, K_d) = (e^2)/(e^2 + K_d)
 ħ(e::CuArray, K_d) = ħ.(e, K_d)
 
-tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0,  :D, :τw, :σ]
-tar_conds = [:v, :n, :c, :a, :b, :e, :W]
-lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
-lansdell_conds = [:v, :r, :s, :a, :W]
+const tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0,  :D, :τw, :σ]
+const tar_conds = [:v, :n, :c, :a, :b, :e, :W]
+const lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
+const lansdell_conds = [:v, :r, :s, :a, :W]
 
 #This function is used to get each time step within the simulation
 get_timesteps(sol) = [sol.t[i] - sol.t[i-1] for i = 2:length(sol.t)]
