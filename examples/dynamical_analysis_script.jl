@@ -81,11 +81,11 @@ print("Codimensional analysis time to complete:")
 plot(c2_map, view = :yx, xlabel = "I_app", ylabel = "g_Ca", legend = true)
 
 #%% Codim 2 analysis
-codim2 = (:g_HCN, :I_app)
+codim2 = (:g_K, :I_app)
 c1_lims = (0.0, 20.0); c2_lims = (-50.0, 1.0) 
 print("Codimensional analysis time to complete:")
 @time c2_map = codim_map(prob_eq, codim2, c1_lims = c1_lims, c2_lims = c2_lims);
-plot(c2_map, view = :yx, xlabel = "I_app", ylabel = "g_HCN", legend = true)
+plot(c2_map, view = :yx, xlabel = "I_app", ylabel = "g_K", legend = true)
 
 #%% Testing noise plots
 p = read_JSON(params_file);
