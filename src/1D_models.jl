@@ -22,7 +22,6 @@ T_model_eqs = [
                   + -g_K*n*(v-E_K)
                   + -g_TREK*b*(v-E_K)
                   + -g_ACh*ħ(e, k_d)*(v-E_ACh)
-                  + -g_HCN*H_INF(v, V5, V6)*(v-E_HCN) #Add the HCN channels here
                   + I_app
                   + W + 0*σ #This 
                   )/C_m ,
