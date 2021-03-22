@@ -1,17 +1,21 @@
 using RetinalChaos
-
-#Run a wave model 
+using Dates
 param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
-save_path = "E:\\Data\\Modelling\\gACH_analysis\\"
+save_path = "C:\\Users\\RennaLabSA1\\Documents\\modelling"
 
-println("File set up")
+open(joinpath(save_path, "log.txt"), "w") do logf
+    
+println(logf, "[$(Dates.now())]: File set up")
 #%%
+println(logf, "[$(Dates.now())]: Beginning simulion")
+println("[$(Dates.now())]: Beginning simulion")
 for sig in range(0.01, 0.25, length = 10), ga in range(0.3, 2.0, length = 10)
 
-    println("Running test for gACh = $(ga) sigma = $(sig)")
-    nx = ny = 64; 
+    println(logf, "[$(Dates.now())]:Running test for gACh = $(ga) sigma = $(sig)")
+    println("[$(Dates.now())]:Running test for gACh = $(ga) sigma = $(sig)")
+    nx = ny = 125; 
     p = read_JSON(params_file);
     p[:σ] = sig
     p[:g_ACh] = ga
@@ -23,16 +27,18 @@ for sig in range(0.01, 0.25, length = 10), ga in range(0.3, 2.0, length = 10)
 
     #%% Lets warm up the solution first
     PDEprob = SDEProblem(net, noise, u0_network, (0.0, 10e3), p)
-    print("Warming up solution:")
+    print(logf, "[$(Dates.now())]: Warming up solution:")
+    print("[$(Dates.now())]: Warming up solution:")
     @time PDEsol = solve(PDEprob, SOSRI(), 
         abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
         save_everystep = false, progress = true, progress_steps = 1
         )
     # extract the last solution and use it as the initial condition for future models 
     # This may take a long time to run
-    print("Running model:")
+    print(logf, "[$(Dates.now())]: Running model:")
+    print("[$(Dates.now())]: Running model:")
     ui_network = PDEsol[end]
-    PDEprob = SDEProblem(net, noise, ui_network, (0.0, 10e3), p)
+    PDEprob = SDEProblem(net, noise, ui_network, (0.0, 300e3), p)
     @time PDEsol = solve(PDEprob, SOSRI(), 
         abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
         save_idxs = save_idxs, progress = true, progress_steps = 1
@@ -40,6 +46,9 @@ for sig in range(0.01, 0.25, length = 10), ga in range(0.3, 2.0, length = 10)
     #%% Plot as a .gif
     save_wave = joinpath(save_path, "sig_$(sig)_gACh_$(ga)_wave_plot.gif")
     save_plot = joinpath(save_path, "sig_$(sig)_gACh_$(ga)_2D_plot.gif")
+    
+    println(logf, "[$(Dates.now())]: Plotting results")
+    println("[$(Dates.now())]: Plotting results")
     dFrame = 50.0
     t_rng = collect(1.0:dFrame:PDEsol.t[end])
     anim = @animate for t = t_rng
@@ -59,4 +68,5 @@ for sig in range(0.01, 0.25, length = 10), ga in range(0.3, 2.0, length = 10)
         plot!(plt, PDEsol.t, PDEsol[i,:])
     end 
     savefig(plt, save_plot)
+end
 end
