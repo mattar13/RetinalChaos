@@ -51,28 +51,6 @@ for (sol_idx, sol) in enumerate(sim)
 end
 eq_plot
 
-#%% Codim analysis with g_HCN
-codim1 = (:g_HCN)
-c1_lims = (0.0, 10.0)
-print("Codimensional analysis time to complete:")
-@time c1_map = codim_map(prob_eq, codim1, c1_lims = c1_lims, eq_res = 10)
-eq_plot = plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
-#Run a ensemble solution
-prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
-test_rng = range(c1_lims[1], c1_lims[2], length = 25) #this ranges from halving the parameter to doubling it
-par_idx = findall(x -> x==codim1, Symbol.(T_sde.ps))
-prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
-ensemble_prob = EnsembleProblem(prob_eq, prob_func = prob_func);
-print("Running a ensemble simulation for :")
-@time sim = solve(ensemble_prob, trajectories = length(test_rng), EnsembleThreads());
-for (sol_idx, sol) in enumerate(sim)
-    dt = 100.0
-    vt = map(t -> sol(t)[1], collect(5e3:dt:tspan[2]))
-    zt = repeat([test_rng[sol_idx]], length(vt))
-    plot!(eq_plot, zt, vt, legend = false, marker = :circle,  c = :blue)
-end
-eq_plot
-
 #%% Codim 2 analysis
 codim2 = (:g_Ca, :I_app)
 c1_lims = (0.0, 20.0); c2_lims = (-50.0, 1.0) 
@@ -87,15 +65,30 @@ print("Codimensional analysis time to complete:")
 @time c2_map = codim_map(prob_eq, codim2, c1_lims = c1_lims, c2_lims = c2_lims);
 plot(c2_map, view = :yx, xlabel = "I_app", ylabel = "g_K", legend = true)
 
+#%% Codim 2 analysis between gCa and gK
+codim2 = (:g_Ca, :g_K)
+c1_lims = (5.0, 30.0); c2_lims = (1.0, 20.0);
+print("Codimensional analysis time to complete:")
+@time c2_map = codim_map(prob_eq, codim2, c1_lims = c1_lims, c2_lims = c2_lims);
+#%%
+plt = plot(c2_map, view = :xy, xlabel = "g_Ca", ylabel = "g_K")#, #xlabel = "I_app", ylabel = "g_Ca", legend = true)
+#%%
+savefig(plt, "figures\\supp_dyn.png")
+#%%
+c3_map
 #%% Testing noise plots
 p = read_JSON(params_file);
+p[:σ] = 1.0
+p[:g_ACh] = 0.0
 u0 = read_JSON(conds_file);
 tspan = (0.0, 300e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+#sol = solve(prob)
+#plot(sol, vars = [:v])
+#%% Iterate through the 
 print("Time it took to simulate $(tspan[2]/1000)s:")
-#Iterate through the 
-test_rng = range(10.0, 20.0, length = 25) #this ranges from halving the parameter to doubling it
-par_idx = findall(x -> x==:g_K, Symbol.(T_sde.ps))
+test_rng = range(0.1, 5.0, length = 50) #this ranges from halving the parameter to doubling it
+par_idx = findall(x -> x==:σ, Symbol.(T_sde.ps))
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
 ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
 print("Running a ensemble simulation for :")
@@ -121,10 +114,11 @@ sfig1 = plot(trace_plot, p1, p2, p3, layout = grid(4,1, heights = [0.70, 0.10, 0
 
 #%% Testing synchrony of bursts
 p = read_JSON(params_file);
-p[:σ] = 0.1
+p[:σ] = 0.25
+p[:g_ACh] = 0.0
 u0 = read_JSON(conds_file);
-tspan = (0.0, 300e3)
+tspan = (0.0, 120e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 print("Time it took to simulate $(tspan[2]/1000)s:")
 sol = solve(prob, SOSRI(), abstol = 2e-2, reltol = 2e-2, maxiters = 1e7, progress = true);
-plot(sol, vars = [:v])
+plot(sol, vars = [:v, :e], layout = grid(2,1))
