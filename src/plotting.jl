@@ -1,16 +1,17 @@
 #Using this will set the default plotting font
-font_title = Plots.font("Arial", 24)
-font_axis = Plots.font("Arial", 12)
-font_legend = Plots.font("Arial", 8)
-pyplot(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
+#font_title = Plots.font("Arial", 24)
+#font_axis = Plots.font("Arial", 12)
+#font_legend = Plots.font("Arial", 8)
+#plotlyjs(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
 
-v_color = :deepskyblue
-n_color = :magenta
-c_color = :green
-a_color = :purple
-b_color = :red
-e_color = :blue
-w_color = :gray
+
+const v_color = :deepskyblue
+const n_color = :magenta
+const c_color = :green
+const a_color = :purple
+const b_color = :red
+const e_color = :blue
+const w_color = :gray
 export v_color, n_color, c_color, a_color, b_color, e_color, w_color
 
 # ALL OF THESE SHOULD BE RECIPES SO WE DON'T HAVE TO IMPORT PLOTS WITH THE FXN
