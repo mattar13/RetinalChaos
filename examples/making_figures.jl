@@ -8,7 +8,7 @@ using StatsBase, Statistics
 font_title = font("Arial", 24)
 font_axis = font("Arial", 12)
 font_legend = font("Arial", 8)
-pyplot(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
+plotlyjs(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
 
 #Set up the file root and default parameters
 param_root = "params\\"
@@ -87,7 +87,8 @@ title!(fig1_C[1], "C", titlepos = :left)
 
 fig1 = plot(fig1_A, fig1_B, fig1_C, layout = grid(3,1, heights = [0.2, 0.3, 0.5]), size = (1000, 1000), grid = false)
 #savefig(fig1, joinpath(save_figs, "Fig1_Model_Dynamics.png"))
-
+#%%
+fig1
 #%% Figure2 Acetylcholine Propagation dynamics
 p = read_JSON(params_file) 
 u0 = read_JSON(conds_file);
