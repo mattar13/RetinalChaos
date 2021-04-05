@@ -64,7 +64,7 @@ export get_timestamps, max_interval_algorithim, timescale_analysis
 using Plots
 export Plots
 include("plotting.jl")
-export plotlyjs, font, Measures
+export gr, font, Measures
 
 export plot, plot!, grid, stroke, @animate #Out of the box, I want to be able to plot
 export title!, heatmap!, scatter!, annotate!, savefig
