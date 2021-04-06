@@ -61,16 +61,23 @@ export get_timestamps, max_interval_algorithim, timescale_analysis
 #println("Fininshed Importing")
 
 #Include all the plotting utilities
-using Plots
+using Plots, Measures
 export Plots
 include("plotting.jl")
-export gr, font, Measures
-
-export plot, plot!, grid, stroke, @animate #Out of the box, I want to be able to plot
-export title!, heatmap!, scatter!, annotate!, savefig
-export heatmap, contour, contour!, hline!, vline!, gif, mov
+#Exporting backends
+export gr, font
+#exporting main plot types
+export plot, plot!, heatmap!, heatmap, scatter!, contour, contour!
+#export minor plotting types
+export hline!, vline!
+#Export annotations and additions
+export title!, annotate!, grid, stroke, mm
+#Export some animations
+export @animate, gif, mov
+#Export save figure
+export savefig
 #Import some other plotting utilities
-using Colors, ColorSchemes, LaTeXStrings, StatsPlots, Dates
+using Colors, ColorSchemes, LaTeXStrings, StatsPlots
 export colormatch, colormap, colorschemes
 
 end
