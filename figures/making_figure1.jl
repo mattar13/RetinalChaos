@@ -1,7 +1,8 @@
-#%% Running and analyzing the model using RetinalChaos.jl
+#%% Making the figure for the overlay of the model
 using RetinalChaos #This might be all that we need for figure 1
-#using StatsBase, Statistics
 #Setup the fonts and stuff
+import RetinalChaos.M_INF
+
 
 font_title = font("Arial", 24)
 font_axis = font("Arial", 12)
@@ -28,24 +29,21 @@ i_app = 10.0
 p = read_JSON(params_file) 
 p[:I_app] = 10.0
 p[:g_ACh] = 0.0
-#Setup initial conditions
 u0 = read_JSON(conds_file);
-#Setup figure 1 problem
+#Setup figure problem
 tspan = (0.0, 60e3)
 prob = ODEProblem(T_ode, u0 |> extract_dict, tspan, p |> extract_dict);
-#Run the simulation
+
 print("Time it took to simulate $(tspan[2]/1000)s:")
 @time sol = solve(prob); 
 
-#to do the analysis we should set a specific dt
+#%% to do the analysis we should set a specific dt
 dt = 0.1 #set the time differential
-t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
-v_t = map(t -> sol(t)[1], t_rng); #extract according to the interval
-sim_thresh = calculate_threshold(v_t)
-spike_array = (v_t .> sim_thresh)
-timestamps = get_timestamps(spike_array; dt = dt)
-burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(spike_array, dt = dt);
-ts_analysis = timescale_analysis(v_t, dt = dt)
+v_thresh = calculate_threshold(sol; idx = 1)
+timestamps = get_timestamps(sol, dt = dt)
+burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(sol, dt = dt);
+ts_analysis = timescale_analysis(sol, dt = dt)
+#%%
 spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
 
 #%% Figure part A
@@ -53,48 +51,70 @@ xlims = (burst_idxs[2][1], burst_idxs[2][1]+200)
 elapsed_time = xlims[2]-xlims[1]
 dx_lims = 20
 xticks = (collect(xlims[1]:dx_lims:xlims[2]), Int64.(collect(0:dx_lims:elapsed_time)))
-fig1_Aa = plot(sol, vars = [:v, :n,], legend = :none, plotdensity = Int(100e3),
+fig1_Aa = plot(sol, vars = [:v, :n,], label = "", plotdensity = Int(100e3),
     ylabel = ["Vₜ (mV)" "Nₜ"], xlabel = ["" "Time (ms)"], 
     lw = 2.0, c = [v_color n_color],
     layout = grid(2, 1),grid = false,
-    xlims = xlims, xticks = xticks
+    xlims = xlims, xticks = xticks, 
+    link = :x, margin = -1.0mm, widen = false
 )
-
+plot!(fig1_Aa[1], xticks = false)
+hline!(fig1_Aa, [v_thresh], label = "Spike threshold", c = :red, linewidth = 2.0, legend = :bottomright)
 dV = 0.1
 vrng = sol(burst_idxs[2][1]:dV:burst_idxs[2][2], idxs = 1)
 dN = 0.1
 nrng = sol(burst_idxs[2][1]:dN:burst_idxs[2][2], idxs = 2)
-fig1_Ab = plot(vrng, nrng, ylabel = "Nₜ", xlabel = "Vₜ (mV)")
-fig1_A = plot(fig1_Aa, fig1_Ab, layout = grid(1,2))
+fig1_Ab = plot(nrng, vrng, xlabel = "Nₜ", ylabel = "Vₜ (mV)", label = "", c = :black)
+hline!(fig1_Ab, [v_thresh], label = "Spike threshold", seriestype = :scatter, c = :red, legend = :bottomright)
+
+fig1_A = plot(fig1_Aa, fig1_Ab, layout = grid(1,2, widths = (0.75, 0.25)), margin = 1mm)
 title!(fig1_A[1], "A", titlepos = :left)
 
-
-#%% Figure part B
+# Figure 1 B
 xlims = (burst_idxs[2][1]-1500, burst_idxs[2][2]+1500)
 elapsed_time = xlims[2] - xlims[1]
 dx_lims = 500
 xticks = (collect(xlims[1]:dx_lims:xlims[2]), (collect(0:dx_lims/1000:elapsed_time/1000)))
-fig1_B = plot(sol, vars = [:v, :c], legend = :none, plotdensity = Int64(100e3),
+fig1_Ba = plot(sol, vars = [:v, :c], legend = :none, plotdensity = Int64(100e3),
     ylabel = ["Vₜ (mV)" "[Cₜ] mM"], xlabel = ["" "Time (s)"], 
     lw = 2.0, c = [v_color c_color], 
     layout = grid(2, 1),grid = false,
-    xlims = xlims, xticks = xticks
+    xlims = xlims, xticks = xticks, 
+    margin = 0.0mm# added margins call here
 )
+plot!(fig1_Ba[1], xticks = false)
+f(v) = p[:δ]*(-p[:g_Ca] * M_INF(v, p[:V1], p[:V2]) * (v - p[:E_Ca]))
+fig1_Bb = plot(f, -50, 10.0, c = :green, label = "", linewidth = 3.0, linestyle = :dash, xlabel = "Vₜ (mV)", ylabel = "[δC] (mM)")
+fig1_B = plot(fig1_Ba, fig1_Bb, layout = grid(1,2, widths = (0.75, 0.25)))
+
 title!(fig1_B[1], "B", titlepos = :left)
 
+# Figure 1 C
 dx_lims = 5e3
 xticks = (
     collect(sol.t[1]:dx_lims:sol.t[end]), 
     collect(sol.t[1]/1000:dx_lims/1000:sol.t[end]/1000)
     )
-fig1_C = plot(sol, vars = [:c, :a, :b, :v], legend = :none, 
-    ylabel = ["Cₜ" "Aₜ" "Bₜ" "Vₜ"], xlabel = ["" "" "" "time (s)"], 
+fig1_Ca = plot(sol, vars = [:c, :a, :b, :v], legend = :none, 
+    ylabel = ["[Cₜ](mM)" "Aₜ" "Bₜ" "Vₜ (mV)"], xlabel = ["" "" "" "time (s)"], 
     lw = 2.0, c = [c_color a_color b_color v_color],
-    layout = grid(4, 1),grid = false,
-    xticks = xticks 
+    layout = grid(4, 1), grid = false,
+    xticks = xticks, margin = 0.0mm 
 )
+plot!(fig1_Ca[1], xticks = false)
+plot!(fig1_Ca[2], xticks = false)
+plot!(fig1_Ca[3], xticks = false)
+
+fig1_Cb = plot(sol, vars = (:a, :c), label = "", ylabel = "[Cₜ] (mM)", xlabel = "Aₜ", c = a_color, linewidth = 3.0)
+fig1_Cc = plot(sol, vars = (:b, :a), label = "", ylabel = "Aₜ", xlabel = "Bₜ", c = b_color, linewidth = 3.0)
+fig1_Cd = plot(sol, vars = (:v, :b), label = "", ylabel = "Bₜ", xlabel = "Vₜ (mV)", c = v_color, linewidth = 3.0)
+fig1_C = plot(fig1_Ca, plot(fig1_Cb, fig1_Cc, fig1_Cd, layout = grid(3,1)), layout = grid(1,2, widths = (0.75, 0.25)))
+
 title!(fig1_C[1], "C", titlepos = :left)
 
-fig1 = plot(fig1_A, fig1_B, fig1_C, layout = grid(3,1, heights = [0.2, 0.3, 0.5]), size = (1000, 1000), grid = false)
+fig1 = plot(fig1_A, fig1_B, fig1_C, 
+    layout = grid(3,1, heights = [0.2, 0.3, 0.5]), 
+    size = (1000, 1000), grid = false
+    )
 #%% Save the figure if you are satusfyed with it
 savefig(fig1, joinpath(save_figs, "Fig1_Model_Dynamics.png"))
