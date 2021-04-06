@@ -21,6 +21,25 @@ if isdir(save_figs) == false
     mkdir(save_figs)
 end
 println("Script settings loaded")
+#%% Lets measure the difference between the adaptive properties of the model vs the timestepping 
+p = read_JSON(params_file) 
+p[:I_app] = 10.0
+p[:g_ACh] = 0.0
+u0 = read_JSON(conds_file);
+#Setup figure problem
+tspan = (0.0, 60e3)
+prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+print("Time it took to simulate $(tspan[2]/1000)s:")
+@time sol = solve(prob_sde); 
+
+dt = 0.1
+timesteps = tspan[1]:dt:tspan[2]
+timestep_average = sum(sol(timesteps, idxs = 1))/length(timesteps)
+adaptive_average = sum(sol(sol.t, idxs =1))/length(sol.t)
+plot(sol, vars = [:v])
+hline!([timestep_average], c = :black, label = "timestep average")
+hline!([adaptive_average], c = :green, label = "adaptive average")
+
 
 #%% This supplemental figure compares the dt to the analysis accuracy
 dt_rng = range(0.005, 0.10, length = 50)
