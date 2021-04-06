@@ -18,6 +18,16 @@ if isdir(save_figs) == false
     mkdir(save_figs)
 end
 
+#%% Running a plain simulations
+p = read_JSON(params_file);
+p[:σ] = 0.01
+p[:τw] = 1000
+u0 = read_JSON(conds_file);
+tspan = (0.0, 600e3) #10 mins long
+prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+sol = solve(prob; progress = true)
+
+plot(sol, vars = [:v])
 #%% Supplemental figure, Bifurcation analysis of voltage injections
 p = read_JSON(params_file) 
 u0 = read_JSON(conds_file)
@@ -28,7 +38,10 @@ tspan = (0.0, 30e3);
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 #We can superimpose a SDE problem overtop
 prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
-
+#%% Conducting an Equilibrium analysis
+sol_eq = find_equilibria(prob_eq)
+#%%
+sol_sde = solve(prob_sde)
 #%% Codim 1 analysis
 codim1 = (:I_app)
 c1_lims = (-50.0, 50.0)
@@ -78,8 +91,8 @@ savefig(plt, "figures\\supp_dyn.png")
 c3_map
 #%% Testing noise plots
 p = read_JSON(params_file);
-p[:σ] = 1.0
-p[:g_ACh] = 0.0
+p[:σ] = 0.01
+p[:τw] = 1000
 u0 = read_JSON(conds_file);
 tspan = (0.0, 300e3)
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
@@ -87,8 +100,8 @@ prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 #plot(sol, vars = [:v])
 #%% Iterate through the 
 print("Time it took to simulate $(tspan[2]/1000)s:")
-test_rng = range(0.1, 5.0, length = 50) #this ranges from halving the parameter to doubling it
-par_idx = findall(x -> x==:σ, Symbol.(T_sde.ps))
+test_rng = range(1.0, 30.0, length = 50) #this ranges from halving the parameter to doubling it
+par_idx = findall(x -> x==:g_Leak, Symbol.(T_sde.ps))
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
 ensemble_prob = EnsembleProblem(prob, prob_func = prob_func);
 print("Running a ensemble simulation for :")
