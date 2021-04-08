@@ -4,7 +4,7 @@ using RetinalChaos
 font_title = font("Arial", 24)
 font_axis = font("Arial", 12)
 font_legend = font("Arial", 8)
-pyplot(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
+gr(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
 
 #Set up the file root and default parameters
 param_root = "params\\"
@@ -18,10 +18,8 @@ if isdir(save_figs) == false
     mkdir(save_figs)
 end
 
-#%% Running a plain simulations
+#%% Running a plain simulation
 p = read_JSON(params_file);
-p[:σ] = 0.01
-p[:τw] = 1000
 u0 = read_JSON(conds_file);
 tspan = (0.0, 600e3) #10 mins long
 prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
@@ -36,21 +34,22 @@ p[:g_ACh] = 0.0 #Remove g_ACh influence
 p[:g_TREK] = 0.0 #Remove g_TREK influence
 tspan = (0.0, 30e3);
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
-#We can superimpose a SDE problem overtop
 prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
-#%% Conducting an Equilibrium analysis
-sol_eq = find_equilibria(prob_eq)
-#%%
-sol_sde = solve(prob_sde)
+eq_analysis = find_equilibria(prob_eq)
+sol_sde = solve(prob_sde, progress = true)
 #%% Codim 1 analysis
 codim1 = (:I_app)
-c1_lims = (-50.0, 50.0)
+c1_lims = (-60.0, 50.0)
 print("Codimensional analysis time to complete:")
-@time c1_map = codim_map(prob_eq, codim1, c1_lims = c1_lims, eq_res = 10)
+@time c1_map = codim_map(prob_eq, codim1, c1_lims = c1_lims, equilibrium_resolution = 10)
+#%% Point to possible bifurcation points
+c_vals = map(x -> x[1], c1_map.points)
+saddle_rng = findall(map(x -> length(x.saddle) >= 1, c1_map.equilibria))
+#%% 
 eq_plot = plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
 #Run a ensemble function (after resetting the function)
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
-test_rng = range(c1_lims[1], c1_lims[2], length = 25) #this ranges from halving the parameter to doubling it
+test_rng = map(x -> x[1], c1_map.points) #this ranges from halving the parameter to doubling it
 par_idx = findall(x -> x==codim1, Symbol.(T_sde.ps))
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
 ensemble_prob = EnsembleProblem(prob_eq, prob_func = prob_func);
@@ -63,7 +62,37 @@ for (sol_idx, sol) in enumerate(sim)
     plot!(eq_plot, zt, vt, legend = false, marker = :circle,  c = :blue)
 end
 eq_plot
+#%%
+#plot!(eq_plot, c1_map.points[saddle_rng[end]], c1_map.equilibria[saddle_rng[end]], view = :yx, seriestype = :scatter)
+bif_value = c1_map.points[saddle_rng[end]][1]
+bif_eq = c1_map.equilibria[saddle_rng[end]].saddle
+plot!(eq_plot, [bif_value], [bif_eq[1]], marker = :square, seriestype = :scatter)
 
+#%%
+
+#%% we want to write in some bifurcation cleaning
+dI_0 = 0.001
+iterations = 10
+c_points = map(x -> x[1], c1_map.points)
+has_saddle = map(x -> !isempty(x.saddle), c1_map.equilibria)
+point0 = findall(has_saddle)[end] #The last saddle point is where we should start
+
+I = c_points[point0]
+#%% Repeat through the iterations
+for i in 1:iterations
+    pI = Dict(Symbol.(T_ode.ps) .=> prob_eq.p)
+    pI[codim1] = I
+    prob_eq_I = ODEProblem(T_ode, prob_eq.u0, prob_eq.tspan, pI|>extract_dict)
+    eq_analysis_I = find_equilibria(prob_eq_I)
+    println(eq_analysis_I)
+    I += dI_0
+end
+
+#%% A saddle node should be somewhere imbetween these two points where the saddle equilibrium and stable are identical
+#%%
+plot(c_points, has_saddle)
+plot!([last_saddle], [1.0], seriestype = :scatter)
+plot!([first_non_saddle], [0.0], seriestype = :scatter)
 #%% Codim 2 analysis
 codim2 = (:g_Ca, :I_app)
 c1_lims = (0.0, 20.0); c2_lims = (-50.0, 1.0) 
