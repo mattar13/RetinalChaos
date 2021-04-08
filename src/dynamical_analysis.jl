@@ -77,7 +77,7 @@ export print, length
 
 #Conduct a stability analysis of the current
 function find_equilibria(prob::ODEProblem;
-        vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), resolution = 10,
+        vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), equilibrium_resolution = 10,
         precision = 2, check_min = 1e-8
     )
     stable = Array{Array{Float64}}([])
@@ -88,9 +88,9 @@ function find_equilibria(prob::ODEProblem;
     storage = Array{Array{Float64}}([])
 
     var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
-    for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], resolution)) 
+    for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], equilibrium_resolution)) 
         #Iterate through the x range
-        for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], resolution))
+        for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], equilibrium_resolution))
             #Iterate through the y range looking for stable points
             
             #We really may only need to check for stable points if the dU is low
@@ -151,23 +151,124 @@ end
 Make a 1D codim object
 """
 function codim_map(prob, codim::Symbol;
-        c1_lims = (-10.0, 10.0), resolution = 50, eq_res = 3,
+        c1_lims = (-10.0, 10.0), codim_resolution = 50,
+        saddle_continuation::Bool = true, 
+        kwargs... #finding equilibria args
     )
     points_list = Array{Tuple{Float64}}([])
     equilibria_list = Array{equilibria_object{Float64}}([])
-    c1_range = LinRange(c1_lims[1], c1_lims[2], resolution)
+    c1_range = LinRange(c1_lims[1], c1_lims[2], codim_resolution)
+    cont_toggle = false
     for (idx1, c1) in enumerate(c1_range)
         pv = prob.p
         pv[codim |> p_find] = c1
         prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
-        equilibria = find_equilibria(prob_i; resolution = eq_res)
+        equilibria = find_equilibria(prob_i; kwargs...)
+        #in order to pass we want to make sure that there has at least been a saddle node first
+
+        if cont_toggle == false && !isempty(equilibria.saddle)
+            cont_toggle = true
+            if saddle_continuation && length(points_list) > 1
+                points_cont, eq_cont = eq_continuation(prob_i, (c1_range[idx1-1], c1_range[idx1]), codim; forward = false, kwargs...) #Step back
+                splice!(points_list, idx1:idx1-1, points_cont)
+                splice!(equilibria_list, idx1:idx1-1, eq_cont)
+            end
+        end
+        
+        if saddle_continuation && cont_toggle && isempty(equilibria.saddle)
+            points_cont, eq_cont = eq_continuation(prob_i, (c1_range[idx1-1], c1_range[idx1]), codim) #Step back
+            push!(points_list, points_cont...)
+            push!(equilibria_list, eq_cont...)
+            saddle_continuation = false #Use it only once
+        end
         points = c1
         #println(points |> typeof)
-        push!(points_list, (points,))
+        push!(points_list, (c1,))
         push!(equilibria_list, equilibria)
     end
-    codim_object((codim,), points_list, equilibria_list)
+    codim_object((codim,), points_list, equilibria_list)    
 end
+
+function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
+        forward = true, max_iters = 100, min_step = 1.0e-15, 
+        kwargs...
+    ) where T <: Real
+
+    points_list = Array{Tuple{Float64}}([])
+    equilibria_list = Array{equilibria_object{Float64}}([])
+    bifurcation_point = 0.0
+    bifurcation_eq = nothing
+    #Adaptive continuation
+    if forward
+        I = rng[1] #Step back
+        In = rng[2] #we start here 
+        ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
+        iter = 0
+        #println("continuation: $(rng[1]) -> $(rng[2])")
+        while I < In && ϵ > min_step && iter <= max_iters 
+            iter += 1
+            I += ϵ #Increment I slowly
+            pv = prob.p
+            pv[par |> p_find] = I #plug in the newly incremented equilibria
+            prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+            equilibria = find_equilibria(prob_i; kwargs...)
+
+            #println(points |> typeof)
+            #If the number of saddle equilibria drops to 0, then return to the previous
+            if length(equilibria) == 2 
+                #This is a flaw of the find equilibria algorithim, move away from this point
+                I -= ϵ #walk back
+                ϵ /= 2 #Divide epsilon in half
+            elseif isempty(equilibria.saddle) #The saddle node is terminated past here
+                push!(points_list, (I,))
+                push!(equilibria_list, equilibria)
+                I -= ϵ #walk back
+                ϵ /= 2 #Divide epsilon in half
+
+            else #None of these contiditons were met alter the bifurcation eq
+                push!(points_list, (I,))
+                push!(equilibria_list, equilibria)
+            end
+
+        end
+    else #forward == false
+        I = rng[2] #Step back
+        In = rng[1] #we start here 
+        ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
+        iter = 0
+        #println("reverse continuation: $(rng[2]) -> $(rng[1])")
+        while I > In && ϵ > min_step && iter < max_iters 
+            iter += 1
+            I -= ϵ #decrement I slowly
+            pv = prob.p
+            pv[par |> p_find] = I #plug in the newly incremented equilibria
+            prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+            equilibria = find_equilibria(prob_i; kwargs...)
+            #println(points |> typeof)
+            #we will add each point and new equilibria to the solution
+            #If the number of saddle equilibria drops to 0, then return to the previous
+              if length(equilibria) == 2 
+                #This is a flaw of the find equilibria algorithim, move away from this point
+                I += ϵ #walk back
+                ϵ /= 2 #Divide epsilon in half
+            elseif isempty(equilibria.saddle) #The saddle node is terminated past here
+                push!(points_list, (I,))
+                push!(equilibria_list, equilibria)
+                I += ϵ #walk back
+                ϵ /= 2 #Divide epsilon in half
+            else #None of these contiditons were met alter the bifurcation eq
+                push!(points_list, (I,))
+                push!(equilibria_list, equilibria)
+            end
+        end
+    end
+    #we want to sort the points before adding them
+    points_vals = map(point -> point[1], points_list)
+    sort_idxs = sortperm(points_vals)
+    #println(sort_idxs)
+    return points_list[sort_idxs], equilibria_list[sort_idxs]
+end
+
 
 function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol};
         c1_lims = (-10.0, 10.0), c2_lims = (0.0, 10.0), resolution = 50, eq_res = 3,
@@ -183,7 +284,7 @@ function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol};
             pv[codim[1] |> p_find] = c1
             pv[codim[2] |> p_find] = c2
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
-            equilibria = find_equilibria(prob_i; resolution = eq_res)
+            equilibria = find_equilibria(prob_i; kwargs...)
             points = (c1, c2)
             #println(points |> typeof)
             push!(points_list, points)
