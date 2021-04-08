@@ -47,16 +47,19 @@ ts_analysis = timescale_analysis(sol, dt = dt)
 spike_dur = sum(ts_analysis[1])/length(ts_analysis[1])
 
 #%% Figure part A
-xlims = (burst_idxs[2][1], burst_idxs[2][1]+200)
+burst_lims = burst_idxs[2]
+xlims = (burst_lims[1], burst_lims[1]+200)
 elapsed_time = xlims[2]-xlims[1]
 dx_lims = 20
 xticks = (collect(xlims[1]:dx_lims:xlims[2]), Int64.(collect(0:dx_lims:elapsed_time)))
+
+
 fig1_Aa = plot(sol, vars = [:v, :n,], label = "", plotdensity = Int(1e5),
     ylabel = ["Vₜ (mV)" "Nₜ"], xlabel = ["" "Time (ms)"], 
     lw = 2.0, c = [v_color n_color],
     layout = grid(2, 1),grid = false,
     xlims = xlims, xticks = xticks, 
-    link = :x, margin = -1.0mm, widen = false
+    link = :x, margin = 0.0mm, widen = false
 )
 plot!(fig1_Aa[1], xticks = false)
 hline!(fig1_Aa, [v_thresh], label = "Spike threshold", c = :red, linewidth = 2.0, legend = :bottomright)
@@ -69,12 +72,12 @@ fig1_A = plot(fig1_Aa, fig1_Ab, layout = grid(1,2, widths = (0.75, 0.25)), margi
 title!(fig1_A[1], "A", titlepos = :left)
 
 # Figure 1 B
-xlims = (burst_idxs[2][1]-1500, burst_idxs[2][2]+1500)
+xlims = (burst_lims[1]-1500, burst_lims[2]+1500)
 elapsed_time = xlims[2] - xlims[1]
 dx_lims = 500
 xticks = (collect(xlims[1]:dx_lims:xlims[2]), (collect(0:dx_lims/1000:elapsed_time/1000)))
 fig1_Ba = plot(sol, vars = [:v, :c], legend = :none, plotdensity = Int64(1e5),
-    ylabel = ["Vₜ (mV)" "[Cₜ] mM"], xlabel = ["" "Time (s)"], 
+    ylabel = ["Vₜ (mV)" "[Cₜ] (μM)"], xlabel = ["" "Time (s)"], 
     lw = 2.0, c = [v_color c_color], 
     layout = grid(2, 1),grid = false,
     xlims = xlims, xticks = xticks, 
@@ -95,7 +98,7 @@ xticks = (
     round.(Int64, collect((xlims[1]-xlims[1])/1000:dx_lims/1000:(xlims[2]-xlims[1])/1000))
     )
 fig1_Ca = plot(sol, vars = [:c, :a, :b, :v], legend = :none, 
-    ylabel = ["[Cₜ](mM)" "Aₜ" "Bₜ" "Vₜ (mV)"], xlabel = ["" "" "" "Time (s)"], 
+    ylabel = ["[Cₜ](μM)" "Aₜ" "Bₜ" "Vₜ (mV)"], xlabel = ["" "" "" "Time (s)"], 
     lw = 2.0, c = [c_color a_color b_color v_color],
     layout = grid(4, 1), grid = false,
     xlims = xlims,
@@ -107,7 +110,7 @@ plot!(fig1_Ca[2], xticks = false)
 plot!(fig1_Ca[3], xticks = false)
 
 t_rng = xlims[1]:dt:xlims[2]
-fig1_Cb = plot(sol(t_rng, idxs = 4), sol(t_rng, idxs = 3), label = "", ylabel = "[Cₜ] (mM)", xlabel = "Aₜ", c = a_color, linewidth = 3.0)
+fig1_Cb = plot(sol(t_rng, idxs = 4), sol(t_rng, idxs = 3), label = "", ylabel = "[Cₜ] (μM)", xlabel = "Aₜ", c = a_color, linewidth = 3.0)
 fig1_Cc = plot(sol(t_rng, idxs = 5), sol(t_rng, idxs = 4), label = "", ylabel = "Aₜ", xlabel = "Bₜ", c = b_color, linewidth = 3.0)
 fig1_Cd = plot(sol(t_rng, idxs = 1), sol(t_rng, idxs = 5), label = "", ylabel = "Bₜ", xlabel = "Vₜ (mV)", c = v_color, linewidth = 3.0)
 fig1_C = plot(fig1_Ca, plot(fig1_Cb, fig1_Cc, fig1_Cd, layout = grid(3,1)), layout = grid(1,2, widths = (0.75, 0.25)))
