@@ -7,7 +7,8 @@ save_path = "C:\\Users\\RennaLabSA1\\Documents\\modelling"
 
 println("[$(Dates.now())]: Beginning simulion")
 ga = 1.1
-for sig in range(0.01, 1.0, length = 10)#, ga in range(0.1, 1.1, length = 2)
+sig = 0.25
+for rho in range(0.1, 1.0, length = 50)#for sig in range(0.01, 1.0, length = 10)#, ga in range(0.1, 1.1, length = 2)
     println("[$(Dates.now())]:Running test for gACh = $(ga) sigma = $(sig)")
     nx = ny = 64; 
     p = read_JSON(params_file);
@@ -15,7 +16,7 @@ for sig in range(0.01, 1.0, length = 10)#, ga in range(0.1, 1.1, length = 2)
     p[:g_ACh] = ga
     p = extract_dict(p, tar_pars);
     u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
-    net = Network(nx, ny; μ = 0.60, version = :gACh) #μ is the probability a cell is capable of being active
+    net = Network(nx, ny; μ = rho, version = :ρ) #μ is the probability a cell is capable of being active
     var = 1 #This is the variable we are interested in
     save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
 
@@ -36,8 +37,8 @@ for sig in range(0.01, 1.0, length = 10)#, ga in range(0.1, 1.1, length = 2)
         save_idxs = save_idxs, progress = true, progress_steps = 1
         )
     # Plot as a .gif
-    save_wave = joinpath(save_path, "sig_$(replace(string(sig), "." => "_"))_gACh_$(replace(string(ga), "." => "_"))_wave_plot.gif")
-    save_plot = joinpath(save_path, "sig_$(replace(string(sig), "." => "_"))_gACh_$(replace(string(ga), "." => "_"))_2D_plot.png")
+    save_wave = joinpath(save_path, "sig_$(replace(string(sig), "." => "_"))_gACh_$(replace(string(ga), "." => "_"))_rho_$(replace(string(rho), "." => "_"))wave_plot.gif")
+    save_plot = joinpath(save_path, "sig_$(replace(string(sig), "." => "_"))_gACh_$(replace(string(ga), "." => "_"))_rho_$(replace(string(rho), "." => "_"))2D_plot.png")
     
     println("[$(Dates.now())]: Plotting results")
     dFrame = 50.0
