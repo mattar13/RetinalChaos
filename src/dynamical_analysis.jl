@@ -146,49 +146,6 @@ struct codim_object{N, T}
     equilibria::Array{equilibria_object{T}}
 end
 
-
-"""
-Make a 1D codim object
-"""
-function codim_map(prob, codim::Symbol;
-        c1_lims = (-10.0, 10.0), codim_resolution = 50,
-        saddle_continuation::Bool = true, 
-        kwargs... #finding equilibria args
-    )
-    points_list = Array{Tuple{Float64}}([])
-    equilibria_list = Array{equilibria_object{Float64}}([])
-    c1_range = LinRange(c1_lims[1], c1_lims[2], codim_resolution)
-    cont_toggle = false
-    for (idx1, c1) in enumerate(c1_range)
-        pv = prob.p
-        pv[codim |> p_find] = c1
-        prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
-        equilibria = find_equilibria(prob_i; kwargs...)
-        #in order to pass we want to make sure that there has at least been a saddle node first
-
-        if cont_toggle == false && !isempty(equilibria.saddle)
-            cont_toggle = true
-            if saddle_continuation && length(points_list) > 1
-                points_cont, eq_cont = eq_continuation(prob_i, (c1_range[idx1-1], c1_range[idx1]), codim; forward = false, kwargs...) #Step back
-                splice!(points_list, idx1:idx1-1, points_cont)
-                splice!(equilibria_list, idx1:idx1-1, eq_cont)
-            end
-        end
-        
-        if saddle_continuation && cont_toggle && isempty(equilibria.saddle)
-            points_cont, eq_cont = eq_continuation(prob_i, (c1_range[idx1-1], c1_range[idx1]), codim) #Step back
-            push!(points_list, points_cont...)
-            push!(equilibria_list, eq_cont...)
-            saddle_continuation = false #Use it only once
-        end
-        points = c1
-        #println(points |> typeof)
-        push!(points_list, (c1,))
-        push!(equilibria_list, equilibria)
-    end
-    codim_object((codim,), points_list, equilibria_list)    
-end
-
 function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         forward = true, max_iters = 100, min_step = 1.0e-15, 
         kwargs...
@@ -204,7 +161,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[2] #we start here 
         ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
         iter = 0
-        #println("continuation: $(rng[1]) -> $(rng[2])")
+        println("continuation: $(rng[1]) -> $(rng[2])")
         while I < In && ϵ > min_step && iter <= max_iters 
             iter += 1
             I += ϵ #Increment I slowly
@@ -236,7 +193,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[1] #we start here 
         ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
         iter = 0
-        #println("reverse continuation: $(rng[2]) -> $(rng[1])")
+        println("reverse continuation: $(rng[2]) -> $(rng[1])")
         while I > In && ϵ > min_step && iter < max_iters 
             iter += 1
             I -= ϵ #decrement I slowly
@@ -269,29 +226,122 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
     return points_list[sort_idxs], equilibria_list[sort_idxs]
 end
 
-
-function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol};
-        c1_lims = (-10.0, 10.0), c2_lims = (0.0, 10.0), resolution = 50, eq_res = 3,
-    )
-    points_list = Array{Tuple{Float64, Float64}}([])
-    equilibria_list = Array{equilibria_object{Float64}}([])
-    c1_range = LinRange(c1_lims[1], c1_lims[2], resolution)
-    c2_range = LinRange(c2_lims[1], c2_lims[2], resolution)
+"""
+Make a 1D codim object
+"""
+function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
+        codim_resolution = 50, saddle_continuation::Bool = true, 
+        kwargs... #finding equilibria args
+    ) where T <: Real
+    points_list = Array{Tuple{T}}([])
+    equilibria_list = Array{equilibria_object{T}}([])
+    c1_range = LinRange(c1_lims[1], c1_lims[2], codim_resolution)
+    cont_toggle = false
+    n_equilibria = -1
     for (idx1, c1) in enumerate(c1_range)
-        #println(idx1)
-        for (idx2, c2) in enumerate(c2_range)
-            pv = prob.p
-            pv[codim[1] |> p_find] = c1
-            pv[codim[2] |> p_find] = c2
-            prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
-            equilibria = find_equilibria(prob_i; kwargs...)
-            points = (c1, c2)
-            #println(points |> typeof)
-            push!(points_list, points)
-            push!(equilibria_list, equilibria)
+        pv = prob.p
+        pv[codim |> p_find] = c1
+        prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+        equilibria = find_equilibria(prob_i; kwargs...)
+        #in order to pass we want to make sure that there has at least been a saddle node first
+        
+        if n_equilibria == -1 #This is the starting point
+            n_equilibria = length(equilibria)
+        elseif length(equilibria) > n_equilibria
+            if saddle_continuation
+                points_cont, eq_cont = eq_continuation(prob_i, (c1_range[idx1-1], c1_range[idx1]), codim; forward = false, kwargs...) #Step back
+                splice!(points_list, idx1:idx1-1, points_cont)
+                splice!(equilibria_list, idx1:idx1-1, eq_cont)
+            end
+            n_equilibria = length(equilibria)
+        elseif length(equilibria) < n_equilibria
+            if saddle_continuation
+                points_cont, eq_cont = eq_continuation(prob_i, (c1_range[idx1-1], c1_range[idx1]), codim) #Step back
+                push!(points_list, points_cont...)
+                push!(equilibria_list, eq_cont...)
+            end
+            #saddle_continuation = false #Use it only once
+            n_equilibria = length(equilibria)
+        elseif length(equilibria) == n_equilibria
+            n_equilibria = length(equilibria)
         end
+
+        points = c1
+        push!(points_list, (c1,))
+        push!(equilibria_list, equilibria)
+    end
+    codim_object((codim,), points_list, equilibria_list)    
+end
+
+#This is for a 1 dimensional array
+"""
+This function finds a bifurcation which is the elimination of a saddle node at a junction
+"""
+function find_bifurcation(c1_map::codim_object{1, T}) where T <: Real
+    c_vals = map(x -> x[1], c1_map.points)
+    bif_value = T[]
+    bif_eq = []
+
+    #println(n_eqs)
+    saddle_rng = findall(map(x -> length(x.saddle) >= 1, c1_map.equilibria))
+    if saddle_rng[1] != 1
+        push!(bif_value, c1_map.points[saddle_rng[1]][1])
+        push!(bif_eq, c1_map.equilibria[saddle_rng[1]])
+    end
+    
+    if saddle_rng[end] != length(c_vals)
+        push!(bif_value, c1_map.points[saddle_rng[end]][1])
+        push!(bif_eq, c1_map.equilibria[saddle_rng[end]])
+    end
+    #Method 2 for finding bifurcations
+    #n_eqs = map(x -> length(x), c1_map.equilibria)
+    #change = n_eqs[1:end-1] .- n_eqs[2:end]
+    #pre_saddle = findall(change.==-2).+1 #detect a decrease in equilibrium by 2
+    #post_saddle = findall(change.==2) #detect a decrease in equilibrium by 2
+
+    #Push bifurcations for reverse continuation
+    #if !isempty(pre_saddle)
+    #    push!(bif_value, c1_map.points[pre_saddle][1][1])
+    #    push!(bif_eq, c1_map.equilibria[pre_saddle][1])
+    #end
+    #Push bifurcations for continuation
+    #if !isempty(post_saddle)
+    #    push!(bif_value, c1_map.points[post_saddle][1][1])
+    #    push!(bif_eq, c1_map.equilibria[post_saddle][1])
+    #end
+    return bif_value, bif_eq
+end
+
+function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol}, c1_lims::Tuple{T, T}, c2_lims::Tuple{T, T};  
+        codim_resolution = 10,
+        kwargs...
+    ) where T <: Real
+    points_list = Array{Tuple{T, T}}([])
+    equilibria_list = Array{equilibria_object{T}}([])
+    c2_range = LinRange(c2_lims[1], c2_lims[2], codim_resolution)
+    #for (idx1, c1) in enumerate(c1_range) #We will do the equilibria continuation on this parameter
+    for (idx2, c2) in enumerate(c2_range)
+        pv = prob.p
+        #pv[codim[1] |> p_find] = c1
+        pv[codim[2] |> p_find] = c2
+        prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
+        #equilibria = find_equilibria(prob_i; kwargs...)
+        #Conduct an inner loop equilibria with continution focused on param c1
+        c_inner = codim_map(prob_i, codim[1], c1_lims, codim_resolution = codim_resolution)
+        points = map(x -> (x[1],c2), c_inner.points)
+        push!(points_list, points...)
+        push!(equilibria_list, c_inner.equilibria...)
     end
     codim_object(codim, points_list, equilibria_list)
+end
+
+#This is for a 2 dimensional array
+function find_bifurcation(c2_map::codim_object{2, T}; idx::Int64 = 1) where T <: Real
+    c_vals = map(x -> x, c2_map.points)
+    #saddle_rng = findall(map(x -> length(x.saddle) >= 1, c1_map.equilibria))
+    #bif_value = c2_map.points[saddle_rng[end]][1]
+    #bif_eq = c2_map.equilibria[saddle_rng[end]].saddle
+    #return bif_value, bif_eq
 end
 
 function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol, Symbol};
