@@ -3,7 +3,6 @@ using RetinalChaos #This might be all that we need for figure 1
 #Setup the fonts and stuff
 import RetinalChaos.M_INF
 
-
 font_title = font("Arial", 24)
 font_axis = font("Arial", 12)
 font_legend = font("Arial", 8)
