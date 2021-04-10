@@ -59,7 +59,7 @@ Network(Mx::Tridiagonal{T,Array{T,1}}, My::Tridiagonal{T,Array{T,1}}, MyE::Array
 """
 This constructs the PDE function so that it can be called
 """
-function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gHCN,
+function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gACh,
         DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0))
     #Set up x diffusion steps
     x_dv = repeat([DX[1]], nx)
