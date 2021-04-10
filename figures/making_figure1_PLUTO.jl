@@ -176,17 +176,17 @@ begin
 	)
 	
 	fig1_Ca = plot(fig1_Ca1, fig1_Ca2, fig1_Ca3, fig1_Ca4,layout = grid(4,1))
-	fig1_Cb = plot(sol(t_rng, idxs = 4), sol(t_rng, idxs = 3), label = "", 
+	fig1_Cb = plot(sol(C_trng, idxs = 4), sol(C_trng, idxs = 3), label = "", 
 		ylabel = "[Cₜ] (μM)", xlabel = "Aₜ", 
 		lw = 3.0, c = a_color, grid = false
 	)
 	
-	fig1_Cc = plot(sol(t_rng, idxs = 5), sol(t_rng, idxs = 4), label = "", 
+	fig1_Cc = plot(sol(C_trng, idxs = 5), sol(C_trng, idxs = 4), label = "", 
 		ylabel = "Aₜ", xlabel = "Bₜ", 
 		lw = 3.0, c = b_color, linewidth = 3.0, grid = false
 	)
 	
-	fig1_Cd = plot(sol(t_rng, idxs = 1), sol(t_rng, idxs = 5), label = "", 
+	fig1_Cd = plot(sol(C_trng, idxs = 1), sol(C_trng, idxs = 5), label = "", 
 		ylabel = "Bₜ", xlabel = "Vₜ (mV)", 
 		lw = 3.0, c = v_color, grid = false
 	)
