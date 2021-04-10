@@ -38,7 +38,7 @@ print("Time it took to simulate $(tspan[2]/1000)s:")
 
 #%% to do the analysis we should set a specific dt
 dt = 0.1 #set the time differential
-v_thresh = calculate_threshold(sol; idx = 1)
+v_thresh = calculate_threshold(sol, dt = dt)
 timestamps = get_timestamps(sol, dt = dt)
 burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(sol, dt = dt);
 ts_analysis = timescale_analysis(sol, dt = dt)
