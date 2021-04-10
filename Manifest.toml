@@ -453,6 +453,12 @@ git-tree-sha1 = "241552bc2209f0fa068b6415b1942cc0aa486bcc"
 uuid = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
 version = "1.1.2"
 
+[[FuzzyCompletions]]
+deps = ["REPL"]
+git-tree-sha1 = "9cde086faa37f32794be3d2df393ff064d43cd66"
+uuid = "fb4132e2-a121-4a70-b8a1-d5b831dcdcc2"
+version = "0.4.1"
+
 [[GPUArrays]]
 deps = ["AbstractFFTs", "Adapt", "LinearAlgebra", "Printf", "Random", "Serialization"]
 git-tree-sha1 = "d887693eb1bd5e1fd573262a978745481895ec7d"
@@ -739,6 +745,12 @@ git-tree-sha1 = "a2777851fd21be36882ddafe5b5e2036cdc14636"
 uuid = "961ee093-0014-501f-94e3-6117800e7a78"
 version = "3.20.1"
 
+[[MsgPack]]
+deps = ["Serialization"]
+git-tree-sha1 = "a8cbf066b54d793b9a48c5daa5d586cf2b5bd43d"
+uuid = "99f44e22-a591-53d1-9472-aa23ef4bd671"
+version = "1.1.0"
+
 [[MuladdMacro]]
 git-tree-sha1 = "c6190f9a7fc5d9d5915ab29f2134421b12d24a68"
 uuid = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
@@ -893,6 +905,12 @@ deps = ["Base64", "Contour", "Dates", "FFMPEG", "FixedPointNumbers", "GR", "Geom
 git-tree-sha1 = "f4425bbd5f313b074d6ce3b86d80c0ad16bf7326"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.6.12"
+
+[[Pluto]]
+deps = ["Base64", "Dates", "Distributed", "FuzzyCompletions", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "TableIOInterface", "Tables", "UUIDs"]
+git-tree-sha1 = "330dce68faaf8614f8e33dd30bc8a3b911845987"
+uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+version = "0.14.1"
 
 [[PoissonRandom]]
 deps = ["Random", "Statistics", "Test"]
@@ -1185,6 +1203,11 @@ deps = ["AbstractAlgebra", "Combinatorics", "DataStructures", "NaNMath", "Specia
 git-tree-sha1 = "cd230ab5f02844155415aad28e8474fe459fe366"
 uuid = "d1185830-fcd6-423d-90d6-eec64667417b"
 version = "0.5.2"
+
+[[TableIOInterface]]
+git-tree-sha1 = "9a0d3ab8afd14f33a35af7391491ff3104401a35"
+uuid = "d1efa939-5518-4425-949f-ab857e148477"
+version = "0.1.6"
 
 [[TableOperations]]
 deps = ["SentinelArrays", "Tables", "Test"]
