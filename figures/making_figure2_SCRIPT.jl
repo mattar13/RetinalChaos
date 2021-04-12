@@ -81,11 +81,6 @@ for (idx, t) in sol.t
     end
 end
 
-#%%
-for frame in xlims[1]:d_frame:xlims[end]-1
-    println(frame)
-end
-
 #%% This is a supplemental gif for what diffusion looks like
 d_frame = 100
 anim = @animate for frame in xlims[1]:d_frame:xlims[end]-1
