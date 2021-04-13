@@ -79,13 +79,15 @@ function get_timestamps(spike_array::BitArray{1};
     )
     idx_array = findall(x -> x==1, spike_array)
     points = Tuple[]
-    start_point = idx_array[1]
-    end_point = idx_array[2]
-    for i in 1:length(idx_array)-1
-        if (idx_array[i+1] - idx_array[i]) != 1
-            end_point = idx_array[i]
-            push!(points, (start_point*dt, end_point*dt))
-            start_point = idx_array[i+1]
+    if !isempty(idx_array)
+        start_point = idx_array[1]
+        end_point = idx_array[2]
+        for i in 1:length(idx_array)-1
+            if (idx_array[i+1] - idx_array[i]) != 1
+                end_point = idx_array[i]
+                push!(points, (start_point*dt, end_point*dt))
+                start_point = idx_array[i+1]
+            end
         end
     end
     points
