@@ -14,7 +14,7 @@ using StatsPlots
 md"
 # Figure 3: Spontaneous Activity
 "
-
+	
 # ╔═╡ 85b88d7a-7e08-4b31-9438-647073d00ae2
 begin
 	#Set up fonts 
