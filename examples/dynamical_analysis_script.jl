@@ -17,37 +17,47 @@ if isdir(save_figs) == false
     #The directory does not exist, we have to make it 
     mkdir(save_figs)
 end
-
-#%% Running a plain simulation
-p = read_JSON(params_file);
-u0 = read_JSON(conds_file);
-tspan = (0.0, 600e3) #10 mins long
-prob = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
-sol = solve(prob; progress = true)
-
-plot(sol, vars = [:v])
+#%% Run a plain noisy simulation first
+p = read_JSON(params_file) 
+u0 = read_JSON(conds_file)
+tspan = (0.0, 120e3);
+prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+#Inject a current
+p[:I_app] = 0.42
+prob_basic = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
+sol_sde = solve(prob_sde, progress = true)
+sol_basic = solve(prob_basic, progress = true)
+plot(sol_sde, vars = [:v])
+plot!(sol_basic, vars = [:v])
+threshold = calculate_threshold(sol_basic)
+hline!([threshold])
+#%%
+println(threshold)
 #%% Supplemental figure, Bifurcation analysis of voltage injections
 p = read_JSON(params_file) 
 u0 = read_JSON(conds_file)
 p[:I_app] = 0.0 #Set initial applied current to 0
 p[:g_ACh] = 0.0 #Remove g_ACh influence
-p[:g_TREK] = 0.0 #Remove g_TREK influence
+p[:g_TREK] = 0.0 #Remove the sAHP
 tspan = (0.0, 30e3);
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
 eq_analysis = find_equilibria(prob_eq)
 sol_sde = solve(prob_sde, progress = true)
+sol_plain = solve(prob_eq, progress = true)
 #%% Codim 1 analysis
 codim1 = (:I_app)
 c1_lims = (-60.0, 50.0)
 print("Codimensional analysis time to complete:")
-@time c1_map = codim_map(prob_eq, codim1, c1_lims = c1_lims, equilibrium_resolution = 10)
+@time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution = 10)
+
 #%% Point to possible bifurcation points
-c_vals = map(x -> x[1], c1_map.points)
-saddle_rng = findall(map(x -> length(x.saddle) >= 1, c1_map.equilibria))
-#%% 
 eq_plot = plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
-#Run a ensemble function (after resetting the function)
+bif_val, bif_eq = find_bifurcation(c1_map)
+saddle_vs = map(x -> x.saddle[1][1], bif_eq)
+plot!(eq_plot, bif_val, saddle_vs, marker = :square, seriestype = :scatter, label= "Saddle node bif")
+
+#%% Run a ensemble function (after resetting the function)
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 test_rng = map(x -> x[1], c1_map.points) #this ranges from halving the parameter to doubling it
 par_idx = findall(x -> x==codim1, Symbol.(T_sde.ps))
@@ -61,44 +71,18 @@ for (sol_idx, sol) in enumerate(sim)
     zt = repeat([test_rng[sol_idx]], length(vt))
     plot!(eq_plot, zt, vt, legend = false, marker = :circle,  c = :blue)
 end
+
 eq_plot
-#%%
-#plot!(eq_plot, c1_map.points[saddle_rng[end]], c1_map.equilibria[saddle_rng[end]], view = :yx, seriestype = :scatter)
-bif_value = c1_map.points[saddle_rng[end]][1]
-bif_eq = c1_map.equilibria[saddle_rng[end]].saddle
-plot!(eq_plot, [bif_value], [bif_eq[1]], marker = :square, seriestype = :scatter)
 
-#%%
-
-#%% we want to write in some bifurcation cleaning
-dI_0 = 0.001
-iterations = 10
-c_points = map(x -> x[1], c1_map.points)
-has_saddle = map(x -> !isempty(x.saddle), c1_map.equilibria)
-point0 = findall(has_saddle)[end] #The last saddle point is where we should start
-
-I = c_points[point0]
-#%% Repeat through the iterations
-for i in 1:iterations
-    pI = Dict(Symbol.(T_ode.ps) .=> prob_eq.p)
-    pI[codim1] = I
-    prob_eq_I = ODEProblem(T_ode, prob_eq.u0, prob_eq.tspan, pI|>extract_dict)
-    eq_analysis_I = find_equilibria(prob_eq_I)
-    println(eq_analysis_I)
-    I += dI_0
-end
-
-#%% A saddle node should be somewhere imbetween these two points where the saddle equilibrium and stable are identical
-#%%
-plot(c_points, has_saddle)
-plot!([last_saddle], [1.0], seriestype = :scatter)
-plot!([first_non_saddle], [0.0], seriestype = :scatter)
 #%% Codim 2 analysis
-codim2 = (:g_Ca, :I_app)
-c1_lims = (0.0, 20.0); c2_lims = (-50.0, 1.0) 
+codim2 = (:I_app, :g_Ca)
+c1_lims = (-60.0, 50.0); c2_lims = (0.0, 20.0) 
 print("Codimensional analysis time to complete:")
-@time c2_map = codim_map(prob_eq, codim2, c1_lims = c1_lims, c2_lims = c2_lims);
-plot(c2_map, view = :yx, xlabel = "I_app", ylabel = "g_Ca", legend = true)
+@time c2_map = codim_map(prob_eq, codim2, c1_lims, c2_lims);
+#%% Find the 2D bifurcation
+find_bifurcation(c2_map)
+#%%
+plot(c2_map, view = :xyz, xlabel = "I_app", ylabel = "g_Ca", zlabel = "Equilibrium Volt", legend = true)
 
 #%% Codim 2 analysis
 codim2 = (:g_K, :I_app)
