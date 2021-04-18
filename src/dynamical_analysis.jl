@@ -161,7 +161,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[2] #we start here 
         ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
         iter = 0
-        println("continuation: $(rng[1]) -> $(rng[2])")
+        #println("continuation: $(rng[1]) -> $(rng[2])")
         while I < In && ϵ > min_step && iter <= max_iters 
             iter += 1
             I += ϵ #Increment I slowly
@@ -193,7 +193,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[1] #we start here 
         ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
         iter = 0
-        println("reverse continuation: $(rng[2]) -> $(rng[1])")
+        #println("reverse continuation: $(rng[2]) -> $(rng[1])")
         while I > In && ϵ > min_step && iter < max_iters 
             iter += 1
             I -= ϵ #decrement I slowly
@@ -337,7 +337,9 @@ end
 
 #This is for a 2 dimensional array
 function find_bifurcation(c2_map::codim_object{2, T}; idx::Int64 = 1) where T <: Real
-    c_vals = map(x -> x, c2_map.points)
+    c_vals_c1 = map(x -> x[1], c2_map.points)
+    c_vals_c2 = map(x -> x[2], c2_map.points)
+    println(unique(c_vals_c1))
     #saddle_rng = findall(map(x -> length(x.saddle) >= 1, c1_map.equilibria))
     #bif_value = c2_map.points[saddle_rng[end]][1]
     #bif_eq = c2_map.equilibria[saddle_rng[end]].saddle
