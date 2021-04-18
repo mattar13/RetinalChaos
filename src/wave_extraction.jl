@@ -170,18 +170,19 @@ function max_interval_algorithim(spike_array::BitArray{1};
     DUR_list = Array{Float64,1}([])
     SPB_list = Array{Float64,1}([])
     IBI_list = Array{Float64,1}([])
-    if !any(spike_array.==1.0)
+    #Detect the spikes first
+    timestamps = get_timestamps(spike_array; dt = dt) #Add in arguments for sweeps later
+    if isempty(timestamps)
         if verbose >= 1
             println("No spikes detected")
         end
         return fill(nothing, 4)
     else
-        intervals = count_intervals(spike_array) .* dt
-        timestamps = get_timestamps(spike_array; dt = dt)
-        if length(timestamps) == 0
-            #Somehow there is a weird case where there are spikes, but none that matter"
-            return fill(nothing, 4)
-        end
+        #println("Times detected")
+        #Lets organize the spipkes into intervals spikes and not spikes
+        spike_durs = map(i -> timestamps[i][2]-timestamps[i][1], 1:length(timestamps))
+        intervals = map(i -> timestamps[i][1] - timestamps[i-1][2], 2:length(timestamps))
+        #intervals = count_intervals(spike_array) .* dt
         bursting = false
         burst_start = 0.0
         burst_end = 0.0
@@ -283,6 +284,8 @@ end
 
 """
 Timescale analysis
+
+returns Spike Durations, Burst Durations, Interburst Intervals
 """
 #Basis for all other timescale analysis
 function timescale_analysis(spike_array::BitArray{1}; 
