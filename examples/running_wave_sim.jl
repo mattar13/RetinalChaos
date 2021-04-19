@@ -7,14 +7,21 @@ conds_file = joinpath(param_root, "conds.json")
 #%% Run a network simulation and save it
 nx = 64 
 ny = 64; 
+p = read_JSON(params_file) 
+p[:σ] = 0.1
+p[:τw] = 800.0
+#Set up the initial conditions
+u0 = read_JSON(conds_file);
 net = Network(nx, ny; μ = 0.15, version = :ρ) 
 p_net = extract_dict(p, tar_pars);
 u0_net = extract_dict(u0, tar_conds, (nx, ny));
-#Lets warm up the solution first
 NetProb = SDEProblem(net, noise, u0_net, (0.0, 60e3), p_net)
+#%%
+#Lets warm up the solution first
 @time NetSol = solve(NetProb, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
     save_everystep = false)
+
 #Run the simulation
 NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
@@ -24,7 +31,7 @@ NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
     )
 
 #Save the solution
-@save "$(Date(Dates.now()))_sol.jld2" NetSol
+@save "E:\\Data\\Modelling\\Simulations\\$(Date(Dates.now()))_sol.jld2" NetSol
 #%% Plotting stuff
 anim = @animate for t = 1.0:50.0:PDEsol.t[end]
     println("Animating frame $t")
