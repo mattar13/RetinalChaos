@@ -1,5 +1,6 @@
 using RetinalChaos
 using Dates
+using JLD2
 param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
@@ -30,8 +31,8 @@ NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
     progress = true, progress_steps = 1
     )
 
-#%% Save the solution
-@save "E:\\Data\\Modelling\\Simulations\\$(Date(Dates.now()))_sol.jld2" NetSol
+#%% Save the solution, must be on drive first
+JLD2.@save "$(Date(Dates.now()))_sol.jld2" NetSol
 #%% Plotting stuff
 anim = @animate for t = 1.0:50.0:PDEsol.t[end]
     println("Animating frame $t")
