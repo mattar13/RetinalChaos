@@ -4,30 +4,27 @@ param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
-#%%
-nx = ny = 64; 
-p = read_JSON(params_file);
-p = extract_dict(p, tar_pars);
-u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
-net = Network(nx, ny; μ = 0.15, version = :ρ) #μ is the probability a cell is capable of being active
-var = 1 #This is the variable we are interested in
-save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
-
-# Lets warm up the solution first
-PDEprob = SDEProblem(net, noise, u0_network, (0.0, 60e3), p)
-print("[$(Dates.now())]: Warming up solution:")
-@time PDEsol = solve(PDEprob, SOSRI(), 
+#%% Run a network simulation and save it
+nx = 64 
+ny = 64; 
+net = Network(nx, ny; μ = 0.15, version = :ρ) 
+p_net = extract_dict(p, tar_pars);
+u0_net = extract_dict(u0, tar_conds, (nx, ny));
+#Lets warm up the solution first
+NetProb = SDEProblem(net, noise, u0_net, (0.0, 60e3), p_net)
+@time NetSol = solve(NetProb, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-    save_everystep = false, progress = true, progress_steps = 1
-    )
-
+    save_everystep = false)
 #Run the simulation
-ui_network = PDEsol[end]
-PDEprob = SDEProblem(net, noise, ui_network, (0.0, 60e3), p)
-@time PDEsol = solve(PDEprob, SOSRI(), 
+NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
+@time NetSol = solve(NetProb, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-    save_idxs = save_idxs, progress = true, progress_steps = 1
+    save_idxs = [1:(nx*ny)...], 
+    progress = true, progress_steps = 1
     )
+
+#Save the solution
+@save "$(Date(Dates.now()))_sol.jld2" NetSol
 #%% Plotting stuff
 anim = @animate for t = 1.0:50.0:PDEsol.t[end]
     println("Animating frame $t")
