@@ -108,8 +108,8 @@ begin
 end
 
 # ╔═╡ bd50617a-ad3a-40f1-9d80-3fea8facf83e
-#Save the solution
-@save "$(Date(Dates.now()))_sol.jld2" NetSol
+#Load the solution
+JLD2.@load "$(Date(Dates.now()))_sol.jld2" NetSol
 
 # ╔═╡ ffc2bfab-aad2-484f-aabc-b3d131868718
 RetinalChaos.calculate_threshold(NetSol)
