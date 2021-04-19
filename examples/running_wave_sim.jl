@@ -30,7 +30,7 @@ NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
     progress = true, progress_steps = 1
     )
 
-#Save the solution
+#%% Save the solution
 @save "E:\\Data\\Modelling\\Simulations\\$(Date(Dates.now()))_sol.jld2" NetSol
 #%% Plotting stuff
 anim = @animate for t = 1.0:50.0:PDEsol.t[end]
