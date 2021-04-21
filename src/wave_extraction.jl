@@ -21,57 +21,6 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution;
 end
 
 """
-This function acts to calculate the distance between points in a single BitArray. 
-Very rarely is the first point part of a spike (in which case there is a fallback), 
-and because of this clip is set to remove the first interval. 
-"""
-function count_intervals(spike_trace::BitArray{1}; 
-        clip = 2, clip_end = 0
-    )
-    isi = Array{Float64}([])
-    count = 0
-    
-    #In the off chance that the first spike occurs right as the first time point, then clipping is cancelled. 
-    if spike_trace[1] == 1
-        clip = 1
-    end
-    
-    for spike in spike_trace
-        if spike == 0
-            count += 1
-        elseif spike == 1 && count == 0
-            count = 0
-        elseif spike == 1 && count > 0
-            push!(isi, count)
-            count = 0
-        end
-    end
-    isi[clip:end-clip_end]
-end
-
-function count_intervals(spike_arr::BitArray{2}, clip = 2)
-    isi_arr = Array{Float64}([])
-    count = 0
-    for idx_y = 1:size(spike_arr,1)
-        all_intervals = extract_interval(spike_arr[idx_y, :], clip = 2)
-        push!(isi_arr, all_intervals...)
-    end
-    isi_arr
-end
-
-function count_intervals(spike_arr::BitArray{3})
-    isi_arr = Array{Float64}([])
-    count = 0
-    for idx_y = 1:size(spike_arr,1)
-        for idx_x = 1:size(spike_arr, 2)
-            all_intervals = extract_interval(spike_arr[idx_y, idx_x, :], clip = 2)
-            push!(isi_arr, all_intervals...)
-        end
-    end
-    isi_arr
-end
-
-"""
 This function returns all the time stamps in a spike or burst array
 """
 function get_timestamps(spike_array::BitArray{1}; 
