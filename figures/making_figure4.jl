@@ -92,27 +92,14 @@ begin
 end
 
 # ╔═╡ 2f4306fd-c32d-4922-82c3-34d91ce5f0a8
-begin
-	nx = 64 
-	ny = 64; 
-	p_net = extract_dict(p, tar_pars);
-	u0_net = extract_dict(u0, tar_conds, (nx, ny));
-	net = Network(nx, ny; μ = 0.15, version = :ρ) 
-	# Lets warm up the solution first
-	NetProb = SDEProblem(net, noise, u0_net, (0.0, 60e3), p_net)
-	@time NetSol = solve(NetProb, SOSRI(), 
-		abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-		save_idxs = [1:(nx*ny)...], 
-		progress = true, progress_steps = 1
-		)
-end
+
 
 # ╔═╡ bd50617a-ad3a-40f1-9d80-3fea8facf83e
 #Load the solution
 JLD2.@load "$(Date(Dates.now()))_sol.jld2" NetSol
 
 # ╔═╡ ffc2bfab-aad2-484f-aabc-b3d131868718
-RetinalChaos.calculate_threshold(NetSol)
+
 
 # ╔═╡ a2e2ec01-6b63-4301-825d-213cbc58e4f4
 NetSol.u |> size
@@ -173,10 +160,10 @@ end
 # ╠═b93d9c06-126f-4e67-adb4-27027fd6bad4
 # ╠═a82156f5-ff66-4e64-91d1-8d126b0acf46
 # ╠═5b0bbe5c-f61b-476e-be49-432590b759d8
-# ╠═2f4306fd-c32d-4922-82c3-34d91ce5f0a8
 # ╠═bd50617a-ad3a-40f1-9d80-3fea8facf83e
-# ╠═ffc2bfab-aad2-484f-aabc-b3d131868718
 # ╠═a2e2ec01-6b63-4301-825d-213cbc58e4f4
+# ╠═2f4306fd-c32d-4922-82c3-34d91ce5f0a8
+# ╠═ffc2bfab-aad2-484f-aabc-b3d131868718
 # ╠═f8e9cda2-fb0a-4f61-994d-be3e64b2fee0
 # ╠═47f910aa-337c-4f86-8489-c02a5373897c
 # ╠═a422bb0c-f779-44f6-9141-9d8694dd3239
