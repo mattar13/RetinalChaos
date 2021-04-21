@@ -91,21 +91,27 @@ begin
 	plot(plt_hist_sd, plt_hist_bd, plt_hist_ibis, layout = grid(3,1))
 end
 
-# ╔═╡ 2f4306fd-c32d-4922-82c3-34d91ce5f0a8
-
-
 # ╔═╡ bd50617a-ad3a-40f1-9d80-3fea8facf83e
-#Load the solution
-JLD2.@load "$(Date(Dates.now()))_sol.jld2" NetSol
-
-# ╔═╡ ffc2bfab-aad2-484f-aabc-b3d131868718
-
+#Load the solution\
+begin
+	open_dir = "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\2021-04-19_sol.jld2"
+	JLD2.@load open_dir NetSol
+end
 
 # ╔═╡ a2e2ec01-6b63-4301-825d-213cbc58e4f4
 NetSol.u |> size
 
-# ╔═╡ f8e9cda2-fb0a-4f61-994d-be3e64b2fee0
+# ╔═╡ 0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
+begin
+	plt = plot()
+	for i in 1:100
+		plot!(plt, NetSol(NetSol.t, idxs = i))
+	end
+	plt
+end
 
+# ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
+NetSol |> size
 
 # ╔═╡ 47f910aa-337c-4f86-8489-c02a5373897c
 begin 
@@ -162,9 +168,8 @@ end
 # ╠═5b0bbe5c-f61b-476e-be49-432590b759d8
 # ╠═bd50617a-ad3a-40f1-9d80-3fea8facf83e
 # ╠═a2e2ec01-6b63-4301-825d-213cbc58e4f4
-# ╠═2f4306fd-c32d-4922-82c3-34d91ce5f0a8
-# ╠═ffc2bfab-aad2-484f-aabc-b3d131868718
-# ╠═f8e9cda2-fb0a-4f61-994d-be3e64b2fee0
+# ╠═0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
+# ╠═60197d1a-fff7-4c55-bdbd-edcf7f534710
 # ╠═47f910aa-337c-4f86-8489-c02a5373897c
 # ╠═a422bb0c-f779-44f6-9141-9d8694dd3239
 # ╠═4e6c5aee-c93d-4752-ba70-c97d828381d0
