@@ -31,7 +31,7 @@ function get_timestamps(spike_array::BitArray{1};
     )
     idx_array = findall(x -> x==1, spike_array)
     points = Tuple[]
-    if !isempty(idx_array)
+    if length(idx_array) > 1
         start_point = idx_array[1]
         end_point = idx_array[2]
         for i in 1:length(idx_array)-1
@@ -48,26 +48,11 @@ end
 function get_timestamps(spike_array::BitArray{2}; 
         dt = 0.1
     )
-
     nx, tsteps = size(spike_array)
     timestamps = Tuple[]
     for x = 1:nx
         stamps = get_timestamps(spike_array[x,:]; dt = dt)
-        push!(timestamps, stamps)
-    end
-    timestamps
-end
-
-function get_timestamps(spike_array::BitArray{3}; 
-        dt = 0.1
-    )
-    nx, ny, tsteps = size(spike_array)
-    timestamps = Tuple[]
-    for x = 1:nx
-        for y = 1:ny
-            stamps = get_timestamps(spike_array[x,y,:]; dt = dt)
-            push!(timestamps, stamps)
-        end
+        push!(timestamps, stamps...)
     end
     timestamps
 end
@@ -76,9 +61,13 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::T, rng::
         idx::Int64 = 1, dt::Float64 = 0.1
     ) where T <: Real
     #First we need to extract the spike array
-    println(size(sol.prob.u0))
-    data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
+    if length(size(sol.prob.u0)) == 1
+        data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
+        spike_array = (data_select .> threshold)
+    else
+        data_select = sol(rng[1]:dt:rng[2]) |> Array
+        spike_array = (data_select .> threshold)
+    end
     get_timestamps(spike_array; dt = dt)
 end
 
@@ -123,7 +112,7 @@ function max_interval_algorithim(spike_array::BitArray{1};
         if verbose >= 1
             println("No spikes detected")
         end
-        return fill(nothing, 4)
+        return nothing
     else
         #println("Times detected")
         #Lets organize the spipkes into intervals spikes and not spikes
@@ -175,47 +164,52 @@ function max_interval_algorithim(spike_array::BitArray{1};
     end
 end
 
-function max_interval_algorithim(spike_array::BitArray{3}; kwargs...)
-    nx, ny, tsteps = size(spike_array)
-    data_array = Tuple[]
+function max_interval_algorithim(spike_array::BitArray{2}; kwargs...)
+    nx, tsteps = size(spike_array)
+    burst_timestamps = Array{Tuple,1}([])
+    DUR_list = Array{Float64,1}([])
+    SPB_list = Array{Float64,1}([])
+    IBI_list = Array{Float64,1}([])
     for x = 1:nx
-        for y = 1:ny
-            data = max_interval_algorithim(spike_array[x,y,:]; kwargs...)
-            push!(data_array, (x, y, data))
+        MI_data = max_interval_algorithim(spike_array[x,:]; kwargs...)
+        if !isnothing(MI_data)
+            push!(burst_timestamps, MI_data[1]...)
+            push!(DUR_list, MI_data[2]...)
+            push!(SPB_list, MI_data[3]...)
+            push!(IBI_list, MI_data[4]...)
         end
     end
-    data_array
+    return burst_timestamps, DUR_list, SPB_list, IBI_list
 end
 
 function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold::T, rng::Tuple{T,T}; 
         idx::Int64 = 1, dt::Float64 = 0.1,
         kwargs...
     ) where T <: Real
-
-    data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    return max_interval_algorithim(spike_array; dt = dt, kwargs...)
+    if length(size(sol.prob.u0)) == 1
+        data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
+        spike_array = (data_select .> threshold)
+    else
+        data_select = sol(rng[1]:dt:rng[2]) |> Array
+        spike_array = (data_select .> threshold)
+    end
+    max_interval_algorithim(spike_array; dt = dt, kwargs...)
 end
 
 function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T};         
-        idx::Int64 = 1, dt::Float64 = 0.1, Z::Int64 = Z,
+        idx::Int64 = 1, dt::Float64 = 0.1, Z::Int64 = 4,
         kwargs...
     ) where T <: Real
 
     threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-    data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    return max_interval_algorithim(spike_array; dt = dt, kwargs...)
+    return max_interval_algorithim(sol, threshold, rng; dt = dt, kwargs...)
 end
 
 function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold::T; 
         idx::Int64 = 1, dt::T = 0.1, 
         kwargs...
     ) where T <: Real
-    #First we need to extract the spike array
-    data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    return max_interval_algorithim(spike_array; dt = dt, kwargs...)
+    return max_interval_algorithim(sol, threshold, (sol.t[1]. sol.t[end]); dt = dt, kwargs...)
 end
 
 function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution; 
@@ -224,10 +218,7 @@ function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution;
     ) where T <: Real
     #First we need to extract the spike array
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
-    data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    println(spike_array |> size)
-    return max_interval_algorithim(spike_array; dt = dt, kwargs...)
+    return max_interval_algorithim(sol, threshold, (sol.t[1], sol.t[end]); dt = dt, kwargs...)
 end
 
 """
@@ -273,19 +264,14 @@ function timescale_analysis(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T}
     ) where T <: Real
 
     threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-    data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    timescale_analysis(spike_array; dt = dt, kwargs...)
+    timescale_analysis(sol, threshold, rng; dt = dt, kwargs...)
 end
 
 function timescale_analysis(sol::DiffEqBase.AbstractODESolution, threshold::T; 
         idx::Int64 = 1, dt::T = 0.1, 
         kwargs...
     ) where T <: Real
-    #First we need to extract the spike array
-    data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    timescale_analysis(spike_array; dt = dt, kwargs...)
+    timescale_analysis(sol, threshold, (sol.t[1], sol.t[end]); dt = dt, kwargs...)
 end
 
 function timescale_analysis(sol::DiffEqBase.AbstractODESolution; 
@@ -294,9 +280,7 @@ function timescale_analysis(sol::DiffEqBase.AbstractODESolution;
     ) where T <: Real
     #First we need to extract the spike array
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
-    data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    timescale_analysis(spike_array; dt = dt, kwargs...)
+    timescale_analysis(sol, threshold, (sol.t[1], sol.t[end]); dt = dt, kwargs...)
 end
 
 """
