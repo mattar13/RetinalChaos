@@ -1,7 +1,8 @@
 #### Time Scale Analysis ################################################################
 using DiffEqBase
 """
-Calculate threshold
+    calculate_threshold(sol::AbstractODESolution, Z::Int64)
+
 Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation 
 """
 calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)
@@ -9,16 +10,18 @@ calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = sum(vm_arr)/length(vm
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T, T}; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T= 0.1,
     ) where T <: Real
-    data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-    return calculate_threshold(data_section; Z = Z)
+    #We want to check how many dimensions the simulation is 
+    if length(size(sol.prob.u0)) == 1
+        data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
+        println(data_section |> size)
+        return calculate_threshold(data_section; Z = Z)
+    else
+        data_section = sol(rng[1]:dt:rng[2]) |> Array
+        calculate_threshold(data_section; Z = Z)
+    end
 end
 
-function calculate_threshold(sol::DiffEqBase.AbstractODESolution; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
-    ) where T <: Real 
-    data_section = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    calculate_threshold(data_section; Z = Z)
-end
+calculate_threshold(sol::DiffEqBase.AbstractODESolution; kwargs...) = calculate_threshold(sol, (sol.t[1], sol.t[end]); kwargs...)
 
 """
 This function returns all the time stamps in a spike or burst array
@@ -45,6 +48,7 @@ end
 function get_timestamps(spike_array::BitArray{2}; 
         dt = 0.1
     )
+
     nx, tsteps = size(spike_array)
     timestamps = Tuple[]
     for x = 1:nx
@@ -72,6 +76,7 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::T, rng::
         idx::Int64 = 1, dt::Float64 = 0.1
     ) where T <: Real
     #First we need to extract the spike array
+    println(size(sol.prob.u0))
     data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
     spike_array = (data_select .> threshold)
     get_timestamps(spike_array; dt = dt)
@@ -82,19 +87,14 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T};
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
     threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-    data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    get_timestamps(spike_array; dt = dt)
+    get_timestamps(sol, threshold, rng; dt = dt)
 end
 
 # For if no range has been provided but a threshold has
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::T; 
         idx::Int64 = 1, dt::T = 0.1
     ) where T <: Real
-    #First we need to extract the spike array
-    data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    get_timestamps(spike_array; dt = dt)
+    get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
 end
 
 # For if no range has been provided
@@ -102,9 +102,7 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution;
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
-    data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
-    spike_array = (data_select .> threshold)
-    get_timestamps(spike_array; dt = dt)
+    get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
 end
 
 """
@@ -228,6 +226,7 @@ function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution;
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
     data_select = sol(sol.t[1]:dt:sol.t[end], idxs = idx) |> Array
     spike_array = (data_select .> threshold)
+    println(spike_array |> size)
     return max_interval_algorithim(spike_array; dt = dt, kwargs...)
 end
 
