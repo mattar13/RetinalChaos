@@ -93,16 +93,13 @@ end
 
 # ╔═╡ bd50617a-ad3a-40f1-9d80-3fea8facf83e
 #Load the solution\
-begin
-	open_dir = "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\sol.jld2"
-	JLD2.@load open_dir NetSol
-end
+JLD2.@load "\\figures\\sol.jld2" NetSol
 
 # ╔═╡ 0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
-#thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
+JLD2.@load "figures\\thresholds.jld2" thresholds
 
 # ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
-ts = RetinalChaos.timescale_analysis(NetSol, thresholds, (0.0, 2000.0))
+JLD2.@load "\\figures\\ts_analysis.jld2" ts_analysis
 
 # ╔═╡ 47f910aa-337c-4f86-8489-c02a5373897c
 begin 
