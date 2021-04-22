@@ -40,6 +40,9 @@ md"
 
 "
 
+# ╔═╡ 7bda25c2-873e-429a-bc94-084c2f919735
+
+
 # ╔═╡ 0bc9c0b4-74bd-444e-bc1b-27734e760d7d
 begin
 	#Set up the parameters 
@@ -51,12 +54,11 @@ begin
 	#Set up the Time span
 	tspan = (0.0, 100e3)
 	#set up the problem to solve
-	prob = SDEProblem(T_sde, u0 |> extract_dict, tspan, p |> extract_dict);
+	prob = SDEProblem(T_sde, noise, u0 |> extract_dict, tspan, p |> extract_dict);
 	#Load the problem into a ensemble simulation
 	n_sims = 50
 	test_rng = repeat([p[:σ]], n_sims)
-	par_idx = findall(x -> x==:σ, Symbol.(T_sde.ps))
-	prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
+	prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, :σ, test_rng)
 	#make the ensemble problem
 	simProb = EnsembleProblem(prob, prob_func = prob_func);
 end
@@ -185,6 +187,7 @@ end
 # ╠═926d1c0c-171b-4001-991c-1c822b3e2fb8
 # ╠═bd8eddc8-d266-4a63-9151-4782a1e72be8
 # ╟─0fd4fa03-d96c-42b4-b78e-747e716588d6
+# ╠═7bda25c2-873e-429a-bc94-084c2f919735
 # ╠═0bc9c0b4-74bd-444e-bc1b-27734e760d7d
 # ╠═b93d9c06-126f-4e67-adb4-27027fd6bad4
 # ╠═a82156f5-ff66-4e64-91d1-8d126b0acf46
