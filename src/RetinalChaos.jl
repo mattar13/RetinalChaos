@@ -10,7 +10,7 @@ using ProgressMeter
 println("Small functions imported")
 
 #Imports if using GPU
-using CuArrays
+using CUDA
 
 #using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 using DifferentialEquations, ModelingToolkit
