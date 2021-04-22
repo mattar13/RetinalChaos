@@ -14,17 +14,19 @@ p[:σ] = 0.1
 p[:τw] = 800.0
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.15, version = :ρ) 
+net = Network(nx, ny; μ = 0.15, version = :ρ, gpu = true) 
 p_net = extract_dict(p, tar_pars);
 u0_net = extract_dict(u0, tar_conds, (nx, ny)) |> cu;
-NetProb = SDEProblem(net, noise, u0_net, (0.0, 60e3), p_net)
+tspan = (0.0|> Float32 , 60e3 |> Float32)  #If gpu change to a Float32
+NetProb = SDEProblem(net, noise, u0_net, tspan, p_net)
 #%%
-#Lets warm up the solution first
+#Lets warm up the solution first (using GPU if available)
 @time NetSol = solve(NetProb, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+    progress = true, progress_steps = 1, 
     save_everystep = false)
 
-#Run the simulation
+#%% Run the simulation
 NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,

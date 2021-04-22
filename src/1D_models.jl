@@ -12,7 +12,8 @@
 @parameters λ δ α β ρ k σ D #Relationships in my model
 @parameters δc αs αc αr H_x VS VH g_n R E_n #Relationships in other models
 @variables v(t) n(t) c(t) a(t) b(t) e(t) W(t) r(t) s(t)
-@derivatives d'~t
+#@derivatives d'~ Differential(t) #This is deprecated
+d = Differential(t)
 
 T_model_eqs = [
           d(v)~ (

@@ -37,7 +37,7 @@ using Distributions
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
-#println("Importing Models")
+println("Importing Models")
 include("models.jl")
 export T_ode, T_sde, SOSRI, SOSRA #Load all the DiffEq Interface
 #Export functions related to creating the 2D network

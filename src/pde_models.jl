@@ -40,21 +40,28 @@ function ∇(du, u, D)
     end
 end
 
+#mutable struct Network{T, N} <: Function
+#      Mx::Tridiagonal{T,Array{T,1}}
+#      My::Tridiagonal{T,Array{T,1}}
+#      MyE::Array{T,2}
+#      EMx::Array{T,2}
+#      DE::Array{T,2}
+#      null::Array{T,2}
+#end
+
 mutable struct Network{T, N} <: Function
-      Mx::Tridiagonal{T,Array{T,1}}
-      My::Tridiagonal{T,Array{T,1}}
-      MyE::Array{T,2}
-      EMx::Array{T,2}
-      DE::Array{T,2}
-      null::Array{T,2}
+      Mx::AbstractArray{T,2}
+      My::AbstractArray{T,2}
+      MyE::AbstractArray{T,2}
+      EMx::AbstractArray{T,2}
+      DE::AbstractArray{T,2}
+      null::AbstractArray{T,2}
 end
 
 """
 This is a constructor for the Network object with a version flag option
 """
-Network(Mx::Tridiagonal{T,Array{T,1}}, My::Tridiagonal{T,Array{T,1}}, MyE::Array{T,2}, EMx::Array{T,2}, DE::Array{T,2}, null, null_param::Symbol) where T = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
-
-
+Network(Mx::AbstractArray{T}, My::AbstractArray{T}, MyE::AbstractArray{T}, EMx::AbstractArray{T}, DE::AbstractArray{T}, null::AbstractArray{T}, null_param::Symbol) where {T <: Real, A} = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
 
 """
 This constructs the PDE function so that it can be called
@@ -74,8 +81,8 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, ve
     y_lv = repeat([DY[2]], ny-2)
     push!(y_lv, abs(DY[1]))
     pushfirst!(y_uv, abs(DY[1]))
-    Mx = Tridiagonal(x_lv, x_dv, x_uv)
-    My = Tridiagonal(y_lv, y_dv, y_uv)
+    Mx = Array(Tridiagonal(x_lv, x_dv, x_uv))
+    My = Array(Tridiagonal(y_lv, y_dv, y_uv))
     MyE = zeros(ny, nx);
     EMx = zeros(ny, nx);
     DE = zeros(ny, nx);
