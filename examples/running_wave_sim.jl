@@ -47,8 +47,13 @@ gif(anim, save_wave, fps = 20)
 #%% Extracting wave data from the simulation
 open_dir = "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\2021-04-19_sol.jld2"
 JLD2.@load open_dir NetSol
-
 #%%
+thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
+@save "figures\\thresholds.jld2" thresholds
+#%%
+ts = RetinalChaos.timescale_analysis(NetSol, thresholds)
+@save "figures\\ts_analysis.jld2"
+
 #%% Running a multiple sim on the Lab computer
 save_path = "C:\\Users\\RennaLabSA1\\Documents\\modelling"
 println("[$(Dates.now())]: Beginning simulion")
