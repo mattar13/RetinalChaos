@@ -17,8 +17,9 @@ u0 = read_JSON(conds_file);
 net = Network(nx, ny; μ = 0.15, version = :ρ, gpu = true) 
 p_net = extract_dict(p, tar_pars);
 u0_net = extract_dict(u0, tar_conds, (nx, ny)) |> cu;
-tspan = (0.0|> Float32 , 60e3 |> Float32)  #If gpu change to a Float32
-NetProb = SDEProblem(net, noise, u0_net, tspan, p_net)
+warmup = (0.0|> Float32 , 60e3 |> Float32)  #If gpu change to a Float32
+tspan = (0.0|> Float32 , 300e3 |> Float32)
+NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 #%%
 #Lets warm up the solution first (using GPU if available)
 @time NetSol = solve(NetProb, SOSRI(), 
@@ -27,19 +28,21 @@ NetProb = SDEProblem(net, noise, u0_net, tspan, p_net)
     save_everystep = false)
 
 #%% Run the simulation
-NetProb = SDEProblem(net, noise, NetSol[end], (0.0, 120e3), p_net)
+NetProb = SDEProblem(net, noise, NetSol[end], tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
     save_idxs = [1:(nx*ny)...], 
     progress = true, progress_steps = 1
     )
+#%%
+#Remove the results from the GPU
 
 #%% Save the solution, must be on drive first
 JLD2.@save "$(Date(Dates.now()))_sol.jld2" NetSol
 #%% Plotting stuff
-anim = @animate for t = 1.0:50.0:PDEsol.t[end]
+anim = @animate for t = 1.0:50.0:NetSol.t[end]
     println("Animating frame $t")
-    frame_i = reshape(PDEsol(t), (nx, ny))
+    frame_i = reshape(NetSol(t), (nx, ny))
     heatmap(frame_i, ratio = :equal, grid = false,
             xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
             c = :curl, clims = (-70.0, 0.0),
