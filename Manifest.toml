@@ -74,12 +74,6 @@ version = "0.15.15"
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
-[[BinaryProvider]]
-deps = ["Libdl", "Logging", "SHA"]
-git-tree-sha1 = "ecdec412a9abc8db54c0efc5548c64dfce072058"
-uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.5.10"
-
 [[BoundaryValueDiffEq]]
 deps = ["BandedMatrices", "DiffEqBase", "FiniteDiff", "ForwardDiff", "LinearAlgebra", "NLsolve", "Reexport", "SparseArrays"]
 git-tree-sha1 = "fe34902ac0c3a35d016617ab7032742865756d7d"
@@ -96,24 +90,6 @@ version = "1.0.6+5"
 git-tree-sha1 = "1b77a77c3b28e0b3f413f7567c9bb8dd9bdccd14"
 uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 version = "0.3.0"
-
-[[CUDAapi]]
-deps = ["Libdl", "Logging"]
-git-tree-sha1 = "831b825d10104bd29e28f6da93312a976830717b"
-uuid = "3895d2a7-ec45-59b8-82bb-cfc6a382f9b3"
-version = "4.0.0"
-
-[[CUDAdrv]]
-deps = ["CEnum", "CUDAapi", "Printf"]
-git-tree-sha1 = "f56bbf18c86bcff7a961a32a4947a5abb2963a29"
-uuid = "c5f51814-7f29-56b8-a69c-e4d8f6be1fde"
-version = "6.3.0"
-
-[[CUDAnative]]
-deps = ["Adapt", "BinaryProvider", "CEnum", "CUDAapi", "CUDAdrv", "ExprTools", "GPUCompiler", "LLVM", "Libdl", "Pkg", "Printf"]
-git-tree-sha1 = "7902d4cdb1b13084ffc88565c20867525765f4cc"
-uuid = "be33ccc6-a3ff-5ff2-a52e-74243cff1e17"
-version = "3.2.0"
 
 [[CanonicalTraits]]
 deps = ["MLStyle"]
@@ -231,18 +207,6 @@ version = "0.2.2"
 git-tree-sha1 = "3f71217b538d7aaee0b69ab47d9b7724ca8afa0d"
 uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "4.0.4"
-
-[[Cthulhu]]
-deps = ["CodeTracking", "FoldingTrees", "InteractiveUtils", "REPL", "UUIDs", "Unicode"]
-git-tree-sha1 = "5e65dfced9daeae7fee72deab634f8a635442b8a"
-uuid = "f68482b8-f384-11e8-15f7-abe071a5a75f"
-version = "1.6.1"
-
-[[CuArrays]]
-deps = ["AbstractFFTs", "Adapt", "CEnum", "CUDAapi", "CUDAdrv", "CUDAnative", "DataStructures", "GPUArrays", "Libdl", "LinearAlgebra", "MacroTools", "NNlib", "Pkg", "Printf", "Random", "Reexport", "Requires", "SparseArrays", "Statistics", "TimerOutputs"]
-git-tree-sha1 = "55ab24cc3fcf96f74246cf7e14bc9c2f818facbc"
-uuid = "3a865a2d-5b23-5a0f-bc46-62713ec82fae"
-version = "2.2.2"
 
 [[DSP]]
 deps = ["FFTW", "IterTools", "LinearAlgebra", "Polynomials", "Random", "Reexport", "SpecialFunctions", "Statistics"]
@@ -447,12 +411,6 @@ git-tree-sha1 = "335bfdceacc84c5cdf16aadc768aa5ddfc5383cc"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.8.4"
 
-[[FoldingTrees]]
-deps = ["AbstractTrees", "REPL"]
-git-tree-sha1 = "e0c730b2d920d29edf8c381695e16c0a28055466"
-uuid = "1eca21be-9b9b-4ed8-839a-6d8ae26b1781"
-version = "1.0.1"
-
 [[Formatting]]
 deps = ["Printf"]
 git-tree-sha1 = "8339d61043228fdd3eb658d86c926cb282ae72a8"
@@ -491,18 +449,6 @@ deps = ["REPL"]
 git-tree-sha1 = "9cde086faa37f32794be3d2df393ff064d43cd66"
 uuid = "fb4132e2-a121-4a70-b8a1-d5b831dcdcc2"
 version = "0.4.1"
-
-[[GPUArrays]]
-deps = ["AbstractFFTs", "Adapt", "LinearAlgebra", "Printf", "Random", "Serialization"]
-git-tree-sha1 = "d887693eb1bd5e1fd573262a978745481895ec7d"
-uuid = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
-version = "3.4.1"
-
-[[GPUCompiler]]
-deps = ["Cthulhu", "DataStructures", "InteractiveUtils", "LLVM", "Libdl", "TimerOutputs"]
-git-tree-sha1 = "5275aa268ecd09640b32560e1eae90c78816e4d1"
-uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
-version = "0.2.0"
 
 [[GR]]
 deps = ["Base64", "DelimitedFiles", "HTTP", "JSON", "LinearAlgebra", "Printf", "Random", "Serialization", "Sockets", "Test", "UUIDs"]
@@ -657,12 +603,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "df381151e871f41ee86cee4f5f6fd598b8a68826"
 uuid = "c1c5ebd0-6772-5130-a774-d5fcae4a789d"
 version = "3.100.0+3"
-
-[[LLVM]]
-deps = ["CEnum", "Libdl", "Printf", "Unicode"]
-git-tree-sha1 = "d9c6e1efcaa6c2fcd043da812a62b3e489a109a3"
-uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
-version = "1.7.0"
 
 [[LaTeXStrings]]
 git-tree-sha1 = "c7aebfecb1a60d59c0fe023a68ec947a208b1e6b"
@@ -848,12 +788,6 @@ deps = ["Distances", "LineSearches", "LinearAlgebra", "NLSolversBase", "Printf",
 git-tree-sha1 = "019f12e9a1a7880459d0173c182e6a99365d7ac1"
 uuid = "2774e3e8-f4cf-5e23-947b-6d7e65073b56"
 version = "4.5.1"
-
-[[NNlib]]
-deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Pkg", "Requires", "Statistics"]
-git-tree-sha1 = "ab1d43fead2ecb9aa5ae460d3d547c2cf8d89461"
-uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-version = "0.7.17"
 
 [[NaNMath]]
 git-tree-sha1 = "bfe47e760d60b82b66b61d2d44128b62e3a369fb"
