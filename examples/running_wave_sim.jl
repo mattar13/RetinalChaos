@@ -1,5 +1,5 @@
 using RetinalChaos
-using Dates
+using Dates, Plots
 using JLD2
 param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
@@ -44,9 +44,11 @@ anim = @animate for t = 1.0:50.0:PDEsol.t[end]
 end
 gif(anim, save_wave, fps = 20)
 
+#%% Extracting wave data from the simulation
+open_dir = "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\2021-04-19_sol.jld2"
+JLD2.@load open_dir NetSol
 
-
-
+#%%
 #%% Running a multiple sim on the Lab computer
 save_path = "C:\\Users\\RennaLabSA1\\Documents\\modelling"
 println("[$(Dates.now())]: Beginning simulion")

@@ -102,16 +102,10 @@ end
 NetSol.u |> size
 
 # ╔═╡ 0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
-begin
-	plt = plot()
-	for i in 1:100
-		plot!(plt, NetSol(NetSol.t, idxs = i))
-	end
-	plt
-end
+thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
 
 # ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
-NetSol |> size
+ts = timescale_analysis(NetSol, thresholds, (0.0, 2000.0))
 
 # ╔═╡ 47f910aa-337c-4f86-8489-c02a5373897c
 begin 
