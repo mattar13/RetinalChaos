@@ -1,5 +1,5 @@
 #### Time Scale Analysis ################################################################
-using DiffEqBase
+
 """
     calculate_threshold(sol::AbstractODESolution, Z::Int64)
 
@@ -7,7 +7,7 @@ Finds the threshold of a trace by calculating the average and then adding the 4x
 """
 calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
 
-function calculate_threshold(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T, T}; 
+function calculate_threshold(sol::AbstractODESolution, rng::Tuple{T, T}; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T= 0.1,
     ) where T <: Real
     #We want to check how many dimensions the simulation is 
@@ -26,7 +26,7 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T, 
     end
 end
 
-calculate_threshold(sol::DiffEqBase.AbstractODESolution; kwargs...) = calculate_threshold(sol, (sol.t[1], sol.t[end]); kwargs...)
+calculate_threshold(sol::AbstractODESolution; kwargs...) = calculate_threshold(sol, (sol.t[1], sol.t[end]); kwargs...)
 
 """
 This function returns all the time stamps in a spike or burst array
@@ -50,7 +50,7 @@ function get_timestamps(spike_array::BitArray{1};
     points
 end
 
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
+function get_timestamps(sol::AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
         idx::Int64 = 1, dt::Float64 = 0.1
     ) where T <: Real
     #First we need to extract the spike array
@@ -73,7 +73,7 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
 end
 
 # For if the threshold has not been calculated
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T}; 
+function get_timestamps(sol::AbstractODESolution, rng::Tuple{T,T}; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
     threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
@@ -81,14 +81,14 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T};
 end
 
 # For if no range has been provided but a threshold has
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
+function get_timestamps(sol::AbstractODESolution, threshold::AbstractArray{T}; 
         idx::Int64 = 1, dt::T = 0.1
     ) where T <: Real
     get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
 end
 
 # For if no range has been provided
-function get_timestamps(sol::DiffEqBase.AbstractODESolution; 
+function get_timestamps(sol::AbstractODESolution; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
@@ -165,7 +165,7 @@ function max_interval_algorithim(spike_array::BitArray{1};
     end
 end
 
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
+function max_interval_algorithim(sol::AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
         idx::Int64 = 1, dt::Float64 = 0.1,
         kwargs...
     ) where T <: Real
@@ -193,7 +193,7 @@ function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold:
     end
 end
 
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T};         
+function max_interval_algorithim(sol::AbstractODESolution, rng::Tuple{T,T};         
         idx::Int64 = 1, dt::Float64 = 0.1, Z::Int64 = 4,
         kwargs...
     ) where T <: Real
@@ -202,14 +202,14 @@ function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, rng::Tuple
     return max_interval_algorithim(sol, threshold, rng; dt = dt, kwargs...)
 end
 
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
+function max_interval_algorithim(sol::AbstractODESolution, threshold::AbstractArray{T}; 
         idx::Int64 = 1, dt::T = 0.1, 
         kwargs...
     ) where T <: Real
     return max_interval_algorithim(sol, threshold, (sol.t[1]. sol.t[end]); dt = dt, kwargs...)
 end
 
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution; 
+function max_interval_algorithim(sol::eAbstractODESolution; 
         idx::Int64 = 1, dt::T = 0.1, Z::Int64 = 4,
         kwargs...
     ) where T <: Real

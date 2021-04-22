@@ -14,6 +14,8 @@ using CUDA
 
 #using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 using DifferentialEquations, ModelingToolkit
+using DiffEqBase
+import DiffEqBase.AbstractODEProblem
 export SDEProblem, ODEProblem, solve, SOSRI
 export EnsembleProblem, EnsembleThreads
 #These macros will be useful for extending the model
