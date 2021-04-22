@@ -13,7 +13,7 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T, 
     #We want to check how many dimensions the simulation is 
     if length(size(sol.prob.u0)) == 1
         data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-        println(data_section |> size)
+        #println(data_section |> size)
         return calculate_threshold(data_section; Z = Z)
     else
         thresholds = zeros(T, size(sol,1))
