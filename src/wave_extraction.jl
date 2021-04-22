@@ -209,7 +209,7 @@ function max_interval_algorithim(sol::AbstractODESolution, threshold::AbstractAr
     return max_interval_algorithim(sol, threshold, (sol.t[1]. sol.t[end]); dt = dt, kwargs...)
 end
 
-function max_interval_algorithim(sol::eAbstractODESolution; 
+function max_interval_algorithim(sol::AbstractODESolution; 
         idx::Int64 = 1, dt::T = 0.1, Z::Int64 = 4,
         kwargs...
     ) where T <: Real
