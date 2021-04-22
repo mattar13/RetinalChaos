@@ -43,7 +43,38 @@ u_find(cond::Symbol; list_u::Array{Symbol, 1} = sym_cs) = findall(c -> c == cond
 #get the index of the parameter in the list
 p_find(par::Symbol; list_p::Array{Symbol, 1}  = sym_ps) = findall(p -> p == par, list_p)[1]
 
-"""
+function extract_dict(dict_item::Dict{Symbol, T}) where T <: Real
+    #To extract the dictionary first we want to take a look at the first param to see if it is a parameter or a condition
+    if dict_item.keys[1] ∈ tar_pars
+        #This is a parameter and we should extract it
+        pars = T[]
+        for par in tar_pars
+            push!(pars, dict_item[par])
+        end
+        return pars
+    else
+        conds = T[]
+        for cond in tar_conds
+            push!(conds, dict_item[cond])
+        end
+        return conds
+    end
+end
+
+function extract_dict(dict_item::Dict{Symbol, T}, dims...) where T <: Real
+    #Extract the dict_item
+    vals = extract_dict(dict_item)
+    val_map = zeros(dims..., length(vals))
+    for i in 1:length(vals)
+        val_map[:,:,i] .= vals[i]
+    end
+    val_map
+end
+
+
+
+
+#= """
 When using the Modeling Toolkit, the dictionary needs to be converted into an array of operations
 """
 function extract_dict(dict_item::Dict{Symbol, Float64})
@@ -51,21 +82,10 @@ function extract_dict(dict_item::Dict{Symbol, Float64})
     idx = 1
     for key in keys(dict_item)
         if isnothing(par_set)
-            par_set = [Variable(key) => dict_item[key]]
+            par_set = [Variable(key)|>Num => dict_item[key]] #For the new version we need this
         else
-            push!(par_set, (Variable(key)=> dict_item[key]))
+            push!(par_set, (Variable(key)|>Num=> dict_item[key]))
         end
     end
     par_set
-end
-
-"""
-Multiple dispatch function that is called to extract a distribution dictionary
-"""
-function extract_dict(dict_item::Dict{Symbol, Tuple}, pars::Array{Symbol})
-    d0 = Array{Distribution}([])
-    for par in pars
-        push!(d0, convert_dist(dict_item[par]))
-    end
-    d0
-end
+end =#
