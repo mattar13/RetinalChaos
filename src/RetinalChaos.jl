@@ -9,6 +9,9 @@ export now
 using ProgressMeter
 println("Small functions imported")
 
+#Imports if using GPU
+using CUDA
+
 #using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 using DifferentialEquations, ModelingToolkit
 export SDEProblem, ODEProblem, solve, SOSRI
