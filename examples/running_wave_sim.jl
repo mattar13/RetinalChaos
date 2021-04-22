@@ -5,6 +5,7 @@ param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
+
 #%% Run a network simulation and save it
 nx = 64 
 ny = 64; 
@@ -15,7 +16,7 @@ p[:τw] = 800.0
 u0 = read_JSON(conds_file);
 net = Network(nx, ny; μ = 0.15, version = :ρ) 
 p_net = extract_dict(p, tar_pars);
-u0_net = extract_dict(u0, tar_conds, (nx, ny));
+u0_net = extract_dict(u0, tar_conds, (nx, ny)) |> cu;
 NetProb = SDEProblem(net, noise, u0_net, (0.0, 60e3), p_net)
 #%%
 #Lets warm up the solution first
