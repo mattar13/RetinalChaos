@@ -83,31 +83,46 @@ begin
 	end
 end
 
-# ╔═╡ 5b0bbe5c-f61b-476e-be49-432590b759d8
-begin
-	plt_hist_sd = histogram(iso_spike_durs)
-	plt_hist_bd = histogram(iso_burst_durs)
-	plt_hist_ibis = histogram(iso_ibis)
-	plot(plt_hist_sd, plt_hist_bd, plt_hist_ibis, layout = grid(3,1))
-end
-
 # ╔═╡ bd50617a-ad3a-40f1-9d80-3fea8facf83e
 #Load the solution\
-JLD2.@load "\\figures\\sol.jld2" NetSol
+JLD2.@load "sol.jld2" NetSol
 
 # ╔═╡ 0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
-JLD2.@load "figures\\thresholds.jld2" thresholds
+JLD2.@load "thresholds.jld2" thresholds
 
 # ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
-JLD2.@load "\\figures\\ts_analysis.jld2" ts_analysis
+JLD2.@load "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\ts_analysis.jld2" ts
 
-# ╔═╡ 47f910aa-337c-4f86-8489-c02a5373897c
-begin 
-	#Run the timescale analysis now for real
-	#dt = 0.1 #set the time differential
-	#v_thresh = RetinalChaos.calculate_threshold(sol, dt = dt)
-	#timestamps = RetinalChaos.get_timestamps(sol, dt = dt)
-	#spike_durs, burst_durs, ibi = RetinalChaos.timescale_analysis(sol, dt = dt)
+# ╔═╡ 280a8f63-7746-407a-9a28-c5e83e15273c
+begin
+	plt_sd = plot()
+	
+	#jitter1 = randn(length(iso_spike_durs))/10.0 .+ 1.0
+	#plot!(plt_sd, jitter1, iso_spike_durs, 
+	#	st = :scatter, ms = 0.4
+	#)
+	plot!(plt_sd, iso_spike_durs, st = :violin, 
+		xticks = ([1,2], ["Isolated", "Network"]), 
+		legend = false
+	)
+	plot!(plt_sd, ts[1], st = :violin)
+	
+	
+	plt_bd = plot(iso_burst_durs, st = :violin, 
+		xticks = ([1,2], ["Isolated", "Network"]),
+		legend = false, 
+		yformatter = x -> x/1000
+	)
+	plot!(plt_bd, ts[2], st = :violin)
+	
+	plt_ibi = plot(iso_ibis, st = :violin, 
+		xticks = ([1,2], ["Isolated", "Network"]),
+		legend = false, 
+		yformatter = x -> x/1000
+	)
+	plot!(plt_ibi, ts[3], st = :violin)
+	
+	plot(plt_sd, plt_bd, plt_ibi, layout = grid(1,3))
 end
 
 # ╔═╡ a422bb0c-f779-44f6-9141-9d8694dd3239
@@ -125,9 +140,12 @@ end
 
 # ╔═╡ 4e6c5aee-c93d-4752-ba70-c97d828381d0
 begin
-	plot(sol, vars = [:v], xformatter = x -> x/1000)
+	plot(NetSol(NetSol.t, idxs = 1), xformatter = x -> x/1000)
 	plot!(data.t[1:10:length(data.t)].*1000, data.data_array[1:10:length(data.t)])
 end
+
+# ╔═╡ abc98139-8c4b-488e-ae88-961b6edbb5a6
+
 
 # ╔═╡ 164b2668-f893-46eb-8bb7-025391163840
 md"
@@ -138,8 +156,13 @@ md"
 # ╔═╡ a3266346-58f0-4ef5-b747-c88567da7a0d
 begin
 	#Open multiple files
-	target_folder = "E:\\Data\\Jordans_Patch_Data\\Starburst Recordings\\UsuableData\\"
+	target_folder = "E:\\Data\\Jordans_Patch_Data\\UsuableData\\"
 	paths = target_folder |> parse_abf;	
+end
+
+# ╔═╡ bcba180e-fc70-4c55-8e3f-59979216e146
+begin
+	#Walk through each file analyzing using timescale analysis
 end
 
 # ╔═╡ Cell order:
@@ -153,12 +176,13 @@ end
 # ╠═0bc9c0b4-74bd-444e-bc1b-27734e760d7d
 # ╠═b93d9c06-126f-4e67-adb4-27027fd6bad4
 # ╠═a82156f5-ff66-4e64-91d1-8d126b0acf46
-# ╠═5b0bbe5c-f61b-476e-be49-432590b759d8
 # ╠═bd50617a-ad3a-40f1-9d80-3fea8facf83e
 # ╠═0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
 # ╠═60197d1a-fff7-4c55-bdbd-edcf7f534710
-# ╠═47f910aa-337c-4f86-8489-c02a5373897c
+# ╟─280a8f63-7746-407a-9a28-c5e83e15273c
 # ╠═a422bb0c-f779-44f6-9141-9d8694dd3239
 # ╠═4e6c5aee-c93d-4752-ba70-c97d828381d0
+# ╠═abc98139-8c4b-488e-ae88-961b6edbb5a6
 # ╟─164b2668-f893-46eb-8bb7-025391163840
-# ╟─a3266346-58f0-4ef5-b747-c88567da7a0d
+# ╠═a3266346-58f0-4ef5-b747-c88567da7a0d
+# ╠═bcba180e-fc70-4c55-8e3f-59979216e146
