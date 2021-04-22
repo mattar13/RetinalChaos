@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.1
+# v0.14.2
 
 using Markdown
 using InteractiveUtils
@@ -145,7 +145,7 @@ begin
 end
 
 # ╔═╡ abc98139-8c4b-488e-ae88-961b6edbb5a6
-
+NeuroPhys.timescale_analysis(data)
 
 # ╔═╡ 164b2668-f893-46eb-8bb7-025391163840
 md"
@@ -163,6 +163,18 @@ end
 # ╔═╡ bcba180e-fc70-4c55-8e3f-59979216e146
 begin
 	#Walk through each file analyzing using timescale analysis
+	phys_spike_durs = Float64[]
+	phys_burst_durs = Float64[]
+	phys_ibis = Float64[]
+	for path in paths
+		println(path)
+		data_i = extract_abf(path)
+		ts_i = NeuroPhys.timescale_analysis(data)
+		push!(phys_spike_durs, ts_i[1]...)
+		push!(phys_spike_durs, ts_i[2]...)
+		push!(phys_spike_durs, ts_i[3]...)
+	end
+	
 end
 
 # ╔═╡ Cell order:
