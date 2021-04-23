@@ -4,7 +4,7 @@ This function is a work of progress. Things I want it to include
 - Changing multiple parameters at once
 """
 
-function ensemble_func(prob::DiffEqBase.AbstractODEProblem, i, repeat, idx::Int64, val_rng; run_func_on = :pars, verbose = false)
+function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars, verbose = false)
     if run_func_on == :pars
         if verbose
             println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
@@ -20,7 +20,7 @@ function ensemble_func(prob::DiffEqBase.AbstractODEProblem, i, repeat, idx::Int6
     end
 end
 
-function ensemble_func(prob::DiffEqBase.AbstractODEProblem, i, repeat, sym::Symbol, val_rng; run_func_on = :pars, verbose = false)
+function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; run_func_on = :pars, verbose = false)
     idx = findall(x -> x==sym, tar_pars)
     if run_func_on == :pars
         if verbose
