@@ -4,6 +4,11 @@ using JLD2
 param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
+#Load the logger
+using Logging: global_logger
+using TerminalLoggers: TerminalLogger
+global_logger(TerminalLogger())
+
 
 save_file = "data\\$(Date(Dates.now()))\\"
 if isdir(save_file) == false
@@ -12,17 +17,17 @@ if isdir(save_file) == false
 end
 
 #%% Run a network simulation and save it
-nx = 64 
-ny = 64; 
+nx = 125 
+ny = 125; 
 p = read_JSON(params_file) 
 p[:σ] = 0.1
 p[:τw] = 800.0
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
 net = Network(nx, ny; μ = 0.15, version = :ρ, gpu = true) 
-p_net = extract_dict(p, tar_pars);
-u0_net = extract_dict(u0, tar_conds, (nx, ny)) |> cu;
-warmup = (0.0|> Float32 , 60e3 |> Float32)  #If gpu change to a Float32
+p_net = extract_dict(p);
+u0_net = extract_dict(u0, nx, ny) |> cu;
+warmup = (0.0|> Float32 , 300e3 |> Float32)  #If gpu change to a Float32
 tspan = (0.0|> Float32 , 300e3 |> Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 #%%
