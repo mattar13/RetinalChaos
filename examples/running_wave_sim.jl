@@ -5,6 +5,11 @@ param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
+save_file = "data\\$(Date(Dates.now()))\\"
+if isdir(save_file) == false
+    #The directory does not exist, we have to make it 
+    mkdir(save_file)
+end
 
 #%% Run a network simulation and save it
 nx = 64 
@@ -34,33 +39,29 @@ NetProb = SDEProblem(net, noise, NetSol[end], tspan, p_net)
     save_idxs = [1:(nx*ny)...], 
     progress = true, progress_steps = 1
     )
-#%%
-#Remove the results from the GPU
 
 #%% Save the solution, must be on drive first
-JLD2.@save "$(Date(Dates.now()))_sol.jld2" NetSol
-#%% Plotting stuff
+JLD2.@save "$(save_file)\\sol.jld2" NetSol
+
+#%% Plotting animation
 anim = @animate for t = 1.0:50.0:NetSol.t[end]
     println("Animating frame $t")
-    frame_i = reshape(NetSol(t), (nx, ny))
+    frame_i = reshape(NetSol(t) |> Array, (nx, ny))
     heatmap(frame_i, ratio = :equal, grid = false,
             xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
             c = :curl, clims = (-70.0, 0.0),
     )
 end
-gif(anim, save_wave, fps = 20)
+gif(anim, "$(save_file)\\animation.gif", fps = 20)
 
-#%% Extracting wave data from the simulation
-open_dir = "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\2021-04-19_sol.jld2"
-JLD2.@load open_dir NetSol
 #%%
 thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
-@save "figures\\thresholds.jld2" thresholds
+@save "$(save_file)\\thresholds.jld2" thresholds
 #%%
 ts = RetinalChaos.timescale_analysis(NetSol, thresholds)
-@save "figures\\ts_analysis.jld2"
+@save "$(save_file)\\ts_analysis.jld2"
 
-#%% Running a multiple sim on the Lab computer
+#= %% Running a multiple sim on the Lab computer
 save_path = "C:\\Users\\RennaLabSA1\\Documents\\modelling"
 println("[$(Dates.now())]: Beginning simulion")
 ga = 1.1
@@ -117,4 +118,4 @@ for rho in range(0.1, 1.0, length = 50)#for sig in range(0.01, 1.0, length = 10)
         plot!(plt, PDEsol.t, PDEsol[i,:])
     end 
     savefig(plt, save_plot)
-end
+end =#
