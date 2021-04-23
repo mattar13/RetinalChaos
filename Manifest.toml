@@ -676,9 +676,9 @@ version = "1.6.0"
 
 [[Latexify]]
 deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "Printf", "Requires"]
-git-tree-sha1 = "1925f6838df247e7853f3f9727dd8a52a78f60f4"
+git-tree-sha1 = "f77a16cb3804f4a74f57e5272a6a4a9a628577cb"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.15.2"
+version = "0.15.5"
 
 [[LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
@@ -917,8 +917,8 @@ version = "0.4.8"
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
 [[NeuroPhys]]
-deps = ["DSP", "DataFrames", "Dates", "Distributions", "FFTW", "LsqFit", "Plots", "Pluto", "Polynomials", "PyCall", "Query", "StatsBase", "Wavelets", "XLSX"]
-git-tree-sha1 = "0b85c764c54d364e6351bc455030f5c89fa2b532"
+deps = ["DSP", "DataFrames", "Dates", "Distributions", "FFTW", "LsqFit", "Plots", "Pluto", "Polynomials", "PyCall", "Query", "Revise", "StatsBase", "Wavelets", "XLSX"]
+git-tree-sha1 = "30c80923ef798438acdff9aba220f187394bac5d"
 repo-rev = "master"
 repo-url = "https://github.com/mattar13/NeuroPhys"
 uuid = "0612f44b-defb-466c-a561-fff8bd3ecefc"
@@ -1397,15 +1397,15 @@ version = "5.2.0+1"
 
 [[SymbolicUtils]]
 deps = ["AbstractAlgebra", "AbstractTrees", "ChainRulesCore", "Combinatorics", "ConstructionBase", "DataStructures", "IfElse", "LabelledArrays", "LinearAlgebra", "NaNMath", "Setfield", "SparseArrays", "SpecialFunctions", "StaticArrays", "TimerOutputs"]
-git-tree-sha1 = "b21d29589b8cc8f10cbd9839996e8ac5846fe361"
+git-tree-sha1 = "e024f71ab5d34fcb7e27740c304b65a64264f48f"
 uuid = "d1185830-fcd6-423d-90d6-eec64667417b"
-version = "0.11.1"
+version = "0.11.2"
 
 [[Symbolics]]
 deps = ["AbstractAlgebra", "DiffRules", "Distributions", "DocStringExtensions", "IfElse", "Latexify", "Libdl", "LinearAlgebra", "MacroTools", "NaNMath", "RecipesBase", "Reexport", "RuntimeGeneratedFunctions", "SciMLBase", "Setfield", "SparseArrays", "SpecialFunctions", "SymbolicUtils", "TreeViews"]
-git-tree-sha1 = "6ab9fb5464fe25d9038b43efd15b942cb016b20b"
+git-tree-sha1 = "a752ddc52faab2e5d1fe2a35d7ead2496430eb11"
 uuid = "0c5d862f-8b57-4792-8d23-62f2024744c7"
-version = "0.1.23"
+version = "0.1.24"
 
 [[TOML]]
 deps = ["Dates"]
