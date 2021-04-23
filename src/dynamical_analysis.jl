@@ -20,7 +20,7 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars
     end
 end
 
-function ensemble_func(prob, i, repeat, sym::Symbol, val_rn; run_func_on = :pars, verbose = false)
+function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; run_func_on = :pars, verbose = false)
     idx = findall(x -> x==sym, tar_pars)
     if run_func_on == :pars
         if verbose
