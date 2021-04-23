@@ -92,6 +92,28 @@ JLD2.@load "sol.jld2" NetSol
 # ╔═╡ 0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
 JLD2.@load "thresholds.jld2" thresholds
 
+# ╔═╡ a422bb0c-f779-44f6-9141-9d8694dd3239
+begin
+	#Extract the physiological data file
+	target_file = 				"E:\\Data\\Patching\\2019_11_03_Patch\\Animal_2\\Cell_3\\19n03042.abf"
+	data = extract_abf(target_file)
+	#Conduct the timescale analysis on this file
+	#reduce the size of the file
+	truncate_data!(data, 
+		t_pre = 140.0, t_post = 240.0, 
+		truncate_based_on = :time_range)
+	data.data_array .-= 25
+end
+
+# ╔═╡ 4e6c5aee-c93d-4752-ba70-c97d828381d0
+begin
+	plot(NetSol(NetSol.t, idxs = 1), xformatter = x -> x/1000)
+	plot!(data.t[1:10:length(data.t)].*1000, data.data_array[1:10:length(data.t)])
+end
+
+# ╔═╡ abc98139-8c4b-488e-ae88-961b6edbb5a6
+ts = NeuroPhys.timescale_analysis(data)
+
 # ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
 JLD2.@load "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\ts_analysis.jld2" ts
 
@@ -127,28 +149,6 @@ begin
 	plot(plt_sd, plt_bd, plt_ibi, layout = grid(1,3))
 end
 
-# ╔═╡ a422bb0c-f779-44f6-9141-9d8694dd3239
-begin
-	#Extract the physiological data file
-	target_file = 				"E:\\Data\\Patching\\2019_11_03_Patch\\Animal_2\\Cell_3\\19n03042.abf"
-	data = extract_abf(target_file)
-	#Conduct the timescale analysis on this file
-	#reduce the size of the file
-	truncate_data!(data, 
-		t_pre = 140.0, t_post = 240.0, 
-		truncate_based_on = :time_range)
-	data.data_array .-= 25
-end
-
-# ╔═╡ 4e6c5aee-c93d-4752-ba70-c97d828381d0
-begin
-	plot(NetSol(NetSol.t, idxs = 1), xformatter = x -> x/1000)
-	plot!(data.t[1:10:length(data.t)].*1000, data.data_array[1:10:length(data.t)])
-end
-
-# ╔═╡ abc98139-8c4b-488e-ae88-961b6edbb5a6
-NeuroPhys.timescale_analysis(data)
-
 # ╔═╡ 164b2668-f893-46eb-8bb7-025391163840
 md"
 # Analyze multiple files
@@ -158,9 +158,15 @@ md"
 # ╔═╡ a3266346-58f0-4ef5-b747-c88567da7a0d
 begin
 	#Open multiple files
-	target_folder = "E:\\Data\\Jordans_Patch_Data\\UsuableData\\"
+	target_folder = "E:\\Data\\Jordans_Patch_Data\\UsuableData\\uncorrupted"
 	paths = target_folder |> parse_abf;	
 end
+
+# ╔═╡ 54b414f6-6e44-41f1-a2db-41afcb1adf81
+paths[1]
+
+# ╔═╡ aaa196fe-8329-400c-b3e7-63e5734f02e8
+data_i = extract_abf(paths[1], swps = -1)
 
 # ╔═╡ bcba180e-fc70-4c55-8e3f-59979216e146
 begin
@@ -170,7 +176,7 @@ begin
 	phys_ibis = Float64[]
 	for path in paths
 		println(path)
-		data_i = extract_abf(path)
+		data_i = extract_abf(path, swps)
 		ts_i = NeuroPhys.timescale_analysis(data)
 		push!(phys_spike_durs, ts_i[1]...)
 		push!(phys_spike_durs, ts_i[2]...)
@@ -200,4 +206,6 @@ end
 # ╠═abc98139-8c4b-488e-ae88-961b6edbb5a6
 # ╟─164b2668-f893-46eb-8bb7-025391163840
 # ╠═a3266346-58f0-4ef5-b747-c88567da7a0d
+# ╠═54b414f6-6e44-41f1-a2db-41afcb1adf81
+# ╠═aaa196fe-8329-400c-b3e7-63e5734f02e8
 # ╠═bcba180e-fc70-4c55-8e3f-59979216e146
