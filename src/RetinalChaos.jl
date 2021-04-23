@@ -11,6 +11,7 @@ println("Small functions imported")
 
 #Imports if using GPU
 using CUDA
+export cu
 
 #using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
 using DifferentialEquations, ModelingToolkit
