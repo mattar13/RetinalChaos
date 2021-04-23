@@ -17,6 +17,7 @@ if isdir(save_file) == false
 end
 
 #%% Run a network simulation and save it
+print("Setting up the model...")
 nx = 125 
 ny = 125; 
 p = read_JSON(params_file) 
@@ -30,22 +31,35 @@ u0_net = extract_dict(u0, nx, ny) |> cu;
 warmup = (0.0|> Float32 , 300e3 |> Float32)  #If gpu change to a Float32
 tspan = (0.0|> Float32 , 300e3 |> Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
-#%%
-#Lets warm up the solution first (using GPU if available)
+println("Completed")
+#%% Lets warm up the solution first (using GPU if available)
+
+print("Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
-    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-    progress = true, progress_steps = 1, 
-    save_everystep = false)
+        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+        progress = true, progress_steps = 1, 
+        save_everystep = false
+    )
+warmup_ics = NetSol[end]
+println("Completed")
+
+#%% Save or load the warmed up solution
+println("Loading or saving solution")
+JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
+#JLD2.@load "$(save_file)\\warmup_ics.jld2" warmup_ics
 
 #%% Run the simulation
-NetProb = SDEProblem(net, noise, NetSol[end], tspan, p_net)
+print("Running the simulation")
+NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
-    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-    save_idxs = [1:(nx*ny)...], 
-    progress = true, progress_steps = 1
+        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+        save_idxs = [1:(nx*ny)...], 
+        progress = true, progress_steps = 1
     )
+println("Completed")
 
 #%% Save the solution, must be on drive first
+println("Saving the simulation")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
 
 #%% Plotting animation
