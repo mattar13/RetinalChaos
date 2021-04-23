@@ -11,14 +11,6 @@ param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
-#%% Fixing the modelling toolkit
-
-p = read_JSON(params_file) 
-u0 = read_JSON(conds_file)
-tspan = (0.0,60e3)
-prob_sde = SDEProblem(T_sde, noise, u0|>extract_dict, tspan, p|>extract_dict);
-@time sol_sde = solve(prob_sde, progress = true)
-plot(sol_sde, vars = [1])
 #%%
 #save everything in the figures folder
 save_figs = "figures\\"
