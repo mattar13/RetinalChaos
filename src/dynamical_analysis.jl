@@ -67,7 +67,7 @@ length(eq::equilibria_object) = length(eq.stable) + length(eq.unstable) + length
 #This function displays information about the equilibrium
 function print(eq::equilibria_object; msg = "Existant Equilibrium", vars = [:v])
     println(msg)
-    var_idxs = map(vr -> u_find(vr), vars)
+    var_idxs = map(vr -> findall(x -> x==vr, tar_conds)[1], vars)
     eq.unstable != [] ? println("Unstable Equilibrium: $(eq.unstable[1][var_idxs])") : nothing
     eq.stable != [] ? println("Stable Equilibrium: $(eq.stable[1][var_idxs])") : nothing
     eq.saddle != [] ? println("Saddle Equilibrium: $(eq.saddle[1][var_idxs])") : nothing
@@ -80,7 +80,7 @@ export print, length
 #Conduct a stability analysis of the current
 function find_equilibria(prob::ODEProblem;
         vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), equilibrium_resolution = 10,
-        precision = 2, check_min = 1e-8
+        precision = 2, check_min = 1e-5
     )
     stable = Array{Array{Float64}}([])
     unstable = Array{Array{Float64}}([])
@@ -89,24 +89,18 @@ function find_equilibria(prob::ODEProblem;
     stable_focus = Array{Array{Float64}}([])
     storage = Array{Array{Float64}}([])
 
-    var_idx = [findall(x -> x==vars[1], tar_conds)[1], findall(x -> x==vars[1], tar_conds)[1]]
+    var_idx = [findall(x -> x==vars[1], tar_conds)[1], findall(x -> x==vars[2], tar_conds)[1]]
     for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], equilibrium_resolution)) 
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], equilibrium_resolution))
             #Iterate through the y range looking for stable points
             
             #We really may only need to check for stable points if the dU is low
-            uI = prob.u0
+            uI = copy(prob.u0)
             uI[var_idx] .= (x, y)
-            
-            function df(ux) 
-                dU = similar(ux)
-                T_ode(dU, ux, prob.p, 0.0) #dU, U, p, t
-                return dU
-            end
-            
+
+            df(ux) = prob.f(similar(ux), ux, prob.p, 0.0) #dU, U, p, t            
             res = nlsolve(df, uI)
-            #println(res)
             equilibria = map(x -> round(x, digits = precision), res.zero)
             check = df(res.zero)
             
@@ -126,12 +120,15 @@ function find_equilibria(prob::ODEProblem;
 
                 if sign(real(ev[1])) != sign(real(ev[2]))
                     #If the sign of the eigenvalues are opposite, then it is a unstable saddle
+                    println("Saddle")
                     push!(saddle, res.zero)
                 else
                     if imag(ev[1]) != 0 #This detects whether or not the equilibria is a focus
                         if real(ev[1]) > 0.0
+                            println("Unstable focus")
                             push!(unstable_focus, res.zero)
                         else
+                            println("Unstable focus")
                             push!(stable_focus, res.zero)
                         end
                     else
@@ -250,6 +247,9 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
         println(idx1)
         pv = prob.p
         pv[findall(x -> x==codim, tar_pars)[1]] = c1
+        #println(pv[findall(x -> x==codim, tar_pars)[1]])
+        #println(pv)
+        #println(tar_pars[findall(x -> x==codim, tar_pars)[1]])
         prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
         equilibria = find_equilibria(prob_i; kwargs...)
         #in order to pass we want to make sure that there has at least been a saddle node first
@@ -274,7 +274,7 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
         elseif length(equilibria) == n_equilibria
             n_equilibria = length(equilibria)
         end
-
+        print
         points = c1
         push!(points_list, (c1,))
         push!(equilibria_list, equilibria)
