@@ -21,7 +21,8 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars
 end
 
 function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; run_func_on = :pars, verbose = false)
-    idx = findall(x -> x==sym, tar_pars)
+    #idx = findall(x -> x==sym, tar_pars)
+    idx = sym |> p_find
     if run_func_on == :pars
         if verbose
             println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
@@ -67,7 +68,8 @@ length(eq::equilibria_object) = length(eq.stable) + length(eq.unstable) + length
 #This function displays information about the equilibrium
 function print(eq::equilibria_object; msg = "Existant Equilibrium", vars = [:v])
     println(msg)
-    var_idxs = map(vr -> findall(x -> x==vr, tar_conds)[1], vars)
+    #var_idxs = map(vr -> findall(x -> x==vr, tar_conds)[1], vars)
+    var_idxs = map(vr -> vr |> u_find, vars)
     eq.unstable != [] ? println("Unstable Equilibrium: $(eq.unstable[1][var_idxs])") : nothing
     eq.stable != [] ? println("Stable Equilibrium: $(eq.stable[1][var_idxs])") : nothing
     eq.saddle != [] ? println("Saddle Equilibrium: $(eq.saddle[1][var_idxs])") : nothing
@@ -89,13 +91,12 @@ function find_equilibria(prob::ODEProblem;
     stable_focus = Array{Array{Float64}}([])
     storage = Array{Array{Float64}}([])
 
-    var_idx = [findall(x -> x==vars[1], tar_conds)[1], findall(x -> x==vars[2], tar_conds)[1]]
+    #var_idx = [findall(x -> x==vars[1], tar_conds)[1], findall(x -> x==vars[2], tar_conds)[1]]
+    var_idx = [vars[1] |> u_find, vars[2] |> u_find]
     for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], equilibrium_resolution)) 
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], equilibrium_resolution))
             #Iterate through the y range looking for stable points
-            
-            #We really may only need to check for stable points if the dU is low
             uI = copy(prob.u0)
             uI[var_idx] .= (x, y)
 
@@ -171,7 +172,8 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             iter += 1
             I += ϵ #Increment I slowly
             pv = prob.p
-            pv[findall(x -> x==par, tar_pars)[1]] = I #plug in the newly incremented equilibria
+            #pv[findall(x -> x==par, tar_pars)[1]] = I #plug in the newly incremented equilibria
+            pv[par |> p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
 
@@ -245,7 +247,8 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
     n_equilibria = -1
     for (idx1, c1) in enumerate(c1_range)
         pv = prob.p
-        pv[findall(x -> x==codim, tar_pars)[1]] = c1
+        #pv[findall(x -> x==codim, tar_pars)[1]] = c1
+        pv[codim |> p_find] = c1
         prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
         equilibria = find_equilibria(prob_i; kwargs...)
         #in order to pass we want to make sure that there has at least been a saddle node first
