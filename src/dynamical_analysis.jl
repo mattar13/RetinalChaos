@@ -89,7 +89,7 @@ function find_equilibria(prob::ODEProblem;
     stable_focus = Array{Array{Float64}}([])
     storage = Array{Array{Float64}}([])
 
-    var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
+    var_idx = [findall(x -> x==vars[1], tar_conds)[1], findall(x -> x==vars[1], tar_conds)[1]]
     for (idx_x, x) in enumerate(LinRange(xlims[1], xlims[2], equilibrium_resolution)) 
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], equilibrium_resolution))
@@ -98,7 +98,13 @@ function find_equilibria(prob::ODEProblem;
             #We really may only need to check for stable points if the dU is low
             uI = prob.u0
             uI[var_idx] .= (x, y)
-            df(ux) = prob.f(ux, prob.p, 0.0)
+            
+            function df(ux) 
+                dU = similar(ux)
+                T_ode(dU, ux, prob.p, 0.0) #dU, U, p, t
+                return dU
+            end
+            
             res = nlsolve(df, uI)
             #println(res)
             equilibria = map(x -> round(x, digits = precision), res.zero)
@@ -163,12 +169,12 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[2] #we start here 
         ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
         iter = 0
-        #println("continuation: $(rng[1]) -> $(rng[2])")
+        println("continuation: $(rng[1]) -> $(rng[2])")
         while I < In && ϵ > min_step && iter <= max_iters 
             iter += 1
             I += ϵ #Increment I slowly
             pv = prob.p
-            pv[par |> p_find] = I #plug in the newly incremented equilibria
+            pv[findall(x -> x==par, tar_pars)[1]] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
 
@@ -195,12 +201,12 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[1] #we start here 
         ϵ = abs(I - In)/2 #Begin at the halfway point between the two points
         iter = 0
-        #println("reverse continuation: $(rng[2]) -> $(rng[1])")
+        println("reverse continuation: $(rng[2]) -> $(rng[1])")
         while I > In && ϵ > min_step && iter < max_iters 
             iter += 1
             I -= ϵ #decrement I slowly
             pv = prob.p
-            pv[par |> p_find] = I #plug in the newly incremented equilibria
+            pv[findall(x -> x==par, tar_pars)[1]] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
             #println(points |> typeof)
@@ -241,8 +247,9 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
     cont_toggle = false
     n_equilibria = -1
     for (idx1, c1) in enumerate(c1_range)
+        println(idx1)
         pv = prob.p
-        pv[codim |> p_find] = c1
+        pv[findall(x -> x==codim, tar_pars)[1]] = c1
         prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
         equilibria = find_equilibria(prob_i; kwargs...)
         #in order to pass we want to make sure that there has at least been a saddle node first

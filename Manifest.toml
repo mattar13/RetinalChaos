@@ -221,9 +221,9 @@ version = "1.6.0"
 
 [[DataFrames]]
 deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
-git-tree-sha1 = "56ff5833e5b755d2db654479993e949e73606b64"
+git-tree-sha1 = "78028b8c1c5147515e0a367e6bbe679fc86ff085"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "1.0.0"
+version = "1.0.1"
 
 [[DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -918,7 +918,7 @@ uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
 [[NeuroPhys]]
 deps = ["DSP", "DataFrames", "Dates", "Distributions", "FFTW", "LsqFit", "Plots", "Pluto", "Polynomials", "PyCall", "Query", "Revise", "StatsBase", "Wavelets", "XLSX"]
-git-tree-sha1 = "30c80923ef798438acdff9aba220f187394bac5d"
+git-tree-sha1 = "2c3d082f0c7aa7bdb118e63ab885d3c1f38a9348"
 repo-rev = "master"
 repo-url = "https://github.com/mattar13/NeuroPhys"
 uuid = "0612f44b-defb-466c-a561-fff8bd3ecefc"
