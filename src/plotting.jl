@@ -458,8 +458,8 @@ function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1
 end
 
 @recipe function f(c1::codim_object{1, Float64}; vars = :v, scatter = false)
-    var_idx = vars |> u_find
-    
+    var_idx = findall(x -> x==vars, tar_conds)[1]
+    #findall(x -> x==par, tar_pars)
     points = map(x -> x[1], c1.points);
     saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria);
     stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria);
