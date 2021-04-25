@@ -244,12 +244,8 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
     cont_toggle = false
     n_equilibria = -1
     for (idx1, c1) in enumerate(c1_range)
-        println(idx1)
         pv = prob.p
         pv[findall(x -> x==codim, tar_pars)[1]] = c1
-        #println(pv[findall(x -> x==codim, tar_pars)[1]])
-        #println(pv)
-        #println(tar_pars[findall(x -> x==codim, tar_pars)[1]])
         prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
         equilibria = find_equilibria(prob_i; kwargs...)
         #in order to pass we want to make sure that there has at least been a saddle node first
