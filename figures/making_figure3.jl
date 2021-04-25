@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.1
+# v0.14.2
 
 using Markdown
 using InteractiveUtils
@@ -14,7 +14,8 @@ using StatsPlots
 md"
 # Figure 3: Spontaneous Activity
 "
-	
+
+
 # ╔═╡ 85b88d7a-7e08-4b31-9438-647073d00ae2
 begin
 	#Set up fonts 
@@ -49,7 +50,7 @@ begin
 	#Set up the Time span
 	tspan = (0.0, 120e3)
 	#set up the problem to solve
-	prob = SDEProblem(T_sde, u0 |> extract_dict, tspan, p |> extract_dict);
+	prob = SDEProblem(T_sde, noise, u0 |> extract_dict, tspan, p |> extract_dict);
 
 end
 
@@ -71,7 +72,7 @@ end
 
 # ╔═╡ 27f07f0a-bff3-4ab1-8997-8d56ef4f84fc
 begin
-	fig3_A = plot(sol, vars = [:v, :W], layout = grid(2,1),label = ["" ""],
+	fig3_A = plot(sol, vars = [1, 7], layout = grid(2,1),label = ["" ""],
 		c = [v_color w_color],lw = 3.0, grid = false,
 		xlabel = ["" "Time (s)"], 
 		ylabel = ["Vₜ (mV)" "Noise (pA)"], 
@@ -148,12 +149,12 @@ savefig(fig3, "Fig3_Spontneous_Activity.png")
 # ╟─b8a24735-3ad0-45c5-8584-6fe27dc67162
 # ╠═85b88d7a-7e08-4b31-9438-647073d00ae2
 # ╟─5d84dba7-a262-43f9-9364-5e13d322d832
-# ╠═43050c9b-76c1-47df-88c4-3b1ff215497b
+# ╟─43050c9b-76c1-47df-88c4-3b1ff215497b
 # ╠═ea8baa30-f4b4-4f56-87ba-5b03aec8c574
 # ╠═f57aa1f7-41b4-435f-b6fc-24815a655b93
-# ╟─27f07f0a-bff3-4ab1-8997-8d56ef4f84fc
-# ╟─bdc1f75d-d992-4b03-a6ad-b61650d8db94
-# ╟─79fd10a2-b662-469e-ab24-508b78ec53b4
+# ╠═27f07f0a-bff3-4ab1-8997-8d56ef4f84fc
+# ╠═bdc1f75d-d992-4b03-a6ad-b61650d8db94
+# ╠═79fd10a2-b662-469e-ab24-508b78ec53b4
 # ╟─df7e26fa-a550-4594-bc5b-f03c38971381
 # ╟─976de364-ca10-4c91-8d9d-143926e48613
 # ╠═b5d23852-523d-4c6f-b374-316a4052c87d
