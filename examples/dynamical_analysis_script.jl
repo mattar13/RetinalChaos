@@ -25,8 +25,6 @@ plot(sol_sde, vars = [1])
 plot!(sol_basic, vars = [1])
 threshold = calculate_threshold(sol_basic)
 hline!([threshold])
-#%%
-println(threshold)
 #%% Supplemental figure, Bifurcation analysis of voltage injections
 p = read_JSON(params_file) 
 u0 = read_JSON(conds_file)
@@ -37,10 +35,10 @@ tspan = (0.0, 30e3);
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 prob_sde = SDEProblem(T_sde, noise, u0|>extract_dict, tspan, p|>extract_dict);
 eq_analysis = find_equilibria(prob_eq)
-
 sol_sde = solve(prob_sde, progress = true)
 sol_plain = solve(prob_eq, progress = true)
-
+#%%
+print(eq_analysis)
 #%% Codim 1 analysis
 codim1 = (:I_app)
 c1_lims = (-60.0, 50.0)
