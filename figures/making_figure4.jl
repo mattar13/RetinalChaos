@@ -15,7 +15,7 @@ using RetinalChaos
 using NeuroPhys
 
 # ╔═╡ 4886869d-19d7-43c9-90c0-2c8a1e5a18f1
-using Dates,JLD2
+using Dates,JLD2, Statistics, StatsPlots
 
 # ╔═╡ 926d1c0c-171b-4001-991c-1c822b3e2fb8
 begin
@@ -39,9 +39,6 @@ md"
 #### Run a simulation for many single traces
 
 "
-
-# ╔═╡ 7bda25c2-873e-429a-bc94-084c2f919735
-
 
 # ╔═╡ 0bc9c0b4-74bd-444e-bc1b-27734e760d7d
 begin
@@ -68,6 +65,9 @@ end
 
 # ╔═╡ a82156f5-ff66-4e64-91d1-8d126b0acf46
 begin
+	iso_baseline = Float64[]
+	iso_max = Float64[]
+	iso_min = Float64[]
 	iso_spike_durs = Float64[]
 	iso_burst_durs = Float64[]
 	iso_ibis = Float64[]
@@ -76,21 +76,52 @@ begin
 		#Run the timescale analysis now for real
 		dt = 0.1 #set the time differential
 		v_thresh = RetinalChaos.calculate_threshold(sol, dt = dt)
+		v_base = RetinalChaos.calculate_threshold(sol, Z = 0, dt = dt)
 		println(v_thresh)
 		timestamps = RetinalChaos.get_timestamps(sol, dt = dt)
 		sd, bd, ibi = RetinalChaos.timescale_analysis(sol, dt = dt)
+		push!(iso_baseline, v_base[1])
+		push!(iso_max, maximum(sol(sol.t, idxs = 1)))
+		push!(iso_min, minimum(sol(sol.t, idxs = 1)))
 		push!(iso_spike_durs, sd...)
 		push!(iso_burst_durs, bd...)
 		push!(iso_ibis, ibi...)
 	end
 end
 
+# ╔═╡ 5fcd8df1-9889-41f8-8f3e-c53b00edcf75
+md"
+## Isolated
+- Baseline $(sum(iso_baseline)/length(iso_baseline)) +- $(std(iso_baseline)/sqrt(length(length(iso_baseline))))
+
+- Max Amp $(sum(iso_max)/length(iso_max)) +- $(std(iso_max)/sqrt(length(length(iso_max))))
+
+- Min Amp $(sum(iso_min)/length(iso_min)) +- $(std(iso_min)/sqrt(length(length(iso_min))))
+
+- Spike Duration = $(sum(iso_spike_durs)/length(iso_spike_durs)) +- $(std(iso_spike_durs)/sqrt(length(length(iso_spike_durs))))
+
+- Burst Duration = $(sum(iso_burst_durs)/length(iso_burst_durs)) +- $(std(iso_burst_durs)/sqrt(length(length(iso_burst_durs))))
+
+- Interburst Interval = $(sum(iso_ibis)/length(iso_ibis)) +- $(std(iso_ibis)/sqrt(length(length(iso_ibis))))
+
+"
+
 # ╔═╡ bd50617a-ad3a-40f1-9d80-3fea8facf83e
 #Load the solution\
-JLD2.@load "sol.jld2" NetSol
+#JLD2.@load "sol.jld2" NetSol
 
 # ╔═╡ 0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
-JLD2.@load "thresholds.jld2" thresholds
+#JLD2.@load "thresholds.jld2" thresholds
+
+# ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
+#JLD2.@load "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\ts_analysis.jld2" ts
+
+# ╔═╡ b69cdf52-3dc2-4cbc-989e-4ea838dd70cd
+#Print out the timescale characteristics
+
+# ╔═╡ ed3f2c93-34a8-454b-9e5a-193ce88e0fe3
+#Calculate the baseline
+#RetinalChaos.calculate_threshold(NetSol; Z = 0)
 
 # ╔═╡ a422bb0c-f779-44f6-9141-9d8694dd3239
 begin
@@ -114,41 +145,6 @@ end
 # ╔═╡ abc98139-8c4b-488e-ae88-961b6edbb5a6
 ts = NeuroPhys.timescale_analysis(data)
 
-# ╔═╡ 60197d1a-fff7-4c55-bdbd-edcf7f534710
-JLD2.@load "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\figures\\ts_analysis.jld2" ts
-
-# ╔═╡ 280a8f63-7746-407a-9a28-c5e83e15273c
-begin
-	plt_sd = plot()
-	
-	#jitter1 = randn(length(iso_spike_durs))/10.0 .+ 1.0
-	#plot!(plt_sd, jitter1, iso_spike_durs, 
-	#	st = :scatter, ms = 0.4
-	#)
-	plot!(plt_sd, iso_spike_durs, st = :violin, 
-		xticks = ([1,2], ["Isolated", "Network"]), 
-		legend = false
-	)
-	plot!(plt_sd, ts[1], st = :violin)
-	
-	
-	plt_bd = plot(iso_burst_durs, st = :violin, 
-		xticks = ([1,2], ["Isolated", "Network"]),
-		legend = false, 
-		yformatter = x -> x/1000
-	)
-	plot!(plt_bd, ts[2], st = :violin)
-	
-	plt_ibi = plot(iso_ibis, st = :violin, 
-		xticks = ([1,2], ["Isolated", "Network"]),
-		legend = false, 
-		yformatter = x -> x/1000
-	)
-	plot!(plt_ibi, ts[3], st = :violin)
-	
-	plot(plt_sd, plt_bd, plt_ibi, layout = grid(1,3))
-end
-
 # ╔═╡ 164b2668-f893-46eb-8bb7-025391163840
 md"
 # Analyze multiple files
@@ -158,31 +154,86 @@ md"
 # ╔═╡ a3266346-58f0-4ef5-b747-c88567da7a0d
 begin
 	#Open multiple files
-	target_folder = "E:\\Data\\Jordans_Patch_Data\\UsuableData\\uncorrupted"
+	target_folder = "E:\\Data\\Jordans_Patch_Data\\UsuableData"
 	paths = target_folder |> parse_abf;	
-end
-
-# ╔═╡ 54b414f6-6e44-41f1-a2db-41afcb1adf81
-paths[1]
-
-# ╔═╡ aaa196fe-8329-400c-b3e7-63e5734f02e8
-data_i = extract_abf(paths[1], swps = -1)
-
-# ╔═╡ bcba180e-fc70-4c55-8e3f-59979216e146
-begin
+	
 	#Walk through each file analyzing using timescale analysis
+	phys_baseline = Float64[]
+	phys_max = Float64[]
+	phys_min = Float64[]
 	phys_spike_durs = Float64[]
 	phys_burst_durs = Float64[]
 	phys_ibis = Float64[]
 	for path in paths
-		println(path)
-		data_i = extract_abf(path, swps)
-		ts_i = NeuroPhys.timescale_analysis(data)
-		push!(phys_spike_durs, ts_i[1]...)
-		push!(phys_spike_durs, ts_i[2]...)
-		push!(phys_spike_durs, ts_i[3]...)
+		print("Opening $path ...")
+		try
+			data_i = extract_abf(path, chs = ["Im_scaled"], continuous = true)
+			
+			push!( 
+				phys_baseline, 
+				sum(data_i.data_array[1, :, 1])/length(data_i.data_array[1, :, 1])
+			)
+			
+			println("Success")
+			
+			ts_i = NeuroPhys.timescale_analysis(data_i, DURmax = 25)
+			
+			push!(phys_spike_durs, ts_i[1]...)
+			push!(phys_burst_durs, ts_i[2]...)
+			push!(phys_ibis, ts_i[3]...)
+		catch
+			println("failed")
+		end
 	end
+	paths
+end
+
+# ╔═╡ 99a1108e-9978-4726-9f87-96264794ab1e
+md"
+## Isolated
+- Baseline $(sum(phys_baseline)/length(phys_baseline)) +- $(std(phys_baseline)/sqrt(length(length(phys_baseline))))
+
+- Max Amp $(sum(phys_max)/length(phys_max)) +- $(std(phys_max)/sqrt(length(length(phys_max))))
+
+- Min Amp $(sum(phys_min)/length(phys_min)) +- $(std(phys_min)/sqrt(length(length(phys_min))))
+
+- Spike Duration = $(sum(phys_spike_durs)/length(phys_spike_durs)) +- $(std(phys_spike_durs)/sqrt(length(length(iso_spike_durs))))
+
+- Burst Duration = $(sum(phys_burst_durs)/length(phys_burst_durs)) +- $(std(phys_burst_durs)/sqrt(length(length(phys_burst_durs))))
+
+- Interburst Interval = $(sum(phys_ibis)/length(phys_ibis)) +- $(std(phys_ibis)/sqrt(length(length(phys_ibis))))
+
+"
+
+# ╔═╡ d9139dd0-54f3-42cc-b1af-2a8cd809c37e
+phys_spike_durs
+
+# ╔═╡ 280a8f63-7746-407a-9a28-c5e83e15273c
+begin
+	plt_sd = plot(iso_spike_durs, st = :violin, 
+		xticks = ([1,2, 3], ["Iso", "Net", "Phys"]), 
+		legend = false
+	)
+	plot!(plt_sd, ts[1], st = :violin)
+	plot!(plt_sd, phys_spike_durs, st = :violin)
 	
+	plt_bd = plot(iso_burst_durs, st = :violin, 
+		xticks = ([1,2, 3], ["Iso", "Net", "Phys"]),
+		legend = false, 
+		yformatter = x -> x/1000
+	)
+	plot!(plt_bd, ts[2], st = :violin)
+	plot!(plt_bd, phys_burst_durs, st = :violin)
+	
+	plt_ibi = plot(iso_ibis, st = :violin, 
+		xticks = ([1,2, 3], ["Iso", "Net", "Phys"]),
+		legend = false, 
+		yformatter = x -> x/1000
+	)
+	plot!(plt_ibi, ts[3], st = :violin)
+	plot!(plt_ibi, phys_ibis, st = :violin)
+	
+	plot(plt_sd, plt_bd, plt_ibi, layout = grid(1,3))
 end
 
 # ╔═╡ Cell order:
@@ -193,19 +244,20 @@ end
 # ╠═926d1c0c-171b-4001-991c-1c822b3e2fb8
 # ╠═bd8eddc8-d266-4a63-9151-4782a1e72be8
 # ╟─0fd4fa03-d96c-42b4-b78e-747e716588d6
-# ╠═7bda25c2-873e-429a-bc94-084c2f919735
 # ╠═0bc9c0b4-74bd-444e-bc1b-27734e760d7d
 # ╠═b93d9c06-126f-4e67-adb4-27027fd6bad4
 # ╠═a82156f5-ff66-4e64-91d1-8d126b0acf46
+# ╟─5fcd8df1-9889-41f8-8f3e-c53b00edcf75
 # ╠═bd50617a-ad3a-40f1-9d80-3fea8facf83e
 # ╠═0379e9a9-d8e7-48f8-aaf6-5e04461e08eb
 # ╠═60197d1a-fff7-4c55-bdbd-edcf7f534710
-# ╟─280a8f63-7746-407a-9a28-c5e83e15273c
+# ╠═b69cdf52-3dc2-4cbc-989e-4ea838dd70cd
+# ╠═ed3f2c93-34a8-454b-9e5a-193ce88e0fe3
 # ╠═a422bb0c-f779-44f6-9141-9d8694dd3239
 # ╠═4e6c5aee-c93d-4752-ba70-c97d828381d0
 # ╠═abc98139-8c4b-488e-ae88-961b6edbb5a6
 # ╟─164b2668-f893-46eb-8bb7-025391163840
 # ╠═a3266346-58f0-4ef5-b747-c88567da7a0d
-# ╠═54b414f6-6e44-41f1-a2db-41afcb1adf81
-# ╠═aaa196fe-8329-400c-b3e7-63e5734f02e8
-# ╠═bcba180e-fc70-4c55-8e3f-59979216e146
+# ╟─99a1108e-9978-4726-9f87-96264794ab1e
+# ╠═d9139dd0-54f3-42cc-b1af-2a8cd809c37e
+# ╠═280a8f63-7746-407a-9a28-c5e83e15273c
