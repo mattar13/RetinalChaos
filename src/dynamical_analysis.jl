@@ -120,15 +120,15 @@ function find_equilibria(prob::ODEProblem;
 
                 if sign(real(ev[1])) != sign(real(ev[2]))
                     #If the sign of the eigenvalues are opposite, then it is a unstable saddle
-                    println("Saddle")
+                    #println("Saddle")
                     push!(saddle, res.zero)
                 else
                     if imag(ev[1]) != 0 #This detects whether or not the equilibria is a focus
                         if real(ev[1]) > 0.0
-                            println("Unstable focus")
+                            #println("Unstable focus")
                             push!(unstable_focus, res.zero)
                         else
-                            println("Unstable focus")
+                            #println("Unstable focus")
                             push!(stable_focus, res.zero)
                         end
                     else
