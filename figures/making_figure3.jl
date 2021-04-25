@@ -99,6 +99,9 @@ begin
 	saddle_vs = map(x -> x.saddle[1][1], bif_eq)
 end
 
+# ╔═╡ 8991460a-bcfd-4c02-babe-d6cd7830987b
+println(c1_map)
+
 # ╔═╡ 79fd10a2-b662-469e-ab24-508b78ec53b4
 begin
 	fig3_B = vspan([bif_val[end], c1_lims[end]], label = "Spiking Range",
@@ -154,6 +157,7 @@ savefig(fig3, "Fig3_Spontneous_Activity.png")
 # ╠═f57aa1f7-41b4-435f-b6fc-24815a655b93
 # ╠═27f07f0a-bff3-4ab1-8997-8d56ef4f84fc
 # ╠═bdc1f75d-d992-4b03-a6ad-b61650d8db94
+# ╠═8991460a-bcfd-4c02-babe-d6cd7830987b
 # ╠═79fd10a2-b662-469e-ab24-508b78ec53b4
 # ╟─df7e26fa-a550-4594-bc5b-f03c38971381
 # ╟─976de364-ca10-4c91-8d9d-143926e48613
