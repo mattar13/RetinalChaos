@@ -131,7 +131,6 @@ export v_color, n_color, c_color, a_color, b_color, e_color, w_color
             y = []
             for pt in eq.unstable
                 push!(x, pt[vars[1]|>u_find])
-                
                 push!(y, pt[vars[2]|>u_find])
             end
             x, y
