@@ -11,25 +11,18 @@ param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
 
-#%%
-#save everything in the figures folder
-save_figs = "figures\\"
-if isdir(save_figs) == false
-    #The directory does not exist, we have to make it 
-    mkdir(save_figs)
-end
 #%% Run a plain noisy simulation first
 p = read_JSON(params_file) 
 u0 = read_JSON(conds_file)
 tspan = (0.0, 120e3);
-prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
+prob_sde = SDEProblem(T_sde, noise, u0|>extract_dict, tspan, p|>extract_dict);
 #Inject a current
-p[:I_app] = 0.42
+#p[:I_app] = 0.42
 prob_basic = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 sol_sde = solve(prob_sde, progress = true)
 sol_basic = solve(prob_basic, progress = true)
-plot(sol_sde, vars = [:v])
-plot!(sol_basic, vars = [:v])
+plot(sol_sde, vars = [1])
+plot!(sol_basic, vars = [1])
 threshold = calculate_threshold(sol_basic)
 hline!([threshold])
 #%%
@@ -42,10 +35,12 @@ p[:g_ACh] = 0.0 #Remove g_ACh influence
 p[:g_TREK] = 0.0 #Remove the sAHP
 tspan = (0.0, 30e3);
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
-prob_sde = SDEProblem(T_sde, u0|>extract_dict, tspan, p|>extract_dict);
-#eq_analysis = find_equilibria(prob_eq)
+prob_sde = SDEProblem(T_sde, noise, u0|>extract_dict, tspan, p|>extract_dict);
+eq_analysis = find_equilibria(prob_eq)
+
 sol_sde = solve(prob_sde, progress = true)
 sol_plain = solve(prob_eq, progress = true)
+
 #%% Codim 1 analysis
 codim1 = (:I_app)
 c1_lims = (-60.0, 50.0)
@@ -54,6 +49,7 @@ print("Codimensional analysis time to complete:")
 
 #%% Point to possible bifurcation points
 eq_plot = plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
+#%%
 bif_val, bif_eq = find_bifurcation(c1_map)
 saddle_vs = map(x -> x.saddle[1][1], bif_eq)
 plot!(eq_plot, bif_val, saddle_vs, marker = :square, seriestype = :scatter, label= "Saddle node bif")
