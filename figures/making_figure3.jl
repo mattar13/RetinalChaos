@@ -151,8 +151,8 @@ savefig(fig3, "Fig3_Spontneous_Activity.png")
 # ╠═bc5c19fa-a5a6-40f9-b081-10b8a7d2ccdc
 # ╟─b8a24735-3ad0-45c5-8584-6fe27dc67162
 # ╠═85b88d7a-7e08-4b31-9438-647073d00ae2
-# ╟─5d84dba7-a262-43f9-9364-5e13d322d832
-# ╟─43050c9b-76c1-47df-88c4-3b1ff215497b
+# ╠═5d84dba7-a262-43f9-9364-5e13d322d832
+# ╠═43050c9b-76c1-47df-88c4-3b1ff215497b
 # ╠═ea8baa30-f4b4-4f56-87ba-5b03aec8c574
 # ╠═f57aa1f7-41b4-435f-b6fc-24815a655b93
 # ╠═27f07f0a-bff3-4ab1-8997-8d56ef4f84fc
