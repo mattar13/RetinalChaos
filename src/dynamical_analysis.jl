@@ -164,7 +164,7 @@ function find_equilibria(prob::ODEProblem;
                     push!(saddle, res.zero)
                 else
                     if imag(ev[1]) != 0 #This detects whether or not the equilibria is a focus
-                        if real(ev[1]) > 0.0
+                        if real(ev[1]) >= 0.0
                             #println("Unstable focus")
                             push!(unstable_focus, res.zero)
                         else
