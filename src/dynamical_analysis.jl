@@ -56,11 +56,50 @@ struct equilibria_object{T}
     stable::Array{Array{T}}
     unstable::Array{Array{T}}
     saddle::Array{Array{T}}
-    unstable_focus::Array{Array{T}}
     stable_focus::Array{Array{T}}
+    unstable_focus::Array{Array{T}}
 end
 
+import Base.getindex
+function getindex(eq::equilibria_object, sym::Symbol)
+    if !isnothing(sym |> u_find)
+        var = sym |> u_find
+        a = [
+            !isempty(eq.stable) ? eq.stable[1][var] : NaN,
+            !isempty(eq.unstable) ? eq.unstable[1][var] : NaN,
+            !isempty(eq.saddle) ? eq.saddle[1][var] : NaN,
+            !isempty(eq.stable_focus) ? eq.stable_focus[1][var] : NaN,
+            !isempty(eq.unstable_focus) ? eq.unstable_focus[1][var] : NaN
+        ]
+        return a
+    elseif sym == :stable
+        return eq.stable
+    elseif sym == :unstable
+        return eq.unstable
+    elseif sym == :saddle
+        return eq.saddle
+    elseif sym == :stable_focus
+        return eq.stable_focus
+    elseif sym == :unstable_focus
+        return eq.unstable_focus
+    end
+end
 
+getindex(eq::equilibria_object, syms...) = map(sym -> eq[sym], syms)
+
+function getindex(eq::equilibria_object, idx::Int64)  
+    if idx == 1
+        return eq.stable
+    elseif idx == 2
+        return eq.unstable
+    elseif idx == 3
+        return eq.saddle
+    elseif idx == 4
+        return eq.stable_focus
+    elseif idx == 5
+        return eq.unstable_focus
+    end
+end
 
 #We can import a function that counts all of the equilibria events in the object
 length(eq::equilibria_object) = length(eq.stable) + length(eq.unstable) + length(eq.saddle) + length(eq.unstable_focus) + length(eq.stable_focus)
@@ -151,6 +190,25 @@ struct codim_object{N, T}
     points::Array{NTuple{N, T}}
     equilibria::Array{equilibria_object{T}}
 end
+
+function getindex(c1::codim_object{1, T}, sym::Symbol) where T <: Real
+    
+    if !isnothing(sym |> u_find) #This will occur if the symbol is a ic symbol
+        var_idx = sym |> u_find
+        return hcat(
+            map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria),
+            map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria),
+            map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria),
+            map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria),
+            map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria)
+        )
+        
+    elseif sym == :points
+        points = map(x -> x[1], c1.points);
+    end
+end
+
+getindex(c1::codim_object{1, T}, syms...) where T <: Real = map(sym -> c1[sym], syms)
 
 function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         forward = true, max_iters = 100, min_step = 1.0e-15, 
@@ -341,6 +399,17 @@ function codim_map(prob::ODEProblem, codim::Tuple{Symbol, Symbol}, c1_lims::Tupl
         push!(equilibria_list, c_inner.equilibria...)
     end
     codim_object(codim, points_list, equilibria_list)
+end
+
+function segment_extracter(c1::codim_object{1, T}, vars = :v) where T <: Real
+    points = map(x -> x[1], c1.points);
+    equilibria = zeros()
+    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria);
+    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria);
+    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria);
+    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria);
+    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria);
+    
 end
 
 #This is for a 2 dimensional array
