@@ -384,7 +384,7 @@ end
     end
 end
 
-function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1, view = :xyz)
+function extract_equilibria(c2::codim_object{2, T}, eq_type::Symbol; eq_var::Int64 = 1, view = :xyz) where T <: Real
     xs = []; ys = []; zs = [];
     for idx = 1:length(c2.points)
         eq = c2.equilibria[idx]
@@ -458,9 +458,10 @@ function extract_equilibria(c2::codim_object, eq_type::Symbol; eq_var::Int64 = 1
 end
 
 @recipe function f(c1::codim_object{1, Float64}; vars = :v, scatter = false)
-    var_idx = findall(x -> x==vars, tar_conds)[1]
-    #findall(x -> x==par, tar_pars)
+    #var_idx = findall(x -> x==vars, tar_conds)[1]
+    var_idx = vars |> u_find
     points = map(x -> x[1], c1.points);
+    
     saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria);
     stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria);
     unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria);
@@ -469,82 +470,93 @@ end
     
     plotted_stable = false; plotted_unstable = false; plotted_saddle = false
     plotted_unstable_focus = false; plotted_stable_focus = false
-    
-    @series begin
-        if plotted_stable == false && !all(stable_p .|> isnan)
-            label := "Stable"
-            plotted_stable = true
-        else
-            label := ""
-        end      
-        seriescolor := :green
-        if scatter
-            marker := :star
+
+    if !all(isnan.(stable_p))
+        @series begin
+            if plotted_stable == false
+                label := "Stable"
+                plotted_stable = true
+            else
+                label := ""
+            end     
+            seriescolor := :green
+            if scatter
+                marker := :star
+            end
+            points, stable_p
         end
-        [points], [stable_p]
     end
     
-    @series begin
-        if plotted_unstable == false && !all(unstable_p .|> isnan)
-            label := "Unstable"
-            plotted_unstable = true
-        else
-            label := ""
-        end      
-        seriescolor := :red
-        if scatter
-            marker := :star
+    if !all(isnan.(unstable_p))
+        @series begin
+            if plotted_unstable == false
+                label := "Unstable"
+                plotted_unstable = true
+            else
+                label := ""
+            end     
+            seriescolor := :red
+            if scatter
+                marker := :star
+            end
+            points, unstable_p
         end
-        [points], [unstable_p]
     end
     
-    @series begin
-        if plotted_saddle == false && !all(saddle_p .|> isnan)
-            label := "Saddle"
-            plotted_saddle = true
-        else
-            label := ""
-        end      
-        seriescolor := :blue
-        if scatter
-            marker := :star
+    if !all(isnan.(saddle_p))
+        @series begin
+            if plotted_saddle == false
+                label := "Saddle"
+                plotted_saddle = true
+            else
+                label := ""
+            end   
+            seriescolor := :blue
+            if scatter
+                marker := :star
+            end
+            points, saddle_p
         end
-        [points], [saddle_p]
     end
     
-    @series begin
-        if plotted_stable_focus == false && !all(stable_focus_p .|> isnan)
-            label := "Stable Focus"
-            plotted_stable_focus = true
-        else
-            label := ""
-        end      
-        seriescolor := :green
-        if scatter
-            marker := :circle
+    if !all(isnan.(stable_focus_p))
+        @series begin
+            if plotted_stable_focus == false 
+                label := "Stable Focus"
+                plotted_stable_focus = true
+            else
+                label := ""
+            end      
+            linestyle := :dash
+            seriescolor := :green
+            if scatter
+                marker := :circle
+            end
+            points, stable_focus_p
         end
-        [points], [stable_focus_p]
     end
     
-    @series begin
-        if plotted_unstable_focus == false && !all(unstable_focus_p .|> isnan)
-            label := "Unstable Focus"
-            plotted_unstable_focus = true
-        else
-            label := ""
-        end      
-        seriescolor := :red
-        if scatter
-            marker := :circle
+    if !all(isnan.(unstable_focus_p))
+        @series begin
+            if plotted_unstable_focus == false 
+                label := "Unstable Focus"
+                plotted_unstable_focus = true
+            else
+                label := ""
+            end     
+            linestyle := :dash
+            seriescolor := :red
+            if scatter
+                marker := :circle
+            end
+            points, unstable_focus_p
         end
-        [points], [unstable_focus_p]
     end
 end
 
-@recipe function f(c2::codim_object; eq_var = 1, view = :xyz)
-       
+@recipe function f(c2::codim_object{2,T}; eq_var = 1, view = :xyz) where T <: Real
+    println("This one is called for some reason")
     #legend := :none
-    
     markersize := 8.0
     #Plotting begins here
     if isa(c2.vars, Symbol)
