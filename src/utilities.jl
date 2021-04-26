@@ -39,9 +39,28 @@ extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> F
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
 
 #get the index of the conditions in the list
-u_find(cond::Symbol; list_u::Array{Symbol, 1} = tar_conds) = findall(c -> c == cond, list_u)[1]
+function u_find(cond::Symbol; list_u::Array{Symbol, 1} = tar_conds, safe_skip::Bool = false) 
+    try
+        return findall(c -> c == cond, list_u)[1]
+    catch
+        if safe_skip
+            println("Value does not exist in the range")
+        end
+        return nothing
+    end
+end
+
 #get the index of the parameter in the list
-p_find(par::Symbol; list_p::Array{Symbol, 1}  = tar_pars) = findall(p -> p == par, list_p)[1]
+function p_find(par::Symbol; list_p::Array{Symbol, 1}  = tar_pars, safe_skip::Bool = false) 
+    try
+        findall(p -> p == par, list_p)[1]
+    catch
+        if safe_skip
+            println("Value does not exist in the range")
+        end
+        return nothing
+    end
+end
 
 function extract_dict(dict_item::Dict{Symbol, T}) where T <: Real
     #To extract the dictionary first we want to take a look at the first param to see if it is a parameter or a condition
