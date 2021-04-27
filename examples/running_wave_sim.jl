@@ -22,11 +22,11 @@ nx = ny = 50;
 p = read_JSON(params_file) 
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.50, version = :gACh, gpu = false) #When running on my computer 
+net = Network(nx, ny; μ = 0.50, version = :gACh) #This branch uses GPU mode
 p_net = extract_dict(p);
-u0_net = extract_dict(u0, nx, ny) #|> cu;
-warmup = (0.0, 300e3)
-tspan = (0.0 , 60e3)
+u0_net = extract_dict(u0, nx, ny) |> cu;
+warmup = (0.0|>Float32, 300e3|>Float32)
+tspan  = (0.0|>Float32 , 60e3|>Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 println("Completed")
 #%% Lets warm up the solution first (using GPU if available)
