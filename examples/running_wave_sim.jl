@@ -1,5 +1,5 @@
 using RetinalChaos
-using Dates, Plots
+using Dates, Plots, CUDA
 using JLD2
 param_root = "params\\"
 params_file = joinpath(param_root, "params.json")
@@ -8,8 +8,11 @@ conds_file = joinpath(param_root, "conds.json")
 using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
-
-
+CUDA.allowscalar(false)
+#%% How to index GPU arrays
+a = :gACh
+Symbol("$(a)_gpu")
+#%%
 save_file = "data\\$(Date(Dates.now()))\\"
 if isdir(save_file) == false
     #The directory does not exist, we have to make it 
@@ -17,20 +20,20 @@ if isdir(save_file) == false
 end
 
 #%% Run a network simulation and save it
-print("Setting up the model...")
+print("[$(Dates.now())]: Setting up the model...")
 nx = ny = 50; 
 p = read_JSON(params_file) 
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.50, version = :gACh) #This branch uses GPU mode
+net = Network(nx, ny; μ = 0.50, version = :gACh, gpu = true) #This branch uses GPU mode
 p_net = extract_dict(p);
 u0_net = extract_dict(u0, nx, ny) |> cu;
 warmup = (0.0|>Float32, 300e3|>Float32)
 tspan  = (0.0|>Float32 , 60e3|>Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
+
 println("Completed")
 #%% Lets warm up the solution first (using GPU if available)
-
 print("[$(Dates.now())]: Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 0.2, maxiters = 1e7,

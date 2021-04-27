@@ -61,7 +61,7 @@ end
 """
 This is a constructor for the Network object with a version flag option
 """
-Network(Mx::AbstractArray{T}, My::AbstractArray{T}, MyE::AbstractArray{T}, EMx::AbstractArray{T}, DE::AbstractArray{T}, null::AbstractArray{T}, null_param::Symbol) where T <: Real = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
+Network(Mx::AbstractArray{T}, My::AbstractArray{T}, MyE::AbstractArray{T}, EMx::AbstractArray{T}, DE::AbstractArray{T}, null::AbstractArray{T}, null_param::Symbol) where T  = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
 
 """
 This constructs the PDE function so that it can be called
@@ -89,6 +89,7 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, ve
     d = Binomial(1, μ)
     null = Float64.(rand(d, (ny, nx)))
     if gpu
+        gversion = Symbol("$(version)_gpu")
         gMx = CuArray(Float32.(Mx))
         gMy = CuArray(Float32.(Mx))
         gEMx = CuArray(Float32.(Mx))
