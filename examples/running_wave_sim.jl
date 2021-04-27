@@ -31,7 +31,7 @@ NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 println("Completed")
 #%% Lets warm up the solution first (using GPU if available)
 
-print("Warming up the solution: ")
+print("[$(Dates.now())]: Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
         progress = true, progress_steps = 1, 
@@ -41,12 +41,13 @@ warmup_ics = NetSol[end]
 println("Completed")
 
 #%% Save or load the warmed up solution
-println("Loading or saving solution")
+print("[$(Dates.now())]: Loading or saving solution...")
 JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
 #JLD2.@load "$(save_file)\\warmup_ics.jld2" warmup_ics
+println("Completed")
 
 #%% Run the simulation
-print("Running the simulation")
+print("[$(Dates.now())]: Running the simulation... ")
 NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
@@ -56,7 +57,7 @@ NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 println("Completed")
 
 #%% Save the solution, must be on drive first
-println("Saving the simulation")
+print("[$(Dates.now())]: Saving the simulation...")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
 #%%
 plot(NetSol, idxs = 1)
