@@ -1,13 +1,13 @@
 # This file contains supplemental analysis figures
 using RetinalChaos
 using Dates
-using StatsBase, Statistics
+using StatsBase, Statistics, LsqFit
 #Setup the fonts and stuff
 
 font_title = font("Arial", 24)
 font_axis = font("Arial", 12)
 font_legend = font("Arial", 8)
-pyplot(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
+gr(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
 
 #Set up the file root and default parameters
 param_root = "params\\"
@@ -21,8 +21,52 @@ if isdir(save_figs) == false
     mkdir(save_figs)
 end
 println("Script settings loaded")
+#%% Take info from Zhous 2004 paper
+#extract the function for ACh activation
+import RetinalChaos.ħ
+p = read_JSON(params_file)
+
+#%% Fitting Zhou 2004 data
+#x -> voltage
+#p -> [gACh, k_d]
+model1(x, par) = map(v -> par[1]*ħ(1.0, par[2])*(v-p[:E_ACh]), x)
+v_known = [35.0, 15.0, -5.0, -25.0, -45.0, -75.0] #Zhou known v's
+i_known = [0.0, 0.0, -25.0, -50.0, -100.0, -200.0] #Zhou known I's
+p0 = [0.75, 0.1]
+fit = curve_fit(model, v_known, i_known, p0, lower = [0.0, 0.0], upper = [Inf, Inf])
+fit.param
+#%%
+p1 = plot(v -> model1(v, fit.param), -75, 35)
+p2 = plot(x -> ħ(x, fit.param[2]), 0.001, 0.1)
+plot(p1, p2,layout = grid(2,1))
+#%%Can we fit for RHO?
+f_I(v, par) = par[1]*ħ(1.0, par[2])*(v-p[:E_ACh])
+#1 -> Clamp cell 1 at a voltage betweeb -15 and 45
+#2 -> get the ACh released
+#3 -> measure the current induced by clamping cell 2 at a different position
+#x = [V_c1, V_c2]
+#p = [ρ, k, V0]
+import RetinalChaos.Φ
+function model2(x, pars) 
+    ret = zeros(size(x,1))
+    for i in size(x, 1)
+        E= pars[1]*Φ(x[i,1], 0.2, -40.0)
+        H = ħ(E, fit.param[2])
+        ret[i, 1] = fit.param[1]*H*(x[i, 2]-p[:E_ACh])
+    end
+    ret
+end
+
+vc1_known = [-15.0,   0.0,  15.0,  30.0,  45.0, 0.0,  15.0, 30.0, 45.0];
+vc2_known = [-7.0,  -70.0, -70.0, -70.0, -70.0, 45.0, 45.0, 45.0, 45.0];
+ic2_known = [-20.0, -30.0, -15.0, -5.0,   0.0,  40.0, 25.0, 20.0, 15.0];
+p2 = [6.0, 0.2];
+#%%
+fit2 = curve_fit(model2, [vc1_known vc2_known], ic2_known, p2, lower = [0.0, 0.0], upper = [Inf, Inf])
+fit2.param
 #%% Lets measure the difference between the adaptive properties of the model vs the timestepping 
 p = read_JSON(params_file) 
+#%%
 p[:I_app] = 10.0
 p[:g_ACh] = 0.0
 u0 = read_JSON(conds_file);

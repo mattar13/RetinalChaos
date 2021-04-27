@@ -35,6 +35,8 @@ tspan = (0.0, 30e3);
 prob_eq = ODEProblem(T_ode, u0|>extract_dict, tspan, p|>extract_dict)
 prob_sde = SDEProblem(T_sde, noise, u0|>extract_dict, tspan, p|>extract_dict);
 eq_analysis = find_equilibria(prob_eq)
+print(eq_analysis)
+#%%
 sol_sde = solve(prob_sde, progress = true)
 sol_plain = solve(prob_eq, progress = true)
 #%% Codim 1 analysis
@@ -42,11 +44,10 @@ codim1 = (:I_app)
 c1_lims = (-60.0, 50.0)
 print("Codimensional analysis time to complete:")
 @time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution = 10)
-#%% Point to possible bifurcation points
-c1_points, c1_v = c1_map[:points, :v]
 #%%
-eq_plot = plot(c1_map)#, xlabel = "Injected Current", ylabel = "Membrane Voltage")
+eq_plot = plot(c1_map, xlabel = "Injected Current", ylabel = "Membrane Voltage")
 bif_val, bif_eq = find_bifurcation(c1_map)
+println(bif_val)
 saddle_vs = map(x -> x.saddle[1][1], bif_eq)
 plot!(eq_plot, bif_val, saddle_vs, marker = :square, seriestype = :scatter, label= "Saddle node bif")
 
