@@ -19,7 +19,7 @@ function T_ode(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T},
 
 	(g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
-	@. dv = (
+	dv = (
 			- g_leak*(v-E_leak)
 			- g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
 			- g_K*n*(v-E_K)
@@ -28,12 +28,12 @@ function T_ode(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T},
 			+ I_app
 	)/C_m
 
-	@. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-	@. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-	@. da = (α*c^4*(1-a) - a)/τa
-	@. db = (β*a^4*(1-b) - b)/τb
-	@. de = (ρ*Φ(v, k, V0) - e)/τACh
-	@. dW = -W/τw
+	dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+	dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+	da = (α*c^4*(1-a) - a)/τa
+	db = (β*a^4*(1-b) - b)/τb
+	de = (ρ*Φ(v, k, V0) - e)/τACh
+	dW = -W/τw
 	#nothing
 	dU
 end
@@ -59,7 +59,7 @@ function T_sde(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T},
 
 	(g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
-	@. dv = (
+	dv = (
 			- g_leak*(v-E_leak)
 			- g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
 			- g_K*n*(v-E_K)
@@ -69,12 +69,12 @@ function T_sde(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T},
 			+ W
 	)/C_m
 
-	@. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-	@. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-	@. da = (α*c^4*(1-a) - a)/τa
-	@. db = (β*a^4*(1-b) - b)/τb
-	@. de = (ρ*Φ(v, k, V0) - e)/τACh
-	@. dW = -W/τw
+	dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
+	dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
+	da = (α*c^4*(1-a) - a)/τa
+	db = (β*a^4*(1-b) - b)/τb
+	de = (ρ*Φ(v, k, V0) - e)/τACh
+	dW = -W/τw
 	#nothing
 	dU
 end
