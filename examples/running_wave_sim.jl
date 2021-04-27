@@ -17,7 +17,7 @@ if isdir(save_file) == false
 end
 
 #%% Run a network simulation and save it
-print("Setting up the model...")
+print("[$(Dates.now())]: Setting up the model...")
 nx = ny = 50; 
 p = read_JSON(params_file) 
 #Set up the initial conditions
@@ -59,6 +59,7 @@ println("Completed")
 #%% Save the solution, must be on drive first
 print("[$(Dates.now())]: Saving the simulation...")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
+println("Completed")
 #%%
 plot(NetSol, idxs = 1)
 #%% Plotting animation
