@@ -1,5 +1,5 @@
 #Version 0: Model without nullout
-function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
+function (PDE::Network{T, :Default})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray{T}, t::T) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -41,7 +41,7 @@ function (PDE::Network{T, :Default})(dU, U, p, t) where T <: Real
 end
 
 #Version 1: gTREK nullout
-function (PDE::Network{T, :gHCN})(dU, U, p, t) where T <: Real
+function (PDE::Network{T, :gHCN})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray{T}, t::T) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -83,7 +83,7 @@ function (PDE::Network{T, :gHCN})(dU, U, p, t) where T <: Real
 end
 
 #Version 2: gACh nullout
-function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
+function (PDE::Network{T, :gACh})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray{T}, t::T) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -98,7 +98,7 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
     da = view(dU, :, :, 4)
     db = view(dU, :, :, 5)
     de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
+    dW = view(dU, :, :, 7)
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
@@ -125,7 +125,7 @@ function (PDE::Network{T, :gACh})(dU, U, p, t) where T <: Real
 end
 
 #Version 3 :Acetylcholine release nullout
-function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
+function (PDE::Network{T, :ρ})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray{T}, t::T) where T <: Real
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -166,7 +166,7 @@ function (PDE::Network{T, :ρ})(dU, U, p, t) where T <: Real
 end
 
 #This is the Lansdell version of the SAC model
-function (PDE::Network{T, :Lansdell})(dU, U, p, t) where T <: Real
+function (PDE::Network{T, :Lansdell})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray{T}, t::T) where T <: Real
     v = view(U, :, :, 1)
     r = view(U, :, :, 2)
     s = view(U, :, :, 3)
