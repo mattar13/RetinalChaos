@@ -61,13 +61,13 @@ end
 """
 This is a constructor for the Network object with a version flag option
 """
-Network(Mx::AbstractArray{T}, My::AbstractArray{T}, MyE::AbstractArray{T}, EMx::AbstractArray{T}, DE::AbstractArray{T}, null::AbstractArray{T}, null_param::Symbol) where {T <: Real, A} = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
+Network(Mx::AbstractArray{T}, My::AbstractArray{T}, MyE::AbstractArray{T}, EMx::AbstractArray{T}, DE::AbstractArray{T}, null::AbstractArray{T}, null_param::Symbol) where T <: Real = Network{T, null_param}(Mx, My, MyE, EMx, DE, null)
 
 """
 This constructs the PDE function so that it can be called
 """
 function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gACh,
-        DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0))
+        DX::Tuple{T, T} = (-2.0, 1.0), DY::Tuple{T, T} = (-2.0, 1.0)) where T <: Real
     #Set up x diffusion steps
     x_dv = repeat([DX[1]], nx)
     x_uv = repeat([DX[2]], nx-2)
