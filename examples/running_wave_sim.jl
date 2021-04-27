@@ -17,24 +17,26 @@ if isdir(save_file) == false
 end
 
 #%% Run a network simulation and save it
-print("Setting up the model...")
+print("[$(Dates.now())]: Setting up the model...")
 nx = 125 
 ny = 125; 
 p = read_JSON(params_file) 
 p[:σ] = 0.1
 p[:τw] = 800.0
+p[:g_ACh] = 2.15
+
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.15, version = :ρ, gpu = true) 
+net = Network(nx, ny; μ = 0.60, version = :gACh, gpu = true) 
 p_net = extract_dict(p);
 u0_net = extract_dict(u0, nx, ny) |> cu;
 warmup = (0.0|> Float32 , 300e3 |> Float32)  #If gpu change to a Float32
-tspan = (0.0|> Float32 , 300e3 |> Float32)
+tspan = (0.0|> Float32 , 60e3 |> Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 println("Completed")
 #%% Lets warm up the solution first (using GPU if available)
 
-print("Warming up the solution: ")
+print("[$(Dates.now())]: Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
         progress = true, progress_steps = 1, 
@@ -44,12 +46,13 @@ warmup_ics = NetSol[end]
 println("Completed")
 
 #%% Save or load the warmed up solution
-println("Loading or saving solution")
+print("[$(Dates.now())]: Loading or saving solution...")
 JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
 #JLD2.@load "$(save_file)\\warmup_ics.jld2" warmup_ics
+println("Completed")
 
 #%% Run the simulation
-print("Running the simulation")
+print("[$(Dates.now())]: Running the simulation... ")
 NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
@@ -59,8 +62,9 @@ NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 println("Completed")
 
 #%% Save the solution, must be on drive first
-println("Saving the simulation")
+print("[$(Dates.now())]: Saving the simulation...")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
+println("Completed")
 
 #%% Plotting animation
 anim = @animate for t = 1.0:50.0:NetSol.t[end]
