@@ -18,25 +18,22 @@ end
 
 #%% Run a network simulation and save it
 print("Setting up the model...")
-nx = 125 
-ny = 125; 
+nx = ny = 50; 
 p = read_JSON(params_file) 
-p[:σ] = 0.1
-p[:τw] = 800.0
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.15, version = :ρ, gpu = true) 
+net = Network(nx, ny; μ = 0.50, version = :gACh, gpu = false) #When running on my computer 
 p_net = extract_dict(p);
-u0_net = extract_dict(u0, nx, ny) |> cu;
-warmup = (0.0|> Float32 , 300e3 |> Float32)  #If gpu change to a Float32
-tspan = (0.0|> Float32 , 300e3 |> Float32)
+u0_net = extract_dict(u0, nx, ny) #|> cu;
+warmup = (0.0, 300e3)
+tspan = (0.0 , 60e3)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 println("Completed")
 #%% Lets warm up the solution first (using GPU if available)
 
 print("Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
-        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+        abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
         progress = true, progress_steps = 1, 
         save_everystep = false
     )
@@ -52,7 +49,7 @@ JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
 print("Running the simulation")
 NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
-        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+        abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
         save_idxs = [1:(nx*ny)...], 
         progress = true, progress_steps = 1
     )
@@ -61,9 +58,10 @@ println("Completed")
 #%% Save the solution, must be on drive first
 println("Saving the simulation")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
-
+#%%
+plot(NetSol, idxs = 1)
 #%% Plotting animation
-anim = @animate for t = 1.0:50.0:NetSol.t[end]
+anim = @animate for t = 1.0:10.0:NetSol.t[end]
     println("Animating frame $t")
     frame_i = reshape(NetSol(t) |> Array, (nx, ny))
     heatmap(frame_i, ratio = :equal, grid = false,
