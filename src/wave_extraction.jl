@@ -7,9 +7,10 @@ Finds the threshold of a trace by calculating the average and then adding the 4x
 """
 calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
 
-function calculate_threshold(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T, T}; 
+function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{T, T}; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T= 0.1,
-    ) where T <: Real
+    ) where {T, N, S}
+    println(N)
     #We want to check how many dimensions the simulation is 
     if length(size(sol.prob.u0)) == 1
         data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
@@ -26,7 +27,7 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T, 
     end
 end
 
-calculate_threshold(sol::DiffEqBase.AbstractODESolution; kwargs...) = calculate_threshold(sol, (sol.t[1], sol.t[end]); kwargs...)
+calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S} = calculate_threshold(sol, (sol.t[1], sol.t[end]); kwargs...)
 
 """
 This function returns all the time stamps in a spike or burst array
