@@ -13,7 +13,7 @@ CUDA.allowscalar(false)
 #%% Setup the network simulation (Need to do this if accessing the saved file)
 print("[$(Dates.now())]: Setting up the model...")
 #Save the model, params, conditions, animations here
-save_file = "data\\$(Date(Dates.now()))_gACh_mu_0.15\\"
+save_file = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\$(Date(Dates.now()))_gACh_mu_0.15\\"
 if isdir(save_file) == false
     #The directory does not exist, we have to make it 
     mkdir(save_file)
@@ -52,7 +52,7 @@ print("[$(Dates.now())]: Running the simulation... ")
 NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-        save_idxs = [1:(nx*ny)...], 
+        save_idxs = [1:(p[:nx]*p[:ny])...], 
         progress = true, progress_steps = 1
     )
 println("Completed")
@@ -63,9 +63,9 @@ JLD2.@save "$(save_file)\\sol.jld2" NetSol
 #%% Plotting animation
 anim = @animate for t = 1.0:60.0:NetSol.t[end]
     println("Animating frame $t")
-    frame_i = reshape(NetSol(t) |> Array, (nx, ny))
+    frame_i = reshape(NetSol(t) |> Array, (p[:nx], p[:ny]))
     heatmap(frame_i, ratio = :equal, grid = false,
-            xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+            xaxis = "", yaxis = "", xlims = (0, p[:nx]), ylims = (0, p[:ny]),
             c = :curl, clims = (-70.0, 0.0),
     )
 end
@@ -148,7 +148,7 @@ for sample in 1:n
     NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
     @time NetSol = solve(NetProb, SOSRI(), 
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-            save_idxs = [1:(nx*ny)...], 
+            save_idxs = [1:(p[:nx]*p[:ny])...], 
             progress = true, progress_steps = 1
         )
     println("Completed")
@@ -160,9 +160,9 @@ for sample in 1:n
     # Plotting animation
     anim = @animate for t = 1.0:60.0:NetSol.t[end]
         println("Animating frame $t")
-        frame_i = reshape(NetSol(t) |> Array, (nx, ny))
+        frame_i = reshape(NetSol(t) |> Array, (p[:nx], p[:ny]))
         heatmap(frame_i, ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
+                xaxis = "", yaxis = "", xlims = (0, p[:nx]), ylims = (0, p[:ny]),
                 c = :curl, clims = (-70.0, 0.0),
         )
     end
