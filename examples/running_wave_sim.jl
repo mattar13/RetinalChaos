@@ -9,11 +9,9 @@ using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 CUDA.allowscalar(false)
-#%% How to index GPU arrays
-a = :gACh
-Symbol("$(a)_gpu")
+
 #%%
-save_file = "data\\$(Date(Dates.now()))\\"
+save_file = "data\\$(Date(Dates.now()))_gACh_mu_0.15\\"
 if isdir(save_file) == false
     #The directory does not exist, we have to make it 
     mkdir(save_file)
@@ -21,11 +19,13 @@ end
 
 #%% Run a network simulation and save it
 print("[$(Dates.now())]: Setting up the model...")
-nx = ny = 50; 
+nx = ny = 125; 
 p = read_JSON(params_file) 
+write_JSON(p, "$(save_file)\\params.json") #write the parameters to save for later
 #Set up the initial conditions
+
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.50, version = :gACh, gpu = true) #This branch uses GPU mode
+net = Network(nx, ny; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
 p_net = extract_dict(p);
 u0_net = extract_dict(u0, nx, ny) |> cu;
 warmup = (0.0|>Float32, 300e3|>Float32)
@@ -36,7 +36,7 @@ println("Completed")
 #%% Lets warm up the solution first (using GPU if available)
 print("[$(Dates.now())]: Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
-        abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
+        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
         progress = true, progress_steps = 1, 
         save_everystep = false
     )
@@ -62,10 +62,8 @@ println("Completed")
 #%% Save the solution, must be on drive first
 print("[$(Dates.now())]: Saving the simulation...")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
-#%%
-plot(NetSol, idxs = 1)
 #%% Plotting animation
-anim = @animate for t = 1.0:10.0:NetSol.t[end]
+anim = @animate for t = 1.0:60.0:NetSol.t[end]
     println("Animating frame $t")
     frame_i = reshape(NetSol(t) |> Array, (nx, ny))
     heatmap(frame_i, ratio = :equal, grid = false,
@@ -73,10 +71,12 @@ anim = @animate for t = 1.0:10.0:NetSol.t[end]
             c = :curl, clims = (-70.0, 0.0),
     )
 end
-gif(anim, "$(save_file)\\animation.gif", fps = 20)
+#%%
+gif(anim, "$(save_file)\\animation.gif", fps = 40.0)
 
 #%%
 thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
+#%%
 @save "$(save_file)\\thresholds.jld2" thresholds
 #%%
 ts = RetinalChaos.timescale_analysis(NetSol, thresholds)
