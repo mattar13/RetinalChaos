@@ -23,9 +23,9 @@ u0 = read_JSON(conds_file);
 #Save the params and ics to load later. 
 write_JSON(p, "$(save_file)\\params.json") #write the parameters to save for later
 write_JSON(u0, "$(save_file)\\conds.json") #write the ics to save for later
-net = Network(p[:nx], p[:ny]; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
+net = Network(p[:nx]|>Int64, p[:ny]|>Int64; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
 p_net = extract_dict(p);
-u0_net = extract_dict(u0, nx, ny) |> cu;
+u0_net = extract_dict(u0, p[:nx]|>Int64, p[:ny]|>Int64) |> cu;
 warmup = (0.0|>Float32, p[:t_warm]|>Float32)
 tspan  = (0.0|>Float32, p[:t_run]|>Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
@@ -45,7 +45,6 @@ println("Completed")
 #%% Save or load the warmed up solution
 print("[$(Dates.now())]: Loading or saving solution...")
 JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
-#JLD2.@load "$(save_file)\\warmup_ics.jld2" warmup_ics
 println("Completed")
 
 #%% Run the simulation
@@ -101,61 +100,72 @@ thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
 ts = RetinalChaos.timescale_analysis(NetSol, thresholds)
 @save "$(save_file)\\ts_analysis.jld2"
 
-#= %% Running a multiple sim on the Lab computer
-save_path = "C:\\Users\\RennaLabSA1\\Documents\\modelling"
-println("[$(Dates.now())]: Beginning simulion")
-ga = 1.1
-sig = 0.25
-for rho in range(0.1, 1.0, length = 50)#for sig in range(0.01, 1.0, length = 10)#, ga in range(0.1, 1.1, length = 2)
-    println("[$(Dates.now())]:Running test for gACh = $(ga) sigma = $(sig)")
-    nx = ny = 64; 
-    p = read_JSON(params_file);
-    p[:σ] = sig
-    p[:g_ACh] = ga
-    p = extract_dict(p, tar_pars);
-    u0_network = extract_dict(read_JSON(conds_file), tar_conds, (nx, ny));
-    net = Network(nx, ny; μ = rho, version = :ρ) #μ is the probability a cell is capable of being active
-    var = 1 #This is the variable we are interested in
-    save_idxs = [var*1:var*(nx*ny)...] #This is a list of indexes of all the variables we want to plot
 
-    # Lets warm up the solution first
-    PDEprob = SDEProblem(net, noise, u0_network, (0.0, 60e3), p)
-    print("[$(Dates.now())]: Warming up solution:")
-    @time PDEsol = solve(PDEprob, SOSRI(), 
-        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-        save_everystep = false, progress = true, progress_steps = 1
-        )
-    # extract the last solution and use it as the initial condition for future models 
-    # This may take a long time to run
-    print("[$(Dates.now())]: Running model:")
-    ui_network = PDEsol[end]
-    PDEprob = SDEProblem(net, noise, ui_network, (0.0, 120e3), p)
-    @time PDEsol = solve(PDEprob, SOSRI(), 
-        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-        save_idxs = save_idxs, progress = true, progress_steps = 1
-        )
-    # Plot as a .gif
-    save_wave = joinpath(save_path, "sig_$(replace(string(sig), "." => "_"))_gACh_$(replace(string(ga), "." => "_"))_rho_$(replace(string(rho), "." => "_"))wave_plot.gif")
-    save_plot = joinpath(save_path, "sig_$(replace(string(sig), "." => "_"))_gACh_$(replace(string(ga), "." => "_"))_rho_$(replace(string(rho), "." => "_"))2D_plot.png")
+#%% Run multiple samples
+n = 4
+for sample in 1:n
+    println("[$(Dates.now())]: Running sample ")
+    # Setup the network simulation (Need to do this if accessing the saved file)
+    print("[$(Dates.now())]: Setting up the model...")
     
-    println("[$(Dates.now())]: Plotting results")
-    dFrame = 50.0
-    t_rng = collect(1.0:dFrame:PDEsol.t[end])
-    anim = @animate for t = t_rng
+    #Save the model, params, conditions, animations here
+    save_file = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\$(Date(Dates.now()))_sample_$sample\\"
+    if isdir(save_file) == false
+        #The directory does not exist, we have to make it 
+        mkdir(save_file)
+    end
+    p = read_JSON(params_file) 
+    u0 = read_JSON(conds_file);
+
+    #Save the params and ics to load later. 
+    write_JSON(p, "$(save_file)\\params.json") #write the parameters to save for later
+    write_JSON(u0, "$(save_file)\\conds.json") #write the ics to save for later
+    net = Network(p[:nx]|>Int64, p[:ny]|>Int64; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
+    p_net = extract_dict(p);
+    u0_net = extract_dict(u0, p[:nx]|>Int64, p[:ny]|>Int64) |> cu;
+    warmup = (0.0|>Float32, p[:t_warm]|>Float32)
+    tspan  = (0.0|>Float32, p[:t_run]|>Float32)
+    NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
+    println("Completed")
+
+    # Lets warm up the solution first (using GPU if available)
+    print("[$(Dates.now())]: Warming up the solution: ")
+    @time NetSol = solve(NetProb, SOSRI(), 
+            abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+            progress = true, progress_steps = 1, 
+            save_everystep = false
+        )
+    warmup_ics = NetSol[end]
+    println("Completed")
+
+    # Save or load the warmed up solution
+    print("[$(Dates.now())]: Loading or saving solution...")
+    JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
+    println("Completed")
+
+    # Run the simulation
+    print("[$(Dates.now())]: Running the simulation... ")
+    NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
+    @time NetSol = solve(NetProb, SOSRI(), 
+            abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
+            save_idxs = [1:(nx*ny)...], 
+            progress = true, progress_steps = 1
+        )
+    println("Completed")
+
+    # Save the solution, must be on drive first
+    print("[$(Dates.now())]: Saving the simulation...")
+    JLD2.@save "$(save_file)\\sol.jld2" NetSol
+    
+    # Plotting animation
+    anim = @animate for t = 1.0:60.0:NetSol.t[end]
         println("Animating frame $t")
-        frame_i = reshape(PDEsol(t), (nx, ny))
+        frame_i = reshape(NetSol(t) |> Array, (nx, ny))
         heatmap(frame_i, ratio = :equal, grid = false,
                 xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
                 c = :curl, clims = (-70.0, 0.0),
         )
     end
-    gif(anim, save_wave, fps = 20)
-
     #
-    plt = plot()
-    for i in 1:20
-        println(i)
-        plot!(plt, PDEsol.t, PDEsol[i,:])
-    end 
-    savefig(plt, save_plot)
-end =#
+    gif(anim, "$(save_file)\\animation.gif", fps = 40.0)
+end
