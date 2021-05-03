@@ -10,29 +10,28 @@ using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 CUDA.allowscalar(false)
 
-#%%
+#%% Setup the network simulation (Need to do this if accessing the saved file)
+print("[$(Dates.now())]: Setting up the model...")
+#Save the model, params, conditions, animations here
 save_file = "data\\$(Date(Dates.now()))_gACh_mu_0.15\\"
 if isdir(save_file) == false
     #The directory does not exist, we have to make it 
     mkdir(save_file)
 end
-
-#%% Run a network simulation and save it
-print("[$(Dates.now())]: Setting up the model...")
-nx = ny = 125; 
 p = read_JSON(params_file) 
-write_JSON(p, "$(save_file)\\params.json") #write the parameters to save for later
-#Set up the initial conditions
-
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
+#Save the params and ics to load later. 
+write_JSON(p, "$(save_file)\\params.json") #write the parameters to save for later
+write_JSON(u0, "$(save_file)\\conds.json") #write the ics to save for later
+net = Network(p[:nx], p[:ny]; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
 p_net = extract_dict(p);
 u0_net = extract_dict(u0, nx, ny) |> cu;
-warmup = (0.0|>Float32, 300e3|>Float32)
-tspan  = (0.0|>Float32 , 60e3|>Float32)
+warmup = (0.0|>Float32, p[:t_warm]|>Float32)
+tspan  = (0.0|>Float32, p[:t_run]|>Float32)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
-
 println("Completed")
+
+
 #%% Lets warm up the solution first (using GPU if available)
 print("[$(Dates.now())]: Warming up the solution: ")
 @time NetSol = solve(NetProb, SOSRI(), 
@@ -74,6 +73,26 @@ end
 #%%
 gif(anim, "$(save_file)\\animation.gif", fps = 40.0)
 
+#%%We can load the data here 
+file_root = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\2021-04-28_gACh_mu_0.2"
+params_file = joinpath(param_root, "params.json")
+conds_file = joinpath(param_root, "conds.json")
+
+print("[$(Dates.now())]: Loading the model...")
+p = read_JSON(params_file) 
+#Set up the initial conditions
+u0 = read_JSON(conds_file);
+net = Network(p[:nx], p[:ny]; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
+p_net = extract_dict(p);
+u0_net = extract_dict(u0, p[:nx], p[:ny]) |> cu;
+warmup = (0.0|>Float32, 300e3|>Float32)
+tspan  = (0.0|>Float32 , 60e3|>Float32)
+NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
+JLD2.@load "$(file_root)\\sol.jld2" NetSol
+println("Completed")
+
+#%%
+save_arr = Array(NetSol)
 #%%
 thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
 #%%
