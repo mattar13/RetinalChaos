@@ -7,27 +7,44 @@ Finds the threshold of a trace by calculating the average and then adding the 4x
 """
 calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
 
-function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{T, T}; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::T= 0.1,
+function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64}; 
+        idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 0.1,
     ) where {T, N, S}
-    println(N)
+    # We need to convert the dt into the correct form
+    println("here")
+    dt = convert(T, dt)
     #We want to check how many dimensions the simulation is 
     if length(size(sol.prob.u0)) == 1
         data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
         #println(data_section |> size)
         return calculate_threshold(data_section; Z = Z)
     else
-        thresholds = zeros(T, size(sol,1))
-        
-        @showprogress "Calculating all array thresholds:" for c_idx = 1:size(sol,1)
-            data_select = sol(rng[1]:dt:rng[2], idxs = c_idx)
-            thresholds[c_idx] = calculate_threshold(data_select; Z = Z)[1]
+        if isa(sol.u, Vector{CuArray{Float32, 1}})
+            #GPU solutions won't allow for much memory, so we have to do this all in the function efficiently
+            
+            n = length(collect(rng[1]:dt:rng[2]))
+            
+            mean = sum(sol(rng[1]:dt:rng[2]), dims = 2)./n
+            println("GPU solution")
+            dev = Z * std(sol(rng[1]:dt:rng[2]))
+            return mean .+ dev
+        else
+            sol_array = sol(rng[1]:dt:rng[2]) |> Array
+            thresholds = mapslices(x -> calculate_threshold(x; Z = Z), sol_array, dims = 2)
+            return thresholds
         end
-        return thresholds
+
+
     end
 end
 
-calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S} = calculate_threshold(sol, (sol.t[1], sol.t[end]); kwargs...)
+function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S} 
+    t_rng = (sol.t[1]|> Float64, sol.t[end] |> Float64)
+    println(t_rng)
+    ans = calculate_threshold(sol, t_rng; kwargs...)
+    
+    return ans
+end
 
 """
 This function returns all the time stamps in a spike or burst array
