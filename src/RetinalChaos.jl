@@ -89,6 +89,6 @@ using Colors, ColorSchemes, LaTeXStrings, StatsPlots
 export colormatch, colormap, colorschemes
 
 include("logging.jl")
-export dotenv, env_location, BotNotify
+export dotenv, env_location, BotNotify, BotFigure
 
 end
