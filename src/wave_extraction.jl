@@ -18,23 +18,12 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::
         data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
         #println(data_section |> size)
         return calculate_threshold(data_section; Z = Z)
-    else
-        if isa(sol.u, Vector{CuArray{Float32, 1}})
-            #GPU solutions won't allow for much memory, so we have to do this all in the function efficiently
-            
-            n = length(collect(rng[1]:dt:rng[2]))
-            
-            mean = sum(sol(rng[1]:dt:rng[2]), dims = 2)./n
-            println("GPU solution")
-            dev = Z * std(sol(rng[1]:dt:rng[2]))
-            return mean .+ dev
-        else
-            sol_array = sol(rng[1]:dt:rng[2]) |> Array
-            thresholds = mapslices(x -> calculate_threshold(x; Z = Z), sol_array, dims = 2)
-            return thresholds
-        end
-
-
+    else  
+        n = length(collect(rng[1]:dt:rng[2]))
+        mean = sum(sol(rng[1]:dt:rng[2]), dims = 2)./n
+        println("GPU solution")
+        dev = Z * std(sol(rng[1]:dt:rng[2]))
+        return mean .+ dev
     end
 end
 
@@ -71,6 +60,7 @@ end
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
         idx::Int64 = 1, dt::Float64 = 0.1
     ) where T <: Real
+    # Lets do this the integrated way
     #First we need to extract the spike array
     if length(size(sol.prob.u0)) == 1
         data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array

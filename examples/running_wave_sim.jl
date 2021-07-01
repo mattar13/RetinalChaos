@@ -1,4 +1,4 @@
-using RetinalChaos
+using Revise, RetinalChaos
 using Dates, Plots, CUDA
 using JLD2
 param_root = "params\\"
@@ -13,7 +13,7 @@ CUDA.allowscalar(false)
 #%% Setup the network simulation (Need to do this if accessing the saved file)
 print("[$(Dates.now())]: Setting up the model...")
 #Save the model, params, conditions, animations here
-save_file = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\$(Date(Dates.now()))_gACh_mu_0.15\\"
+save_file = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\$(Date(Dates.now()))_test_mu_18p\\"
 if isdir(save_file) == false
     #The directory does not exist, we have to make it 
     mkdir(save_file)
@@ -52,7 +52,7 @@ print("[$(Dates.now())]: Running the simulation... ")
 NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
 @time NetSol = solve(NetProb, SOSRI(), 
         abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-        save_idxs = [1:(p[:nx]*p[:ny])...], 
+        save_idxs = [1:((p[:nx]*p[:ny])|>Int64)...], 
         progress = true, progress_steps = 1
     )
 println("Completed")
@@ -60,19 +60,39 @@ println("Completed")
 #%% Save the solution, must be on drive first
 print("[$(Dates.now())]: Saving the simulation...")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
+println("Completed")
+
 #%% Plotting animation
+println("[$(Dates.now())]:Animating simulation...")
 anim = @animate for t = 1.0:60.0:NetSol.t[end]
     println("Animating frame $t")
-    frame_i = reshape(NetSol(t) |> Array, (p[:nx], p[:ny]))
+    frame_i = reshape(NetSol(t) |> Array, (p[:nx]|>Int64, p[:ny]|>Int64))
     heatmap(frame_i, ratio = :equal, grid = false,
             xaxis = "", yaxis = "", xlims = (0, p[:nx]), ylims = (0, p[:ny]),
             c = :curl, clims = (-70.0, 0.0),
     )
 end
-#%%
 gif(anim, "$(save_file)\\animation.gif", fps = 40.0)
+#%%Conduct the threshold analysis
+thresholds = calculate_threshold(NetSol; dt = 500.0) #This takes really long
+@save "$(save_file)\\thresholds.jld2" thresholds
+#%% Conduct the timescale analysis
+#timestamps = Tuple[]
+rng = (NetSol.t[1]|>Float64, NetSol.t[end]|>Float64)
+dt = 100.0
+#%%
+data_array = (NetSol |> Array) .> thresholds
+tsteps = NetSol.t
+t_stamps = findall(data_array)
+tsteps[data_array[1, :]]
+#%%
+arr = collect(1:100)
+a = rand(10, 100)
+mapslices(+, a, dims = 2)
 
-#%%We can load the data here 
+
+
+#%% We can load the data here 
 file_root = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\2021-04-28_gACh_mu_0.2"
 params_file = joinpath(param_root, "params.json")
 conds_file = joinpath(param_root, "conds.json")
@@ -90,31 +110,26 @@ NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 JLD2.@load "$(file_root)\\sol.jld2" NetSol
 println("Completed")
 
-#%%
-save_arr = Array(NetSol)
-#%%
-thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
-#%%
-@save "$(save_file)\\thresholds.jld2" thresholds
-#%%
-ts = RetinalChaos.timescale_analysis(NetSol, thresholds)
-@save "$(save_file)\\ts_analysis.jld2"
+
+
 
 
 #%% Run multiple samples
 n = 4
-for sample in 1:n
+for val in LinRange(1.0, 20.0, 10)
+    println(val)
     println("[$(Dates.now())]: Running sample ")
     # Setup the network simulation (Need to do this if accessing the saved file)
     print("[$(Dates.now())]: Setting up the model...")
     
     #Save the model, params, conditions, animations here
-    save_file = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\$(Date(Dates.now()))_sample_$sample\\"
+    save_file = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\$(Date(Dates.now()))_gCa_$val\\"
     if isdir(save_file) == false
         #The directory does not exist, we have to make it 
         mkdir(save_file)
     end
     p = read_JSON(params_file) 
+    p[:g_Ca] = val
     u0 = read_JSON(conds_file);
 
     #Save the params and ics to load later. 
@@ -148,7 +163,7 @@ for sample in 1:n
     NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
     @time NetSol = solve(NetProb, SOSRI(), 
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-            save_idxs = [1:(p[:nx]*p[:ny])...], 
+            save_idxs = [1:((p[:nx]*p[:ny])|>Int64)...], 
             progress = true, progress_steps = 1
         )
     println("Completed")
@@ -160,9 +175,9 @@ for sample in 1:n
     # Plotting animation
     anim = @animate for t = 1.0:60.0:NetSol.t[end]
         println("Animating frame $t")
-        frame_i = reshape(NetSol(t) |> Array, (p[:nx], p[:ny]))
+        frame_i = reshape(NetSol(t) |> Array, (p[:nx]|>Int64, p[:ny]|>Int64))
         heatmap(frame_i, ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, p[:nx]), ylims = (0, p[:ny]),
+                xaxis = "", yaxis = "", xlims = (0, p[:nx]|>Int64), ylims = (0, p[:ny]|>Int64),
                 c = :curl, clims = (-70.0, 0.0),
         )
     end
