@@ -6,6 +6,8 @@ import Base.print
 import Dates.now
 export now
 #This is for showing the progress of the wave finding function. Which also should be looked at
+
+
 using ProgressMeter
 println("Small functions imported")
 
@@ -13,7 +15,9 @@ println("Small functions imported")
 using CUDA
 export cu
 
-#using OrdinaryDiffEq, StochasticDiffEq, ModelingToolkit
+#Include all the plotting utilities
+using Plots, Measures
+
 using DifferentialEquations, ModelingToolkit
 using DiffEqBase
 import DiffEqBase.AbstractODEProblem
@@ -63,10 +67,11 @@ export calculate_threshold
 export get_timestamps, max_interval_algorithim, timescale_analysis
 #println("Fininshed Importing")
 
-#Include all the plotting utilities
-using Plots, Measures
-export Plots
+
+
+
 include("plotting.jl")
+export Plots
 #Exporting backends
 export gr, font
 #exporting main plot types
@@ -82,5 +87,8 @@ export savefig
 #Import some other plotting utilities
 using Colors, ColorSchemes, LaTeXStrings, StatsPlots
 export colormatch, colormap, colorschemes
+
+include("logging.jl")
+export dotenv, env_location, BotNotify
 
 end
