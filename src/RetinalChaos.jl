@@ -7,7 +7,7 @@ import Dates.now
 export now
 #This is for showing the progress of the wave finding function. Which also should be looked at
 
-using Telegram, Telegram.API, ConfigEnv
+#using Telegram, Telegram.API, ConfigEnv
 using ProgressMeter
 println("Small functions imported")
 

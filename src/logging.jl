@@ -1,8 +1,8 @@
 #this variable will be added
 function BotNotify(text::String; add_date = true)
     if add_date
-         println("$(now()) $text")
-         sendMessage(text = "$(now()) $text")
+         println("[$(now())]: $text")
+         sendMessage(text = "[$(now())]: $text")
     else
          println(text)
          sendMessage(text = text) 
@@ -10,8 +10,8 @@ function BotNotify(text::String; add_date = true)
     return nothing
 end
 
-function BotFigure(fig)
-     open(fig, "r") do io
+function BotFigure(fig_loc)
+     open(fig_loc, "r") do io
           sendPhoto(photo = io)
       end
 end
