@@ -7,25 +7,26 @@ import Dates.now
 export now
 #This is for showing the progress of the wave finding function. Which also should be looked at
 
-#using Telegram, Telegram.API, ConfigEnv
+using Telegram, Telegram.API, ConfigEnv
 using ProgressMeter
 println("Small functions imported")
 
 #Imports if using GPU
 using CUDA
-export cu
+export cu, allowscalar
+CUDA.allowscalar(false)
 
 #Include all the plotting utilities
 using Plots, Measures
 
-using DifferentialEquations, ModelingToolkit
-using DiffEqBase
+using DifferentialEquations
+#using ModelingToolkit, DiffEqBase
 import DiffEqBase.AbstractODEProblem
 export SDEProblem, ODEProblem, solve, SOSRI
 export EnsembleProblem, EnsembleThreads
-#These macros will be useful for extending the model
-export @parameters, @variables, @derivatives, @register
-export ODESystem, SDESystem
+#These macros are only useful with ModelingToolkit which currently we are not using
+#export @parameters, @variables, @derivatives, @register
+#export ODESystem, SDESystem
 
 println("Modelling utilities imported")
 #Imports for reading and writing parameters and solutions
