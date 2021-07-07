@@ -90,7 +90,7 @@ function Network(nx::Real, ny::Real;
     MyE = zeros(ny, nx);
     EMx = zeros(ny, nx);
     DE = zeros(ny, nx);
-    d = Binomial(1, μ)
+    d = Binomial(1, μ|>Float64)
     null = Float64.(rand(d, (ny, nx)))
     if gpu
         #Float32 is the most efficient form of CUDA arrays
