@@ -90,21 +90,12 @@ function extract_dict(dict_item::Dict{Symbol, T}, dims...) where T <: Real
     val_map
 end
 
-
-
-
-#= """
-When using the Modeling Toolkit, the dictionary needs to be converted into an array of operations
-"""
-function extract_dict(dict_item::Dict{Symbol, Float64})
-    par_set = nothing
-    idx = 1
-    for key in keys(dict_item)
-        if isnothing(par_set)
-            par_set = [Variable(key)|>Num => dict_item[key]] #For the new version we need this
-        else
-            push!(par_set, (Variable(key)|>Num=> dict_item[key]))
-        end
-    end
-    par_set
-end =#
+function load_model(file_root::String)
+    p = read_JSON("$(file_root)\\params.json")
+    p_net = extract_dict(p);
+    net = Network(p[:nx]|> Int64, p[:ny]|>Int64; μ = p[:μ], version = :gACh, gpu = true)
+    JLD2.@load "$(file_root)\\warmup_ics.jld2" warmup_ics
+    NetProb = SDEProblem(net, noise, warmup_ics, (0.0 , p[:t_run]), p_net)
+    return NetProb
+end
+    
