@@ -1,7 +1,6 @@
 using Revise
 using RetinalChaos
-using Dates, Plots, CUDA
-using JLD2
+using Dates, Plots, JLD2
 
 #Configure the logger
 using Logging: global_logger
@@ -9,10 +8,9 @@ using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 
 #Load the telegram client and env
-#dotenv("D:\\TelegramAccessEnv\\.env")
-#BotNotify("Testing the bot here to check. So far it works")
+dotenv("D:\\TelegramAccessEnv\\.env")
 #Activate the GPU
-CUDA.allowscalar(false)
+RetinalChaos.CUDA.allowscalar(false)
 
 #%% Setup the network simulation (Need to do this if accessing the saved file)
 print("[$(Dates.now())]: Setting up the model...")
@@ -31,13 +29,13 @@ u0 = read_JSON(conds_file);
 write_JSON(p, "$(save_file)\\params.json") #write the parameters to save for later
 write_JSON(u0, "$(save_file)\\conds.json") #write the ics to save for later
 net = Network(p[:nx]|>Int64, p[:ny]|>Int64; μ = p[:μ], version = :gACh, gpu = true) #This branch uses GPU mode
-p_net = Float32.(extract_dict(p));
+p_net = extract_dict(p)# |> cu;
 u0_net = extract_dict(u0, p[:nx]|>Int64, p[:ny]|>Int64) |> cu;
 warmup = (0.0, p[:t_warm])
 tspan  = (0.0, p[:t_run])
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
 println("Completed")
-#BotNotify("Model set up complete")
+BotNotify("{Waves} Model set up complete")
 
 #%% Lets warm up the solution first (using GPU if available)
 print("[$(Dates.now())]: Warming up the solution: ")
@@ -48,12 +46,13 @@ print("[$(Dates.now())]: Warming up the solution: ")
     )
 warmup_ics = NetSol[end]
 println("Completed")
-#BotNotify("Model warmup complete")
+BotNotify("{Waves} Model warmup complete")
 
 #%% Save or load the warmed up solution
 print("[$(Dates.now())]: Loading or saving solution...")
 JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
 println("Completed")
+
 
 #%% Run the simulation
 print("[$(Dates.now())]: Running the simulation... ")
@@ -65,6 +64,7 @@ NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
     )
 println("Completed")
 BotNotify("Model run complete")
+
 
 #%% Save the solution, must be on drive first
 print("[$(Dates.now())]: Saving the simulation...")
