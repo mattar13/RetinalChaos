@@ -83,6 +83,7 @@ end
 function extract_dict(dict_item::Dict{Symbol, T}, dims...) where T <: Real
     #Extract the dict_item
     vals = extract_dict(dict_item)
+    dims = Int64.(dims) #Put this in to convert the dimensions  
     val_map = zeros(dims..., length(vals))
     for i in 1:length(vals)
         val_map[:,:,i] .= vals[i]
