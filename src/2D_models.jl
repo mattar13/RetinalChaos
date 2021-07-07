@@ -1,5 +1,5 @@
 #Version 0: Model without nullout
-function (PDE::Network{T, :Default})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::Real) where T
+function (PDE::Network{T, :Default})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -41,7 +41,7 @@ function (PDE::Network{T, :Default})(dU::AbstractArray{T}, U::AbstractArray{T}, 
 end
 
 #Version 1: gTREK nullout
-function (PDE::Network{T, :gHCN})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::Real) where T
+function (PDE::Network{T, :gHCN})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -83,7 +83,7 @@ function (PDE::Network{T, :gHCN})(dU::AbstractArray{T}, U::AbstractArray{T}, p::
 end
 
 #Version 2: gACh nullout
-function (PDE::Network{T, :gACh})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::Real) where T
+function (PDE::Network{T, :gACh})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -125,7 +125,7 @@ function (PDE::Network{T, :gACh})(dU::AbstractArray{T}, U::AbstractArray{T}, p::
 end
 
 #Version 3 :Acetylcholine release nullout
-function (PDE::Network{T, :ρ})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::Real) where T
+function (PDE::Network{T, :ρ})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -166,7 +166,7 @@ function (PDE::Network{T, :ρ})(dU::AbstractArray{T}, U::AbstractArray{T}, p::Ab
 end
 
 #This is the Lansdell version of the SAC model
-function (PDE::Network{T, :Lansdell})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::Real) where T
+function (PDE::Network{T, :Lansdell})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
     v = view(U, :, :, 1)
     r = view(U, :, :, 2)
     s = view(U, :, :, 3)

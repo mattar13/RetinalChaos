@@ -97,11 +97,8 @@ include("2D_models.jl") #Includes all 2D models
 @register ħ(e, k_d)
 
 #Noise models
-noise(du::Array{T,1}, u::Array{T,1}, p, t) where T <: Real = du[end] = p[end]
-noise(du::Array{T,3}, u::Array{T,3}, p, t) where T <: Real = du[:,:,end] .= p[end]
-noise(du::CuArray{T,3}, u::CuArray{T,3}, p, t) where T <: Real = du[:,:,end] .= p[end]
+noise(du::Array{T,1}, u::Array{T,1}, p, t::T) where T <: Real = du[end] = p[end]
+noise(du::Array{T,3}, u::Array{T,3}, p, t::T) where T <: Real = du[:,:,end] .= p[end]
+noise(du::CuArray{T,3}, u::CuArray{T,3}, p, t::T) where T <: Real = du[:,:,end] .= p[end]
 
 lansdell_noise(du, u, p, t) = du[:,:,end] .= p[end]
-
-#I want to make ODEproblems compatible with dictionaries
-(::Type{ODEProblem})(ode_sys::ModelingToolkit.AbstractODESystem, u0::Dict{Symbol, Float64}, tspan::Tuple{Float64,Float64}, p::Dict{Symbol, Float64}) = ODEProblem(ode_sys, u0 |> extract_dict, tspan, p |> extract_dict)
