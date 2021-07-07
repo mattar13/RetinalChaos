@@ -9,13 +9,13 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars
         if verbose
             println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
         end
-        prob.p[idx] .= val_rng[i]
+        prob.p[idx] = val_rng[i]
         prob
     elseif run_func_on == :conds
         if verbose
             println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
         end
-        prob.u0 .= val_rng[i]
+        prob.u0[idx] = val_rng[i]
         prob
     end
 end
@@ -27,13 +27,13 @@ function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; run_func_on = :par
         if verbose
             println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
         end
-        prob.p[idx] .= val_rng[i]
+        prob.p[idx] = val_rng[i]
         prob
     elseif run_func_on == :conds
         if verbose
             println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
         end
-        prob.u0 .= val_rng[i]
+        prob.u0 = val_rng[i]
         prob
     end
 end

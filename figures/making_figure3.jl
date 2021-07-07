@@ -75,7 +75,7 @@ begin
 	fig3_A = plot(sol, vars = [1, 7], layout = grid(2,1),label = ["" ""],
 		c = [v_color w_color],lw = 3.0, grid = false,
 		xlabel = ["" "Time (s)"], 
-		ylabel = ["Vₜ (mV)" "Noise (pA)"], 
+		ylabel = ["Vₜ (mV)" "Noisy Current (pA)"], 
 		xformatter = x -> x/1000, 
 	
 	)
@@ -100,7 +100,7 @@ begin
 end
 
 # ╔═╡ 8991460a-bcfd-4c02-babe-d6cd7830987b
-println(c1_map)
+bif_val
 
 # ╔═╡ 79fd10a2-b662-469e-ab24-508b78ec53b4
 begin
@@ -110,16 +110,16 @@ begin
 	vspan!(fig3_B, [c1_lims[1], bif_val[end]], label = "Non-spiking range", 
 		c = :red, alpha = 0.5
 	)
-	plot!(fig3_B, c1_map, 
+	plot!(fig3_B, c1_map,
 		lw = 3.0,
-		xlabel = "Injected Current", ylabel = "Membrane Voltage"
+		xlabel = "Applied Current (pA)", ylabel = "Vₜ (mV)"
 	)
-
+	
 	plot!(fig3_B, bif_val, saddle_vs, label= "Saddle node bif",
 		marker = :square, st = :scatter, grid = false, 
 		xlims = c1_lims
 	)
-	
+	title!(fig3_B[1], "B", title_pos = :left)
 end
 
 # ╔═╡ df7e26fa-a550-4594-bc5b-f03c38971381
@@ -137,6 +137,7 @@ begin
 		xlabel = "Noisy current (pA)", ylabel = "Probability of Occurrance (PDF)", 
 		xlims = c1_lims
 	)
+	title!(fig3_C[1], "C", title_pos = :left)
 	
 end
 
@@ -159,6 +160,6 @@ savefig(fig3, "Fig3_Spontneous_Activity.png")
 # ╠═bdc1f75d-d992-4b03-a6ad-b61650d8db94
 # ╠═8991460a-bcfd-4c02-babe-d6cd7830987b
 # ╠═79fd10a2-b662-469e-ab24-508b78ec53b4
-# ╟─df7e26fa-a550-4594-bc5b-f03c38971381
-# ╟─976de364-ca10-4c91-8d9d-143926e48613
+# ╠═df7e26fa-a550-4594-bc5b-f03c38971381
+# ╠═976de364-ca10-4c91-8d9d-143926e48613
 # ╠═b5d23852-523d-4c6f-b374-316a4052c87d
