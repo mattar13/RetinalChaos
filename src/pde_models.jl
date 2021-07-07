@@ -66,9 +66,13 @@ Network(Mx::AbstractArray{T}, My::AbstractArray{T}, MyE::AbstractArray{T}, EMx::
 """
 This constructs the PDE function so that it can be called
 """
-function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, version = :gACh,
-        DX::Tuple{T, T} = (-2.0, 1.0), DY::Tuple{T, T} = (-2.0, 1.0)) where T <: Real
-    #Set up x diffusion steps
+function Network(nx::Real, ny::Real; 
+            gpu::Bool = false, μ::T = 0.75, version = :gACh,
+            DX::Tuple{Float64, Float64} = (-2.0, 1.0), DY::Tuple{Float64, Float64} = (-2.0, 1.0)
+        )where T <: Real
+    #We want to ensure both nx and ny are integers    
+    nx = nx |> Int64 
+    ny = ny |> Int64
     x_dv = repeat([DX[1]], nx)
     x_uv = repeat([DX[2]], nx-2)
     x_lv = repeat([DX[2]], nx-2)
@@ -89,7 +93,7 @@ function Network(nx::Int64, ny::Int64; gpu::Bool = false, μ::Float64 = 0.75, ve
     d = Binomial(1, μ)
     null = Float64.(rand(d, (ny, nx)))
     if gpu
-        gversion = Symbol("$(version)_gpu")
+        #Float32 is the most efficient form of CUDA arrays
         gMx = CuArray(Float32.(Mx))
         gMy = CuArray(Float32.(Mx))
         gEMx = CuArray(Float32.(Mx))
