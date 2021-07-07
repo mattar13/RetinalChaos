@@ -22,9 +22,9 @@ nx = ny = 50;
 p = read_JSON(params_file) 
 #Set up the initial conditions
 u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.50, version = :gACh, gpu = false) #When running on my computer 
+net = Network(nx, ny; μ = 0.50, version = :gACh) #When running on my computer 
 p_net = extract_dict(p);
-u0_net = extract_dict(u0, nx, ny) #|> cu;
+u0_net = extract_dict(u0, nx, ny);
 warmup = (0.0, 300e3)
 tspan = (0.0 , 60e3)
 NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
