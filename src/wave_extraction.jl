@@ -11,7 +11,6 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::
         idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 0.1,
     ) where {T, N, S}
     # We need to convert the dt into the correct form
-    println("here")
     dt = convert(T, dt)
     #We want to check how many dimensions the simulation is 
     if length(size(sol.prob.u0)) == 1
@@ -38,18 +37,18 @@ end
 """
 This function returns all the time stamps in a spike or burst array
 """
-function get_timestamps(spike_array::BitArray{1}; 
-        dt = 0.1, verbose = 0
-    )
+
+function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <: Real
     idx_array = findall(x -> x==1, spike_array)
     points = Tuple[]
     if length(idx_array) > 1
         start_point = idx_array[1]
         end_point = idx_array[2]
         for i in 1:length(idx_array)-1
+            #println(idx_array[i+1] - idx_array[i])
             if (idx_array[i+1] - idx_array[i]) != 1
                 end_point = idx_array[i]
-                push!(points, (start_point*dt, end_point*dt))
+                push!(points, (tseries[start_point], tseries[end_point]))
                 start_point = idx_array[i+1]
             end
         end
@@ -57,11 +56,17 @@ function get_timestamps(spike_array::BitArray{1};
     points
 end
 
+get_timestamps(spike_array::Vector{Bool}; dt = 0.1) = get_timestamps(spike_array, collect((1*dt):dt:(length(spike_array)*dt)))
+
+
+"""
+If dt is set to Inf, the algorithim acts adaptive
+"""
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
-        idx::Int64 = 1, dt::Float64 = 0.1
+        idx::Int64 = 1, dt::Float64 = Inf
     ) where T <: Real
     # Lets do this the integrated way
-    #First we need to extract the spike array
+    # First we need to extract the spike array
     if length(size(sol.prob.u0)) == 1
         data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
         spike_array = (data_select .> threshold[1])
@@ -76,11 +81,10 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
             push!(timestamps, stamps...)
         end
         return timestamps
-    end
-    
+    end   
 end
 
-# For if the threshold has not been calculated
+# get timestamps will not work adaptively with a region defined
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T}; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
@@ -90,15 +94,26 @@ end
 
 # For if no range has been provided but a threshold has
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
-        idx::Int64 = 1, dt::T = 0.1
+        idx::Int64 = 1, dt::T = -Inf
     ) where T <: Real
-    get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
+    if dt == -Inf #Adaptive timestamp finding
+        data_select = sol |> Array
+        spike_array = (data_select .> threshold) |> Array
+        tstamps = fill(Tuple[], size(spike_array,1))
+        for i in 1:size(spike_array, 1)
+            tstamps[i] =  get_timestamps(spike_array[i, :], sol.t |> Array)
+        end
+        return tstamps
+    else   
+        get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
+    end
 end
 
 # For if no range has been provided
 function get_timestamps(sol::DiffEqBase.AbstractODESolution; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
+    println("This isn't exactly ready yet")
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
     get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
 end
