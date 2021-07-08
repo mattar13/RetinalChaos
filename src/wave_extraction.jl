@@ -95,7 +95,6 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
     ) where T <: Real
     if dt == -Inf #Adaptive timestamp finding
         data_select = sol |> Array |> Array{T}
-        println(data_select |> typeof)
         spike_array = (data_select .> threshold) |> Array
         tstamps = fill(Tuple{T,T}[], size(spike_array,1))
         for i in 1:size(spike_array, 1)
