@@ -28,9 +28,7 @@ end
 
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S} 
     t_rng = (sol.t[1]|> Float64, sol.t[end] |> Float64)
-    println(t_rng)
     ans = calculate_threshold(sol, t_rng; kwargs...)
-    
     return ans
 end
 
