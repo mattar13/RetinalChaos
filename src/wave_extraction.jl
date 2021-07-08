@@ -229,8 +229,9 @@ function extract_interval(timestamp_arr::Vector{Vector{Tuple{T, T}}}, flatten = 
     end
 end
 
-function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; dt = 500.0)
-    thresholds = calculate_threshold(sol; dt = 500.0) #This takes really long
+function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolution; 
+    dt = 500.0)
+    thresholds = calculate_threshold(sol; dt = dt) #This takes really long
     spikes = get_timestamps(sol, thresholds)
     spike_durs, isi = extract_interval(spikes)
     bursts, spb = max_interval_algorithim(spikes)
