@@ -14,7 +14,6 @@ println("Small functions imported")
 #Imports if using GPU
 using CUDA
 export cu, allowscalar
-CUDA.allowscalar(false)
 
 #Include all the plotting utilities
 using Plots, Measures
