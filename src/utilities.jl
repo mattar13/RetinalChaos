@@ -93,7 +93,7 @@ end
 
 function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
             reset_model::Bool = false, gpu::Bool = true, version = :gACh,
-            abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+            abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
             animate_solution = true, animate_dt = 60.0
         ) where T <: Real
     
@@ -150,7 +150,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         #Warmup the problem
         print("[$(now())]: Warming up the solution... ")
         @time NetSol = solve(NetProb, SOSRI(), 
-                abstol = abstol, reltol = reltol, maxiters = maxiters,
+                abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
                 progress = true, progress_steps = 1, 
                 save_everystep = false
             )
