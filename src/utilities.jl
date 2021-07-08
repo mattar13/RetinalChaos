@@ -147,8 +147,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         #Load the ODE problem
         NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p)
 
-        println(u0 |> size)
-        #We may put a section here to warmup the solution
+        #Warmup the problem
         print("[$(now())]: Warming up the solution... ")
         @time NetSol = solve(NetProb, SOSRI(), 
                 abstol = abstol, reltol = reltol, maxiters = maxiters,
@@ -156,6 +155,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
                 save_everystep = false
             )
         
+        #Save the warmed up solution
         warmup_ics = NetSol[end]
         JLD2.@save conds_file warmup_ics
         if gpu
