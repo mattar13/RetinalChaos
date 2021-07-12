@@ -1,5 +1,6 @@
 module RetinalChaos
 
+const verbose = false #Adjust the to print out statments relevant to the module import
 #Import small functions
 import Base.length
 import Base.print
@@ -9,14 +10,23 @@ export now
 
 using Telegram, Telegram.API, ConfigEnv
 using ProgressMeter
-println("Small functions imported")
+if verbose 
+
+     println("[$(now())]: Small functions imported")
+end
 
 #Imports if using GPU
 using CUDA
 export cu, allowscalar
 
 #Include all the plotting utilities
-using Plots, Measures
+
+if verbose 
+     print("[$(now())]: Plotting utilities imported in: ")
+     @time using Plots, Measures     
+else
+     using Plots, Measures 
+end
 
 using DifferentialEquations
 #using ModelingToolkit, DiffEqBase
@@ -27,14 +37,19 @@ export EnsembleProblem, EnsembleThreads
 #export @parameters, @variables, @derivatives, @register
 #export ODESystem, SDESystem
 
-println("Modelling utilities imported")
+if verbose
+     println("[$(now())]Modelling utilities imported")
+end
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2
 
-println("Extra utilities imported")
+
 #Imported for dynamical analysis
 using ForwardDiff, LinearAlgebra, NLsolve
 
+if verbose
+     println("[$(now())]: Extra utilities imported")
+end
 #For Binomial Nullification of parameters
 using Distributions
 
@@ -44,7 +59,9 @@ using Distributions
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
-println("Importing Models")
+if verbose 
+     println("[$(now())]: Importing Models")
+end
 include("models.jl")
 export T_ode, T_sde, SOSRI, SOSRA #Load all the DiffEq Interface
 #Export functions related to creating the 2D network
