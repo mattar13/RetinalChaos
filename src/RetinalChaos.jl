@@ -82,7 +82,7 @@ export codim_map
 
 include("wave_extraction.jl")
 export calculate_threshold
-export get_timestamps, max_interval_algorithim, timescale_analysis
+export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
 #println("Fininshed Importing")
 
 

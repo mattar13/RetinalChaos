@@ -132,7 +132,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         #Load the model
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
         #Load the ODE problem
-        NetProb = SDEProblem(net, noise, warmup_ics, (0f0 , p_dict[:t_run]), p0)
+        NetProb = SDEProblem(net, noise, warmup_ics, (0f0 , p_dict[:t_run]), p)
     else
         println("[$(now())]: Model loaded from new")
         #Load the initial conditions

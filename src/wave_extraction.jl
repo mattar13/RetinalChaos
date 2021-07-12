@@ -20,17 +20,14 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::
     else  
         n = length(collect(rng[1]:dt:rng[2]))
         mean = sum(sol(rng[1]:dt:rng[2]), dims = 2)./n
-        println("GPU solution")
         dev = Z * std(sol(rng[1]:dt:rng[2]))
-        return mean .+ dev
+        return (mean .+ dev) |> Array
     end
 end
 
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S} 
     t_rng = (sol.t[1]|> Float64, sol.t[end] |> Float64)
-    println(t_rng)
     ans = calculate_threshold(sol, t_rng; kwargs...)
-    
     return ans
 end
 
@@ -40,7 +37,7 @@ This function returns all the time stamps in a spike or burst array
 
 function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <: Real
     idx_array = findall(x -> x==1, spike_array)
-    points = Tuple[]
+    points = Tuple{T,T}[]
     if length(idx_array) > 1
         start_point = idx_array[1]
         end_point = idx_array[2]
@@ -73,7 +70,7 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
         get_timestamps(spike_array; dt = dt)
     else
         #For each data trace we have a corresponding threshold
-        timestamps = Tuple[]
+        timestamps = Tuple{T, T}[]
         @showprogress "Extracting timestamps: " for c_idx in 1:size(sol,1)
             data_select = sol(rng[1]:dt:rng[2], idxs = c_idx) |> Array
             spike_array = (data_select .> threshold[c_idx])
@@ -94,12 +91,12 @@ end
 
 # For if no range has been provided but a threshold has
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
-        idx::Int64 = 1, dt::T = -Inf
+        idx::Int64 = 1, dt::Float64 = -Inf
     ) where T <: Real
     if dt == -Inf #Adaptive timestamp finding
-        data_select = sol |> Array
+        data_select = sol |> Array |> Array{T}
         spike_array = (data_select .> threshold) |> Array
-        tstamps = fill(Tuple[], size(spike_array,1))
+        tstamps = fill(Tuple{T,T}[], size(spike_array,1))
         for i in 1:size(spike_array, 1)
             tstamps[i] =  get_timestamps(spike_array[i, :], sol.t |> Array)
         end
@@ -120,29 +117,25 @@ end
 
 """
 This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
+    It takes in timestamps and returns the burst durations and the spikes per burst
 A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
 """
-function max_interval_algorithim(spike_array::BitArray{1}; 
+function max_interval_algorithim(timestamps::Vector{Tuple{T, T}}; 
         ISIstart::Int64 = 500, ISIend::Int64 = 500, IBImin::Int64 = 1000, DURmin::Int64 = 100, SPBmin::Int64 = 4, 
-        dt::T = 0.1, verbose = false
+        verbose = false
     ) where T <: Real
     burst_timestamps = Tuple[]
     DUR_list = Float64[]
     SPB_list = Float64[]
     IBI_list = Float64[]
-    #Detect the spikes first
-    timestamps = get_timestamps(spike_array; dt = dt) #Add in arguments for sweeps later
     if isempty(timestamps)
         if verbose >= 1
             println("No spikes detected")
         end
         return nothing
     else
-        #println("Times detected")
         #Lets organize the spipkes into intervals spikes and not spikes
-        spike_durs = map(i -> timestamps[i][2]-timestamps[i][1], 1:length(timestamps))
         intervals = map(i -> timestamps[i][1] - timestamps[i-1][2], 2:length(timestamps))
-        #intervals = count_intervals(spike_array) .* dt
         bursting = false
         burst_start = 0.0
         burst_end = 0.0
@@ -184,141 +177,84 @@ function max_interval_algorithim(spike_array::BitArray{1};
             push!(DUR_list, DUR)
             push!(SPB_list, SPB)
         end
-        return burst_timestamps, DUR_list, SPB_list, IBI_list
+        return burst_timestamps, SPB_list
     end
 end
 
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
-        idx::Int64 = 1, dt::Float64 = 0.1,
-        kwargs...
-    ) where T <: Real
-    if length(size(sol.prob.u0)) == 1
-        data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-        spike_array = (data_select .> threshold[1])
-        return max_interval_algorithim(spike_array; dt = dt, kwargs...)
-    else
-        burst_timestamps = Tuple[]
-        DUR_list = Float64[]
-        SPB_list = Float64[]
-        IBI_list = Float64[]
-        @showprogress "Running max_interval_algorithim: " for c_idx in 1:size(sol,1)
-            data_select = sol(rng[1]:dt:rng[2], idxs = c_idx) |> Array
-            spike_array = (data_select .> threshold[c_idx])
-            MI_data = max_interval_algorithim(spike_array; kwargs...)
-            if !isnothing(MI_data)
-                push!(burst_timestamps, MI_data[1]...)
-                push!(DUR_list, MI_data[2]...)
-                push!(SPB_list, MI_data[3]...)
-                push!(IBI_list, MI_data[4]...)
+function max_interval_algorithim(timestamp_arr::Vector{Vector{Tuple{T, T}}}; flatten = true) where T <: Real
+    if flatten
+        #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
+        bursts = Tuple{T, T}[]
+        spd = T[]
+        for idx in 1:length(timestamp_arr)
+            result = max_interval_algorithim(timestamp_arr[idx])
+            if !isnothing(result)
+                push!(bursts, result[1]...)
+                push!(spd, result[2]...)
             end
         end
-        return burst_timestamps, DUR_list, SPB_list, IBI_list
+        return bursts, spd
+    else
+        println("Not implemented")
     end
 end
 
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T};         
-        idx::Int64 = 1, dt::Float64 = 0.1, Z::Int64 = 4,
-        kwargs...
-    ) where T <: Real
-
-    threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-    return max_interval_algorithim(sol, threshold, rng; dt = dt, kwargs...)
-end
-
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
-        idx::Int64 = 1, dt::T = 0.1, 
-        kwargs...
-    ) where T <: Real
-    return max_interval_algorithim(sol, threshold, (sol.t[1]. sol.t[end]); dt = dt, kwargs...)
-end
-
-function max_interval_algorithim(sol::DiffEqBase.AbstractODESolution; 
-        idx::Int64 = 1, dt::T = 0.1, Z::Int64 = 4,
-        kwargs...
-    ) where T <: Real
-    #First we need to extract the spike array
-    threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
-    return max_interval_algorithim(sol, threshold, (sol.t[1], sol.t[end]); dt = dt, kwargs...)
-end
-
-"""
-Timescale analysis
-
-returns Spike Durations, Burst Durations, Interburst Intervals
-"""
-#Basis for all other timescale analysis
-function timescale_analysis(spike_array::BitArray{1}; 
-        dt::T = 0.1,
-        kwargs...
-    ) where T <: Real
-
-    if !any(spike_array .== 1.0)
-        #println("No spikes detected")
-        return nothing
-    else
-        timestamps = get_timestamps(spike_array; dt = dt);
-        spike_durations = map(x -> x[2]-x[1], timestamps)
-        if spike_durations == Any[]
-            #This essentially means that no spikes are detected, therefore no bursts occur
-            return nothing
+function extract_interval(timestamps::Vector{Tuple{T, T}}) where T <: Real
+    if !isempty(timestamps)
+        durations = map(x -> x[2]-x[1], timestamps)
+        intervals = T[]
+        for i in 1:length(timestamps)-1
+            push!(intervals, timestamps[i+1][1] - timestamps[i][2])
         end
-        burst_idxs, burst_durations, spb_list, ibis = max_interval_algorithim(spike_array; dt = dt, kwargs...);
-        return spike_durations, burst_durations, ibis
+
+        return durations, intervals
     end
 end
 
-function timescale_analysis(sol::DiffEqBase.DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
-        idx::Int64 = 1, dt::Float64 = 0.1,
-        kwargs...
-    ) where T <: Real
-    if length(size(sol.prob.u0)) == 1
-        data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-        spike_array = (data_select .> threshold[1])
-        return timescale_analysis(spike_array; dt = dt, kwargs...)
-    else
-        spike_durations = Float64[]
-        burst_durations = Float64[]
-        ibis = Float64[]
-        @showprogress "Conducting timescale analysis: " for c_idx in 1:size(sol,1)
-            data_select = sol(rng[1]:dt:rng[2], idxs = c_idx) |> Array
-            spike_array = (data_select .> threshold[c_idx])
-            ts_data = timescale_analysis(spike_array; dt = dt, kwargs...)
-            if !isnothing(ts_data)
-                push!(spike_durations, ts_data[1]...)
-                push!(burst_durations, ts_data[2]...)
-                push!(ibis, ts_data[3]...)
+function extract_interval(timestamp_arr::Vector{Vector{Tuple{T, T}}}, flatten = true) where T <: Real
+    if flatten
+        #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
+        durations = T[]
+        intervals = T[]
+        for idx in 1:length(timestamp_arr)
+            result = extract_interval(timestamp_arr[idx])
+            if !isnothing(result)
+                push!(durations, result[1]...)
+                push!(intervals, result[2]...)
             end
         end
-        return spike_durations, burst_durations, ibis
+        return durations, intervals
+    else
+        println("Not implemented")
     end
+end
+
+function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolution; 
+    dt = 500.0)
+    thresholds = calculate_threshold(sol; dt = dt) #This takes really long
+    spikes = get_timestamps(sol, thresholds)
+    spike_durs, isi = extract_interval(spikes)
+    bursts, spb = max_interval_algorithim(spikes)
+    burst_durs, ibi = extract_interval(bursts)
     
+    timestamps = Dict(
+        "Spikes" => spikes,
+        "Bursts" => bursts
+    )
+
+    data = Dict(
+        "Thresholds" => thresholds,
+        "SpikeDurs" => spike_durs, 
+        "ISIs" => isi, 
+        "BurstDurs" => burst_durs, 
+        "IBIs" => ibi,
+        "SpikesPerBurst" => spb
+    )
+    JLD2.save("$(save_file)\\timestamps.jld2", timestamps)
+    JLD2.save("$(save_file)\\data.jld2", data)
+    BotNotify("{Wave} Finished running timeseries analysis")
+    return timestamps, data
 end
-
-function timescale_analysis(sol::DiffEqBase.DiffEqBase.AbstractODESolution, rng::Tuple{T,T}; 
-        idx::Int64 = 1, dt::Float64 = 0.1, Z::Int64 = 4,
-        kwargs...
-    ) where T <: Real
-
-    threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-    timescale_analysis(sol, threshold, rng; dt = dt, kwargs...)
-end
-
-function timescale_analysis(sol::DiffEqBase.DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
-        idx::Int64 = 1, dt::T = 0.1, 
-        kwargs...
-    ) where T <: Real
-    timescale_analysis(sol, threshold, (sol.t[1], sol.t[end]); dt = dt, kwargs...)
-end
-
-function timescale_analysis(sol::DiffEqBase.DiffEqBase.AbstractODESolution; 
-        idx::Int64 = 1, dt::T = 0.1, Z::Int64 = 4,
-        kwargs...
-    ) where T <: Real
-    #First we need to extract the spike array
-    threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
-    timescale_analysis(sol, threshold, (sol.t[1], sol.t[end]); dt = dt, kwargs...)
-end
-
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
 """
