@@ -255,6 +255,31 @@ function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolut
     BotNotify("{Wave} Finished running timeseries analysis")
     return timestamps, data
 end
+
+function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
+    dt = 500.0)
+    thresholds = calculate_threshold(sol; dt = dt) #This takes really long
+    spikes = get_timestamps(sol, thresholds)
+    spike_durs, isi = extract_interval(spikes)
+    bursts, spb = max_interval_algorithim(spikes)
+    burst_durs, ibi = extract_interval(bursts)
+    
+    timestamps = Dict(
+        "Spikes" => spikes,
+        "Bursts" => bursts
+    )
+
+    data = Dict(
+        "Thresholds" => thresholds,
+        "SpikeDurs" => spike_durs, 
+        "ISIs" => isi, 
+        "BurstDurs" => burst_durs, 
+        "IBIs" => ibi,
+        "SpikesPerBurst" => spb
+    )
+
+    return timestamps, data
+end
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
 """
