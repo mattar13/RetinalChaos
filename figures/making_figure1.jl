@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.1
+# v0.14.9
 
 using Markdown
 using InteractiveUtils
@@ -57,13 +57,16 @@ begin
 	#Run analysis 
 	dt = 0.1 #set the time differential
 	v_thresh = calculate_threshold(sol, dt = dt)
-	timestamps = get_timestamps(sol, dt = dt)
-	burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(sol, dt = dt)
+	timestamps, data = timeseries_analysis(sol; dt = 0.1)
+	#burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(sol, dt = dt)
 end
+
+# ╔═╡ e275d737-a497-493f-867b-e93721f8da65
+timestamps["Bursts"][1]
 
 # ╔═╡ 4e11ec08-cbb3-462d-8c5f-6eb37c5c79f9
 begin 	
-	burst_lims = burst_idxs[2]	#lets set the limits for area of interest
+	burst_lims = timestamps["Bursts"][2]	#lets set the limits for area of interest
 	t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
 	#Plot A tick intervals and limits
 	A_dx = 20 #the tick interval is 20ms
@@ -77,7 +80,7 @@ begin
 	B_trng = B_xlims[1]:1.0:B_xlims[2]
 	#Plot C tick intervals and limits
 	C_dx = 10e3
-	C_xlims = (burst_idxs[2][1], burst_idxs[4][1])
+	C_xlims = (timestamps["Bursts"][2][1], timestamps["Bursts"][4][1])
 	C_xticks = collect(C_xlims[1]:C_dx:C_xlims[2]) 
 	C_trng = C_xlims[1]:1.0:C_xlims[2]
 end
@@ -102,16 +105,16 @@ begin
 	fig1_Aa = plot(fig1_Aa1, fig1_Aa2, layout = grid(2,1))
 		
 	plot!(fig1_Aa[1], xticks = false)
-	hline!(fig1_Aa, [v_thresh], 
-		label = "Spike threshold", c = :red, linewidth = 2.0, legend = :bottomright
-	)
+	#hline!(fig1_Aa, [v_thresh], 
+	#	label = "Spike threshold", c = :red, linewidth = 2.0, legend = :bottomright
+	#)
 	
 	fig1_Ab = plot(sol(A_trng, idxs = 2), sol(A_trng, idxs = 1), 
 		xlabel = "Nₜ", ylabel = "Vₜ (mV)", label = "", c = :black
 	)
-	hline!(fig1_Ab, [v_thresh], seriestype = :scatter,
-		label = "Spike threshold",  c = :red, legend = :bottomright
-	)
+	#hline!(fig1_Ab, [v_thresh], seriestype = :scatter,
+	#	label = "Spike threshold",  c = :red, legend = :bottomright
+	#)
 
 	fig1_A = plot(fig1_Aa, fig1_Ab, 
 		layout = grid(1,2, widths = (0.75, 0.25)), margin = 0mm
@@ -206,16 +209,17 @@ fig1 = plot(fig1_A, fig1_B, fig1_C,
     )
 
 # ╔═╡ 327ff679-53b5-4b48-a579-327ea49312e1
-savefig(fig1, "Fig1_Model_Dynamics.png")
+savefig(fig1, "E:\\Projects\\2021_Modelling_Paper\\Figures\\Fig1_Model_Dynamics.png")
 
 # ╔═╡ Cell order:
 # ╠═1f3a5020-9a18-11eb-3b98-2fa7c5574805
 # ╠═39edbae4-3774-4de8-aa01-7597be0cc8d7
 # ╠═80ce4218-d0b0-4fa6-9784-74fb9b68bc4e
 # ╠═e908115c-8389-49a1-8d0a-530d292f70c0
-# ╠═1cb6ef5d-ddb0-4c90-9bc0-0c3924399fbe
+# ╟─1cb6ef5d-ddb0-4c90-9bc0-0c3924399fbe
 # ╠═b215888a-6acf-4b9e-aa7e-4dec87b8738b
 # ╠═578be207-80cb-4738-aa39-3db181b7c058
+# ╠═e275d737-a497-493f-867b-e93721f8da65
 # ╠═4e11ec08-cbb3-462d-8c5f-6eb37c5c79f9
 # ╠═abb10995-b168-4c2a-83a8-5cc386bca927
 # ╠═4e2a0bb6-4999-4519-931d-52c415205bac
