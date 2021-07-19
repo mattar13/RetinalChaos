@@ -355,5 +355,5 @@ savefig(binom_boxes,"$(saveroot)\\Binomial.png")
 # ╠═f3679820-7e5e-4bef-b6d6-412c3262b11f
 # ╠═ba39a93d-15e1-4f29-8f55-ddbcd2350aa5
 # ╠═09be5084-2914-4a65-a904-ca37062c5c96
-# ╠═078ff5f2-fa34-4b7b-9a10-4e0c77a1dea6
+# ╟─078ff5f2-fa34-4b7b-9a10-4e0c77a1dea6
 # ╠═da7d2a76-0516-49e8-a5dd-f667c4389b87
