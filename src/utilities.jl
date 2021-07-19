@@ -94,7 +94,8 @@ end
 function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
             reset_model::Bool = false, gpu::Bool = true, version = :gACh,
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-            animate_solution = true, animate_dt = 60.0
+            animate_solution = true, animate_dt = 60.0, 
+            notify = false #set this to true in order to get phone notifications
         ) where T <: Real
     
     if reset_model && isdir(file_root)
@@ -127,9 +128,12 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     end
     
     if isfile(conds_file)
+        println("loading initial conditions")
         #Load the initial conditions
-        JLD2.@load conds_file warmup_ics
+        #JLD2.@load conds_file warmup_ics #This is the JLD2 file way
+        warmup_ics = BSON.load(conds_file)
         #Load the model
+        println("loading model")
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
         #Load the ODE problem
         NetProb = SDEProblem(net, noise, warmup_ics, (0f0 , p_dict[:t_run]), p)
@@ -157,17 +161,25 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         
         #Save the warmed up solution
         warmup_ics = NetSol[end]
-        JLD2.@save conds_file warmup_ics
+        #Save the end solution 
+        #JLD2.@save conds_file warmup_ics #as a JSON
+        bson(conds_file, Dict(:warmup_ics => NetSol[end])) #as a BSON
+        #println(warmup_ics |> typeof)
         if gpu
             NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
         end
     end
-    BotNotify("{Waves} Model warmup solution loaded")
+    if notify
+        BotNotify("{Waves} Model warmup solution loaded")
+    end
     
     #Now we want to test whether or not we have run the simulation
     if isfile(sol_file)
         #We don't need to rerun the problem
-        JLD2.@load sol_file NetSol
+        println("Loading completed solution")
+        #JLD2.@load sol_file NetSol #This is the JSON method
+        NetSol = BSON.load(sol_file)
+        println("Correct solution loaded")
     else
         print("[$(now())]: Running the model... ")
         NetProb = SDEProblem(net, noise, warmup_ics, (0f0 , p_dict[:t_run]), p)
@@ -179,11 +191,14 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         )
 
         print("[$(now())]: Saving the simulation...")
-        JLD2.@save sol_file NetSol
+        #JLD2.@save sol_file NetSol #Save as a JLD2
+        bson(sol_file, Dict(:sol => NetSol))
         println("Completed")
 
     end
-    BotNotify("{Waves} Model solution loaded")
+    if notify
+        BotNotify("{Waves} Model solution loaded")
+    end
 
     if !isfile(animation_file) && animate_solution
         println("[$(now())]: Animating simulation...")
