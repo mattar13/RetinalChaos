@@ -41,7 +41,7 @@ if verbose
      println("[$(now())]Modelling utilities imported")
 end
 #Imports for reading and writing parameters and solutions
-using JSON2, JLD2
+using JSON2, JLD2, BSON
 
 
 #Imported for dynamical analysis
