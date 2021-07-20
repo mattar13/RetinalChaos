@@ -109,9 +109,9 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
 
     #We can step through each section checking to see what level we are at
     params_file = "$(file_root)\\params.json"
-    iconds_file = "$(file_root)\\conds.json"
-    conds_file = "$(file_root)\\warmup_ics.jld2"
-    sol_file = "$(file_root)\\sol.jld2"
+    iconds_file = "$(file_root)\\iconds.json"
+    conds_file = "$(file_root)\\conds.bson"
+    sol_file = "$(file_root)\\sol.bson"
     animation_file =  "$(file_root)\\animation.gif"
 
     #We first check to see if there is a param loaded
@@ -128,15 +128,18 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     end
     
     if isfile(conds_file)
-        println("loading initial conditions")
-        #Load the initial conditions
-        #JLD2.@load conds_file warmup_ics #This is the JLD2 file way
-        warmup_ics = BSON.load(conds_file)
-        #Load the model
-        println("loading model")
+        #Load the solution from the JSON file
+        BSON.@load conds_file warmup #This is the BSON file way
+        u0 = warmup |> cu
+        #Construct the model and ODE problem
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-        #Load the ODE problem
-        NetProb = SDEProblem(net, noise, warmup_ics, (0f0 , p_dict[:t_run]), p)
+        NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
+        #For some reason this only works when we run a quick solution first
+        #@time sol = solve(NetProb, SOSRI(), 
+        #    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+        #    progress = true, progress_steps = 1, 
+        #    save_everystep = false
+        #)
     else
         println("[$(now())]: Model loaded from new")
         #Load the initial conditions
@@ -146,27 +149,24 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
             u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny])
         end
 
-        #Load the model
+        #Load the model and ODE interface
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-        #Load the ODE problem
         NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p)
 
         #Warmup the problem
         print("[$(now())]: Warming up the solution... ")
-        @time NetSol = solve(NetProb, SOSRI(), 
+        @time sol = solve(NetProb, SOSRI(), 
                 abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
                 progress = true, progress_steps = 1, 
                 save_everystep = false
             )
         
         #Save the warmed up solution
-        warmup_ics = NetSol[end]
-        #Save the end solution 
-        #JLD2.@save conds_file warmup_ics #as a JSON
-        bson(conds_file, Dict(:warmup_ics => NetSol[end])) #as a BSON
-        #println(warmup_ics |> typeof)
+        warmup = sol[end]|>Array #Keep this one as the original 
+        BSON.@save conds_file warmup #as a JSON
+        warmup = sol[end] #Convert this one to CPU
         if gpu
-            NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
+            sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
         end
     end
     if notify
@@ -175,24 +175,20 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     
     #Now we want to test whether or not we have run the simulation
     if isfile(sol_file)
-        #We don't need to rerun the problem
-        println("Loading completed solution")
-        #JLD2.@load sol_file NetSol #This is the JSON method
-        NetSol = BSON.load(sol_file)
-        println("Correct solution loaded")
+        #We need to have previously activated the problem
+        BSON.@load sol_file sol #This is the JSON method
     else
         print("[$(now())]: Running the model... ")
-        NetProb = SDEProblem(net, noise, warmup_ics, (0f0 , p_dict[:t_run]), p)
+        NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p)
         #Run the solution to fruition
-        @time NetSol = solve(NetProb, SOSRI(), 
+        @time sol = solve(NetProb, SOSRI(), 
             abstol = abstol, reltol = reltol, maxiters = maxiters,
             save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
             progress = true, progress_steps = 1
         )
 
         print("[$(now())]: Saving the simulation...")
-        #JLD2.@save sol_file NetSol #Save as a JLD2
-        bson(sol_file, Dict(:sol => NetSol))
+        BSON.@save sol_file sol #Save as a BSON
         println("Completed")
 
     end
@@ -202,8 +198,8 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
 
     if !isfile(animation_file) && animate_solution
         println("[$(now())]: Animating simulation...")
-        anim = @animate for t = 1.0:animate_dt:NetSol.t[end]
-            frame_i = reshape(NetSol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
+        anim = @animate for t = 1.0:animate_dt:sol.t[end]
+            frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
             heatmap(frame_i, ratio = :equal, grid = false,
                     xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
                     c = :curl, clims = (-70.0, 0.0),
@@ -213,5 +209,5 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     end
 
     #We want to return the solution
-    return NetSol
+    return sol
 end 
