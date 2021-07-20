@@ -42,7 +42,8 @@ if verbose
 end
 #Imports for reading and writing parameters and solutions
 using JSON2, JLD2, BSON
-
+#These packages are needed to load the problems
+using ResettableStacks, RandomNumbers, LinearAlgebra
 
 #Imported for dynamical analysis
 using ForwardDiff, LinearAlgebra, NLsolve
