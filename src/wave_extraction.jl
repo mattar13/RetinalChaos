@@ -8,7 +8,7 @@ Finds the threshold of a trace by calculating the average and then adding the 4x
 calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
 
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64}; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 0.1,
+        idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 100.0,
     ) where {T, N, S}
     # We need to convert the dt into the correct form
     dt = convert(T, dt)
@@ -36,25 +36,44 @@ This function returns all the time stamps in a spike or burst array
 """
 
 function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <: Real
-    idx_array = findall(x -> x==1, spike_array)
-    points = Tuple{T,T}[]
-    if length(idx_array) > 1
-        start_point = idx_array[1]
-        end_point = idx_array[2]
-        for i in 1:length(idx_array)-1
-            #println(idx_array[i+1] - idx_array[i])
-            if (idx_array[i+1] - idx_array[i]) != 1
-                end_point = idx_array[i]
-                push!(points, (tseries[start_point], tseries[end_point]))
-                start_point = idx_array[i+1]
-            end
-        end
+    diff_vals = map(i -> (spike_array[i]-spike_array[i+1]), 1:length(spike_array)-1)
+    diff_starts = findall(x -> x==-1, diff_vals).+1 #This is a list of all the starting points in the array
+    diff_ends = findall(x -> x==1, diff_vals) #This is a list of all the ending points in the array
+    #If there is one more end than start than we have to remove the last point from the diff_starts
+
+    if spike_array[1] #This means we start out in a spike and will most likely end o
+        #println("We started out in a spike, the first value will be an end spike")
+        diff_ends = diff_ends[2:end]
     end
-    points
+
+    if length(diff_starts) > length(diff_ends)  #This happens because an end point was cutoff
+        diff_starts = diff_starts[1:length(diff_ends)]
+    elseif length(diff_starts) < length(diff_ends) #This happens because a start point was cutoff
+        diff_ends = diff_ends[2:end]
+    end
+
+    return hcat(tseries[diff_starts], tseries[diff_ends])
 end
 
 get_timestamps(spike_array::Vector{Bool}; dt = 0.1) = get_timestamps(spike_array, collect((1*dt):dt:(length(spike_array)*dt)))
 
+# For if no range has been provided but a threshold has
+function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
+        idx::Int64 = 1, dt::Float64 = -Inf
+    ) where T <: Real
+    if dt == -Inf #Adaptive timestamp finding
+        data_select = sol |> Array |> Array{T}
+        spike_array = (data_select .> threshold) |> Array
+        tstamps = Vector{Matrix{Float32}}(undef, size(spike_array,1))
+        for i in 1:size(spike_array, 1)
+            tstamps[i] = get_timestamps(spike_array[i, :], sol.t |> Array)
+            #push!(tstamps, arr)
+        end
+        return tstamps
+    else   
+        get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
+    end
+end
 
 """
 If dt is set to Inf, the algorithim acts adaptive
@@ -89,23 +108,6 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T};
     get_timestamps(sol, threshold, rng; dt = dt)
 end
 
-# For if no range has been provided but a threshold has
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
-        idx::Int64 = 1, dt::Float64 = -Inf
-    ) where T <: Real
-    if dt == -Inf #Adaptive timestamp finding
-        data_select = sol |> Array |> Array{T}
-        spike_array = (data_select .> threshold) |> Array
-        tstamps = fill(Tuple{T,T}[], size(spike_array,1))
-        for i in 1:size(spike_array, 1)
-            tstamps[i] =  get_timestamps(spike_array[i, :], sol.t |> Array)
-        end
-        return tstamps
-    else   
-        get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
-    end
-end
-
 # For if no range has been provided
 function get_timestamps(sol::DiffEqBase.AbstractODESolution; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
@@ -114,6 +116,7 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution;
     threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
     get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
 end
+
 
 """
 This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
@@ -181,13 +184,13 @@ function max_interval_algorithim(timestamps::Vector{Tuple{T, T}};
     end
 end
 
-function max_interval_algorithim(timestamp_arr::Vector{Vector{Tuple{T, T}}}; flatten = true) where T <: Real
+function max_interval_algorithim(timestamp_arr::Vector{Vector{Tuple{T, T}}}; flatten = true, kwargs...) where T <: Real
     if flatten
         #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
         bursts = Tuple{T, T}[]
         spd = T[]
         for idx in 1:length(timestamp_arr)
-            result = max_interval_algorithim(timestamp_arr[idx])
+            result = max_interval_algorithim(timestamp_arr[idx], kwargs...)
             if !isnothing(result)
                 push!(bursts, result[1]...)
                 push!(spd, result[2]...)
@@ -199,25 +202,25 @@ function max_interval_algorithim(timestamp_arr::Vector{Vector{Tuple{T, T}}}; fla
     end
 end
 
-function extract_interval(timestamps::Vector{Tuple{T, T}}) where T <: Real
-    if !isempty(timestamps)
-        durations = map(x -> x[2]-x[1], timestamps)
-        intervals = T[]
-        for i in 1:length(timestamps)-1
-            push!(intervals, timestamps[i+1][1] - timestamps[i][2])
-        end
-
-        return durations, intervals
-    end
+function extract_interval(timestamps::Matrix{T}; 
+        max_duration = 10e5, max_interval = 10e5
+    ) where T <: Real
+    durations = timestamps[:, 2] .- timestamps[:,1]
+    lagged_starts = timestamps[2:end,1]
+    lagged_ends = timestamps[1:end-1,2]
+    intervals = lagged_starts .- lagged_ends
+    return durations[durations .< max_duration], intervals[intervals .< max_interval]
 end
 
-function extract_interval(timestamp_arr::Vector{Vector{Tuple{T, T}}}, flatten = true) where T <: Real
+function extract_interval(timestamp_arr::Vector{Matrix{T}}; 
+        flatten = true, kwargs...
+    ) where T <: Real
     if flatten
         #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
         durations = T[]
         intervals = T[]
         for idx in 1:length(timestamp_arr)
-            result = extract_interval(timestamp_arr[idx])
+            result = extract_interval(timestamp_arr[idx]; kwargs...)
             if !isnothing(result)
                 push!(durations, result[1]...)
                 push!(intervals, result[2]...)
@@ -230,12 +233,14 @@ function extract_interval(timestamp_arr::Vector{Vector{Tuple{T, T}}}, flatten = 
 end
 
 function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolution; 
-    dt = 500.0)
-    thresholds = calculate_threshold(sol; dt = dt) #This takes really long
+        dt::Float64 = 100.0, Z::Int64 = 6,  
+        max_spike_duration::Float64 = 100.0, max_burst_duration::Float64 = 10e5
+    )
+    thresholds = calculate_threshold(sol; Z = Z, dt = dt) #This takes really long
     spikes = get_timestamps(sol, thresholds)
-    spike_durs, isi = extract_interval(spikes)
+    spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
     bursts, spb = max_interval_algorithim(spikes)
-    burst_durs, ibi = extract_interval(bursts)
+    burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
     
     timestamps = Dict(
         "Spikes" => spikes,
@@ -250,8 +255,8 @@ function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolut
         "IBIs" => ibi,
         "SpikesPerBurst" => spb
     )
-    BSON.save("$(save_file)\\timestamps.bson", timestamps)
-    BSON.save("$(save_file)\\data.bson", data)
+    bson("$(save_file)\\timestamps.bson", timestamps)
+    bson("$(save_file)\\data.bson", data)
     BotNotify("{Wave} Finished running timeseries analysis")
     return timestamps, data
 end
