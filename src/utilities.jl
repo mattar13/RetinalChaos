@@ -93,12 +93,14 @@ end
 
 #This function converts the solution into a CPU based solution
 function convert_to_cpu(model::RODESolution)
-    prob = model.prob
+    prob_remade = remake(model.prob, u0 = model.prob.u0 |> Array)
+    #println(prob_remade |> typeof)
+    #lets go into remaking the problem
     alg = model.alg
     t = model.t
     u = map(u -> u |> Array, model.u) #This pa
     W = model.W |> Array
-    return RetinalChaos.DiffEqBase.build_solution(prob, alg, t, u, W=W)
+    return RetinalChaos.DiffEqBase.build_solution(prob_remade, alg, t, u, W=W)
 end
 
 function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
@@ -192,6 +194,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         )
 
         print("[$(now())]: Saving the simulation...")
+        sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
         BSON.@save sol_file sol #Save as a BSON
         println("Completed")
 
