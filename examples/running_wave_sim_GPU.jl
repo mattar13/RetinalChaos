@@ -18,16 +18,20 @@ p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
 u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
 
 for mu in LinRange(0.05, 1.0, 25)
-    #BotNotify("{Waves} Running simulation for mu = $mu")
-    save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
-    p_dict[:μ] = mu
-    NetSol = load_model(save_path, p_dict, u_dict)
-    timestamps, data = timeseries_analysis(save_path, NetSol)
-    #Maybe we are running out of GPU memory and need to reset here
-    NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-    BotNotify("{Waves} Running simulation for mu = $mu completed")
+    try
+        #BotNotify("{Waves} Running simulation for mu = $mu")
+        save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
+        p_dict[:μ] = mu
+        NetSol = load_model(save_path, p_dict, u_dict)
+        timestamps, data = timeseries_analysis(save_path, NetSol)
+        #Maybe we are running out of GPU memory and need to reset here
+        NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
+        BotNotify("{Waves} Running simulation for mu = $mu completed")
+    catch error
+        BotNotify("{Waves} has encountered an error")
+        BotNotify(error)
+    end
 end
-#%% Load the BSON file for the timeseries_analysis
 
 #%% This is for a replication experiment
 #for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
