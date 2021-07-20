@@ -14,27 +14,15 @@ RetinalChaos.CUDA.allowscalar(false)
 
 # Load the needed files to run the model
 p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
-p_dict[:t_warm] = 10.0
-p_dict[:t_run] = 10.0
 u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
 
-#%%
-load_test = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\test_1"
-model = load_model(load_test, p_dict, u_dict, animate_solution = false)
-
-
-
-#%%
-using BSON
-#%%
-BSON.@load "$(load_test)\\conds.bson" warmup #This is the JSON method
-#%%
-BSON.@load "$(load_test)\\sol.bson" sol
-#%%
-model = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-#%% 
-#for mu in LinRange(0.05, 1.0, 25)
-for mu in [0.88125,0.920833,0.960417,1.0]
+#%% Testing the conversion to CPU function
+#load_test = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\test_1"
+#model = load_model(load_test, p_dict, u_dict, animate_solution = false)
+#new_sol = convert_to_cpu(model)
+#new_sol(10.0) #Interpolation actually works
+#for mu in [0.88125,0.920833,0.960417,1.0]
+for mu in LinRange(0.05, 1.0, 25)
     BotNotify("{Waves} Running simulation for mu = $mu")
     save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
     p_dict[:μ] = mu
