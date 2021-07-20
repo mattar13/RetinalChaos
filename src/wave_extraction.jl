@@ -250,8 +250,8 @@ function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolut
         "IBIs" => ibi,
         "SpikesPerBurst" => spb
     )
-    JLD2.save("$(save_file)\\timestamps.jld2", timestamps)
-    JLD2.save("$(save_file)\\data.jld2", data)
+    BSON.save("$(save_file)\\timestamps.bson", timestamps)
+    BSON.save("$(save_file)\\data.bson", data)
     BotNotify("{Wave} Finished running timeseries analysis")
     return timestamps, data
 end
