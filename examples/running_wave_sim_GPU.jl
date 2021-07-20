@@ -17,8 +17,6 @@ RetinalChaos.CUDA.allowscalar(false)
 p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
 u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
 
-#%% Testing the conversion to CPU function
-
 for mu in LinRange(0.05, 1.0, 25)
     #BotNotify("{Waves} Running simulation for mu = $mu")
     save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
@@ -31,22 +29,14 @@ for mu in LinRange(0.05, 1.0, 25)
 end
 #%% Load the BSON file for the timeseries_analysis
 
-load_analysis = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_5\\"
-model = load_model(load_analysis, p_dict, u_dict)
-#%%
-timestamps, data = timeseries_analysis(load_analysis, model)
-#%%
-p1 = histogram(data["SpikeDurs"], yaxis = :log, xlabel = "Spike Duration (ms)")
-
-
-#%%
-for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
-    BotNotify("{Waves} Running simulation for mu = $mu")
-    save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\r_$(repeat)_mu_$(round(Int64, mu*100))\\"
-    p_dict[:μ] = mu
-    NetSol = load_model(save_path, p_dict, u_dict)
-    timestamps, data = timeseries_analysis(save_path, NetSol)
-    #Maybe we are running out of GPU memory and need to reset here
-    NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-    BotNotify("{Waves} Running simulation for mu = $mu completed")
-end
+#%% This is for a replication experiment
+#for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
+#    BotNotify("{Waves} Running simulation for mu = $mu")
+#    save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\r_$(repeat)_mu_$(round(Int64, mu*100))\\"
+#    p_dict[:μ] = mu
+#    NetSol = load_model(save_path, p_dict, u_dict)
+#    timestamps, data = timeseries_analysis(save_path, NetSol)
+#    #Maybe we are running out of GPU memory and need to reset here
+#    NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
+#    BotNotify("{Waves} Running simulation for mu = $mu completed")
+#end
