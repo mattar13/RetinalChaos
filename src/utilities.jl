@@ -91,6 +91,16 @@ function extract_dict(dict_item::Dict{Symbol, T}, dims...) where T <: Real
     val_map
 end
 
+#This function converts the solution into a CPU based solution
+function convert_to_cpu(model::RODESolution)
+    prob = model.prob
+    alg = model.alg
+    t = model.t
+    u = map(u -> u |> Array, model.u) #This pa
+    W = model.W |> Array
+    return RetinalChaos.DiffEqBase.build_solution(prob, alg, t, u, W=W)
+end
+
 function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
             reset_model::Bool = false, gpu::Bool = true, version = :gACh,
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
@@ -134,12 +144,6 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         #Construct the model and ODE problem
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
         NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
-        #For some reason this only works when we run a quick solution first
-        #@time sol = solve(NetProb, SOSRI(), 
-        #    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-        #    progress = true, progress_steps = 1, 
-        #    save_everystep = false
-        #
     else
         println("[$(now())]: Model loaded from new")
         #Load the initial conditions
