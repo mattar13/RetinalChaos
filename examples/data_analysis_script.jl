@@ -55,6 +55,23 @@ plot(sol, vars = [:v])
 hline!([timestep_average], c = :black, label = "timestep average")
 hline!([adaptive_average], c = :green, label = "adaptive average")
 
+#%% Lets run a loop to test what the best and fastest threshold is
+import RetinalChaos.calculate_threshold
+times = Float64[]
+results = Float64[]
+dts = LinRange(100.0, 500.0, 200)
+for dt in dts
+    println("Running test for threshold dt: $dt")
+    thresh = calculate_threshold(model, dt = dt)
+    time = @elapsed calculate_threshold(model, dt = dt)
+    push!(times, time)
+    push!(results, thresh[1])
+end
+#%%
+p1 = plot(dts, results, st = :scatter)
+p2 = plot(dts, times, st = :scatter)
+plot(p1, p2, layout = grid(2,1))
+
 
 #%% This supplemental figure compares the dt to the analysis accuracy
 dt_rng = range(0.005, 0.10, length = 50)
