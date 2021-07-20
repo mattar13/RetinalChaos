@@ -34,19 +34,9 @@ end
 load_analysis = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_5\\"
 model = load_model(load_analysis, p_dict, u_dict)
 #%%
-threshold = calculate_threshold(model, Z = 6)
-tstamps = get_timestamps(model, threshold)
-spike_result = extract_interval(tstamps; max_duration = 100.0)
-p1 = histogram(result[1], yaxis = :log)
-p2 = histogram(result[2], yaxis = :log)
-plot(p1, p2)
-#%% Lets look at the bursts now
-
+timestamps, data = timeseries_analysis(load_analysis, model)
 #%%
-data = BSON.load("$(load_analysis)\\data.bson")
-
-
-
+p1 = histogram(data["SpikeDurs"], yaxis = :log, xlabel = "Spike Duration (ms)")
 
 
 #%%
