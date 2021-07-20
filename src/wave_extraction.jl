@@ -117,91 +117,6 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution;
     get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
 end
 
-
-"""
-This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
-    It takes in timestamps and returns the burst durations and the spikes per burst
-A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
-"""
-function max_interval_algorithim(timestamps::Vector{Tuple{T, T}}; 
-        ISIstart::Int64 = 500, ISIend::Int64 = 500, IBImin::Int64 = 1000, DURmin::Int64 = 100, SPBmin::Int64 = 4, 
-        verbose = false
-    ) where T <: Real
-    burst_timestamps = Tuple[]
-    DUR_list = Float64[]
-    SPB_list = Float64[]
-    IBI_list = Float64[]
-    if isempty(timestamps)
-        if verbose >= 1
-            println("No spikes detected")
-        end
-        return nothing
-    else
-        #Lets organize the spipkes into intervals spikes and not spikes
-        intervals = map(i -> timestamps[i][1] - timestamps[i-1][2], 2:length(timestamps))
-        bursting = false
-        burst_start = 0.0
-        burst_end = 0.0
-        IBI = 0.0
-        SPB = 0
-        idx = 1
-        for i = 1:length(intervals)
-            if bursting == false && intervals[i] <= ISIstart
-                bursting = true
-                burst_start = timestamps[i][1]
-            elseif bursting == true && intervals[i] >= ISIend
-                bursting = false
-                burst_end = timestamps[i][2]
-                IBI = intervals[i]
-                DUR = (burst_end - burst_start)
-                if IBI >= IBImin && DUR >= DURmin && SPB >= SPBmin
-                    if verbose
-                        println("Timestamp $idx: $burst_start -> $burst_end, DUR $idx: $DUR,  SPB $idx: $SPB, IBI $idx: $IBI,")
-                    end
-                    push!(burst_timestamps, (burst_start, burst_end))
-                    push!(DUR_list, DUR)
-                    push!(SPB_list, SPB)
-                    push!(IBI_list, IBI)
-                    SPB = 0
-                    idx+=1
-                end  
-            end
-            if bursting == true
-                SPB += 1
-            end
-        end
-        #This algorithim usually leaves one last burst off because it has no end point. We can add this
-        DUR = (timestamps[end][2] - burst_start)
-        if DUR >= DURmin && SPB >= SPBmin && bursting == true
-            if verbose
-                println("Timestamp  $idx: $burst_start -> $(timestamps[end][2]), DUR $idx: $DUR, SPB $idx: $SPB, IBI $idx: Unknown")
-            end
-            push!(burst_timestamps, (burst_start, timestamps[end][2]))
-            push!(DUR_list, DUR)
-            push!(SPB_list, SPB)
-        end
-        return burst_timestamps, SPB_list
-    end
-end
-
-function max_interval_algorithim(timestamp_arr::Vector{Vector{Tuple{T, T}}}; flatten = true, kwargs...) where T <: Real
-    if flatten
-        #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
-        bursts = Tuple{T, T}[]
-        spd = T[]
-        for idx in 1:length(timestamp_arr)
-            result = max_interval_algorithim(timestamp_arr[idx], kwargs...)
-            if !isnothing(result)
-                push!(bursts, result[1]...)
-                push!(spd, result[2]...)
-            end
-        end
-        return bursts, spd
-    else
-        println("Not implemented")
-    end
-end
-
 function extract_interval(timestamps::Matrix{T}; 
         max_duration = 10e5, max_interval = 10e5
     ) where T <: Real
@@ -231,17 +146,101 @@ function extract_interval(timestamp_arr::Vector{Matrix{T}};
         println("Not implemented")
     end
 end
+"""
+This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
+    It takes in timestamps and returns the burst durations and the spikes per burst
+A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
+"""
+function max_interval_algorithim(timestamps::Matrix{T}; 
+        ISIstart::Int64 = 500, ISIend::Int64 = 500, IBImin::Int64 = 1000, DURmin::Int64 = 100, SPBmin::Int64 = 4, 
+        verbose = false
+    ) where T <: Real
+    burst_timestamps = Tuple[]
+    SPB_list = Float64[]
+    if isempty(timestamps)
+        if verbose >= 1
+            println("No spikes detected")
+        end
+        return nothing
+    else
+        #Lets organize the spipkes into intervals spikes and not spikes
+        results = extract_interval(timestamps)
+        intervals = results[2]
+        bursting = false
+        burst_start_list = T[]
+        burst_end_list = T[]
+        burst_start = 0.0
+        burst_end = 0.0
+        SPB = 0
+        idx = 1
+        for i = 1:length(intervals)
+            if bursting == false && intervals[i] <= ISIstart #If the cell does not start as bursting and the interval is under ISI start
+                bursting = true #Begin the burst
+                burst_start = timestamps[i, 1] #Record the burst start
+            elseif bursting == true && intervals[i] >= ISIend #If the cell is bursting, and the interval to the next spike is greater than ISI thresh
+                bursting = false #The bursting can stop
+                burst_end = timestamps[i, 2] #The burst end can be recorded
 
-function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolution; 
+                if intervals[i] >= IBImin && (burst_end - burst_start) >= DURmin && SPB >= SPBmin #If the burst meets all the correct qualifications
+                    if verbose
+                        println("Timestamp $idx: $burst_start -> $burst_end, DUR $idx: $DUR,  SPB $idx: $SPB, IBI $idx: $intervals[i],")
+                    end
+                    push!(burst_start_list, burst_start)
+                    push!(burst_end_list, burst_end)
+                    #push!(burst_timestamps, (burst_start, burst_end)) #Record it
+                    push!(SPB_list, SPB)
+                    SPB = 0
+                    idx+=1
+                end  
+            end
+
+            if bursting == true
+                SPB += 1
+            end
+        end
+        if length(burst_start_list) > length(burst_end_list)
+            #This algorithim usually leaves one last burst off because it has no end point. We can add this
+            push!(burst_end_list, burst_start_list[end] + intervals[end])
+        end        
+        burst_timestamps = hcat(burst_start_list, burst_end_list)
+        if isempty(burst_start_list)
+            return nothing
+        end
+        return burst_timestamps, SPB_list
+    end
+end
+
+function max_interval_algorithim(timestamp_arr::Vector{Matrix{T}}; 
+        flatten = true, kwargs...
+    ) where T <: Real
+    if flatten
+        #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
+        bursts = Matrix{Float32}[]
+        spd = T[]
+        for idx in 1:length(timestamp_arr)
+            result = max_interval_algorithim(timestamp_arr[idx], kwargs...)
+            if !isnothing(result)
+                push!(bursts, result[1])
+                push!(spd, result[2]...)
+            end
+        end
+        return bursts, spd
+    else
+        println("Not implemented")
+    end
+end
+
+
+function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
         dt::Float64 = 100.0, Z::Int64 = 6,  
-        max_spike_duration::Float64 = 100.0, max_burst_duration::Float64 = 10e5
+        max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
     )
     thresholds = calculate_threshold(sol; Z = Z, dt = dt) #This takes really long
     spikes = get_timestamps(sol, thresholds)
     spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
     bursts, spb = max_interval_algorithim(spikes)
     burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
-    
+
     timestamps = Dict(
         "Spikes" => spikes,
         "Bursts" => bursts
@@ -255,36 +254,48 @@ function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolut
         "IBIs" => ibi,
         "SpikesPerBurst" => spb
     )
+
+    return timestamps, data
+end
+
+
+function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolution;
+        plot_histograms = true, kwargs...   
+    )
+    timestamps, data = timeseries_analysis(sol; kwargs...)
     bson("$(save_file)\\timestamps.bson", timestamps)
     bson("$(save_file)\\data.bson", data)
+
+    if plot_histograms
+        p1 = histogram(data["SpikeDurs"], yaxis = :log, xlabel = "Spike Duration (ms)")
+        p2 = plot(
+                #This is a weird bug which won't let histogram format the xaxis
+                histogram(data["ISIs"], yaxis = :log, xlabel = "Spike Interval (s)"), 
+                xformatter = x -> x/1000
+            )
+        p3 = plot(
+                histogram(data["BurstDurs"], yaxis = :log, xlabel = "Burst Duration (s)"),
+                xformatter = x -> x/1000
+            )
+        p4 = plot(
+                histogram(data["IBIs"], yaxis = :log, xlabel = "Interburst Interval (s)"), 
+                xformatter = x -> x/1000
+            )
+        p5 = histogram(data["Thresholds"], yaxis = :log, xlabel = "Voltage threshold")
+        p6 = histogram(data["SpikesPerBurst"], yaxis = :log, xlabel = "Spiked per Burst")
+        hist_plot = plot(
+            p1, p2, p3, p4, p5, p6, 
+            layout = grid(3,2), ylabel = "Counts", 
+            legend = false
+            )
+        savefig(hist_plot, "$(save_file)\\histogram_plot.png")
+    end
+
     BotNotify("{Wave} Finished running timeseries analysis")
     return timestamps, data
 end
 
-function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-    dt = 500.0)
-    thresholds = calculate_threshold(sol; dt = dt) #This takes really long
-    spikes = get_timestamps(sol, thresholds)
-    spike_durs, isi = extract_interval(spikes)
-    bursts, spb = max_interval_algorithim(spikes)
-    burst_durs, ibi = extract_interval(bursts)
-    
-    timestamps = Dict(
-        "Spikes" => spikes,
-        "Bursts" => bursts
-    )
 
-    data = Dict(
-        "Thresholds" => thresholds,
-        "SpikeDurs" => spike_durs, 
-        "ISIs" => isi, 
-        "BurstDurs" => burst_durs, 
-        "IBIs" => ibi,
-        "SpikesPerBurst" => spb
-    )
-
-    return timestamps, data
-end
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
 """
