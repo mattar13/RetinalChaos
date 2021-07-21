@@ -107,6 +107,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
             reset_model::Bool = false, gpu::Bool = true, version = :gACh,
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
             animate_solution = true, animate_dt = 60.0, 
+            model_file_type = :jld2,
             notify = false #set this to true in order to get phone notifications
         ) where T <: Real
     
@@ -119,29 +120,26 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         mkdir(file_root)
     end
 
-    #We can step through each section checking to see what level we are at
-    params_file = "$(file_root)\\params.json"
-    iconds_file = "$(file_root)\\iconds.json"
-    conds_file = "$(file_root)\\conds.bson"
-    sol_file = "$(file_root)\\sol.bson"
-    animation_file =  "$(file_root)\\animation.gif"
-
     #We first check to see if there is a param loaded
-    if isfile(params_file)
-        p_dict = read_JSON(params_file, is_type = Dict{Symbol, T}) 
+    if isfile("$(file_root)\\params.json")
+        p_dict = read_JSON("$(file_root)\\params.json", is_type = Dict{Symbol, T}) 
         p = p_dict |> extract_dict
     else
         #In this scenario we need to use a new dictionary
         println("[$(now())]: Writing a new dictionary")
         p = p_dict |> extract_dict
 
-        write_JSON(p_dict, params_file) #write the parameters to save for later
-        write_JSON(u_dict, iconds_file) #write the 
+        write_JSON(p_dict, "$(file_root)\\params.json") #write the parameters to save for later
+        write_JSON(u_dict, "$(file_root)\\iconds.json") #write the 
     end
     
-    if isfile(conds_file)
+    if isfile("$(file_root)\\conds.bson") || isfile("$(file_root)\\conds.jld2")
         #Load the solution from the JSON file
-        BSON.@load conds_file warmup #This is the BSON file way
+        if model_file_type == :bson
+            BSON.@load "$(file_root)\\conds.bson" warmup #This is the BSON file way
+        elseif model_file_type == :jld2
+            JLD2.@load "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
+        end
         u0 = warmup |> cu
         #Construct the model and ODE problem
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
@@ -169,7 +167,12 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         
         #Save the warmed up solution
         warmup = sol[end]|>Array #Keep this one as the original 
-        BSON.@save conds_file warmup #as a JSON
+        if model_file_type == :bson
+            BSON.@save "$(file_root)\\conds.bson" warmup #This is the BSON file way
+        elseif model_file_type == :jld2
+            JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
+        end
+
         warmup = sol[end] #Convert this one to CPU
         if gpu
             sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
@@ -180,9 +183,13 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     end
     
     #Now we want to test whether or not we have run the simulation
-    if isfile(sol_file)
-        #We need to have previously activated the problem
-        BSON.@load sol_file sol #This is the JSON method
+    if isfile("$(file_root)\\sol.bson") || isfile("$(file_root)\\sol.jld2")
+        #Load the solution from the JSON file
+        if model_file_type == :bson
+            BSON.@load "$(file_root)\\sol.bson" sol #This is the BSON file way
+        elseif model_file_type == :jld2
+            JLD2.@load "$(file_root)\\sol.jld2" sol #This is only here to try to save the older files
+        end
     else
         print("[$(now())]: Running the model... ")
         NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p)
@@ -195,7 +202,11 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
 
         print("[$(now())]: Saving the simulation...")
         sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
-        BSON.@save sol_file sol #Save as a BSON
+        if model_file_type == :bson
+            BSON.@save "$(file_root)\\sol.bson" sol #This is the BSON file way
+        elseif model_file_type == :jld2
+            JLD2.@save "$(file_root)\\sol.jld2" sol #This is only here to try to save the older files
+        end
         println("Completed")
 
     end
@@ -203,7 +214,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         BotNotify("{Waves} Model solution loaded")
     end
 
-    if !isfile(animation_file) && animate_solution
+    if !isfile("$(file_root)\\animation.gif") && animate_solution
         println("[$(now())]: Animating simulation...")
         anim = @animate for t = 1.0:animate_dt:sol.t[end]
             frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
@@ -212,7 +223,7 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
                     c = :curl, clims = (-70.0, 0.0),
             )
         end
-        gif(anim, animation_file, fps = 1000.0/animate_dt)
+        gif(anim, "$(file_root)\\animation.gif", fps = 1000.0/animate_dt)
     end
 
     #We want to return the solution
