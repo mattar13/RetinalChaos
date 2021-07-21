@@ -133,17 +133,26 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         write_JSON(u_dict, "$(file_root)\\iconds.json") #write the 
     end
     
-    if isfile("$(file_root)\\conds.bson") || isfile("$(file_root)\\conds.jld2")
-        #Load the solution from the JSON file
-        if model_file_type == :bson
-            BSON.@load "$(file_root)\\conds.bson" warmup #This is the BSON file way
-        elseif model_file_type == :jld2
-            JLD2.@load "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
-        end
+    if isfile("$(file_root)\\conds.bson") 
+        BSON.@load "$(file_root)\\conds.bson" warmup #This is the BSON file way
         u0 = warmup |> cu
         #Construct the model and ODE problem
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
         NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
+        
+        if model_file_type == :jld2 && !isfile("$(file_root)\\conds.jld2") #In this case we want to make a backup of the file
+            JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
+        end
+    elseif isfile("$(file_root)\\conds.jld2")
+        JLD2.@load "$(file_root)\\conds.jld2" warmup #Load the solution from the JSON file
+        u0 = warmup |> cu
+        #Construct the model and ODE problem
+        net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
+        NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
+
+        if model_file_type == :bson && !isfile("$(file_root)\\conds.bson") #In this case we want to make a backup of the file
+            BSON.@save "$(file_root)\\conds.bson" warmup #as a BSON file
+        end 
     else
         println("[$(now())]: Model loaded from new")
         #Load the initial conditions
@@ -183,12 +192,16 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     end
     
     #Now we want to test whether or not we have run the simulation
-    if isfile("$(file_root)\\sol.bson") || isfile("$(file_root)\\sol.jld2")
+    if isfile("$(file_root)\\sol.bson") #Always try to load BSON first
+        BSON.@load "$(file_root)\\sol.bson" sol #This is the BSON file way
+        if model_file_type == :jld2 && !isfile("$(file_root)\\sol.jld2") #This means we have to backup the file
+            JLD2.@save "$(file_root)\\sol.jld2" sol #This is the BSON file way   
+        end
+    elseif isfile("$(file_root)\\sol.jld2")
         #Load the solution from the JSON file
-        if model_file_type == :bson
-            BSON.@load "$(file_root)\\sol.bson" sol #This is the BSON file way
-        elseif model_file_type == :jld2
-            JLD2.@load "$(file_root)\\sol.jld2" sol #This is only here to try to save the older files
+        JLD2.@load "$(file_root)\\sol.jld2" sol #This is only here to try to save the older files
+        if model_file_type == :bson && !isfile("$(file_root)\\sol.bson")
+            BSON.@save "$(file_root)\\sol.bson" sol #This is the BSON file way            
         end
     else
         print("[$(now())]: Running the model... ")
