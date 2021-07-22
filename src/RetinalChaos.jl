@@ -1,5 +1,6 @@
 module RetinalChaos
 
+using Plots: text_box_width
 const verbose = false #Adjust the to print out statments relevant to the module import
 #Import small functions
 import Base.length
@@ -55,7 +56,7 @@ end
 using Distributions
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
-#using Statistics, StatsBase
+using Statistics, StatsBase
     
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
