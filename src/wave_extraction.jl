@@ -232,7 +232,7 @@ end
 
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-        dt::Float64 = 100.0, Z::Int64 = 6,  
+        dt::Float64 = 100.0, Z::Int64 = 4,  
         max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
     )
     thresholds = calculate_threshold(sol; Z = Z, dt = dt) #This takes really long
@@ -266,23 +266,31 @@ function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolut
     bson("$(save_file)\\timestamps.bson", timestamps)
     bson("$(save_file)\\data.bson", data)
 
-    if plot_histograms
-        p1 = histogram(data["SpikeDurs"], yaxis = :log, xlabel = "Spike Duration (ms)")
-        p2 = plot(
-                #This is a weird bug which won't let histogram format the xaxis
-                histogram(data["ISIs"], yaxis = :log, xlabel = "Spike Interval (s)"), 
-                xformatter = x -> x/1000
-            )
-        p3 = plot(
-                histogram(data["BurstDurs"], yaxis = :log, xlabel = "Burst Duration (s)"),
-                xformatter = x -> x/1000
-            )
-        p4 = plot(
-                histogram(data["IBIs"], yaxis = :log, xlabel = "Interburst Interval (s)"), 
-                xformatter = x -> x/1000
-            )
+    if plot_histograms && !isempty(data["SpikeDurs"])
+        sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 1000))
+        sdur_weights = sdur_hfit.weights/maximum(sdur_hfit.weights)
+        sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
+        p1 = plot(sdur_edges, sdur_weights, xlabel = "Spike Duration (ms)")
+
+        isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 100.0, 1000))
+        isi_weights = isi_hfit.weights/maximum(isi_hfit.weights)
+        isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
+        p2 = plot(isi_edges, isi_weights,  xlabel = "Spike Interval (s)", xformatter = x -> x/1000)
+
+        bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 1000))
+        bdur_weights = bdur_hfit.weights/maximum(bdur_hfit.weights)
+        bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
+        p3 = plot(bdur_edges, bdur_weights, xlabel = "Burst Duration (s)",xformatter = x -> x/1000)
+
+        ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 60e3, 1000))
+        ibi_weights = ibi_hfit.weights/maximum(ibi_hfit.weights)
+        ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
+        p4 = plot(ibi_edges, ibi_weights, xlabel = "Interburst Interval (s)", xformatter = x -> x/1000)
+        
         p5 = histogram(data["Thresholds"], yaxis = :log, xlabel = "Voltage threshold")
         p6 = histogram(data["SpikesPerBurst"], yaxis = :log, xlabel = "Spiked per Burst")
+        
+        
         hist_plot = plot(
             p1, p2, p3, p4, p5, p6, 
             layout = grid(3,2), ylabel = "Counts", 
