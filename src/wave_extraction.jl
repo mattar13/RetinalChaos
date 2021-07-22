@@ -319,14 +319,14 @@ function extract_waves(sol::DiffEqBase.AbstractODESolution, thresholds::Matrix{T
     markers = reshape(markers, (nx*ny, size(markers,3)))
     n_markers = maximum(markers)
     good_markers = zeros(size(markers))
-    for i = 1:10 #This simply prunes all unnecessary coordinates
+    for i = 1:n_markers #This simply prunes all unnecessary coordinates
         idxs = (markers .== i)
         if sum(idxs) >= wave_min #We can consider this a wave
             println(i)
             good_markers .+= idxs
         end
     end
-    return good_markers.==1.0
+    return Matrix{Bool}(good_markers.==1.0)
 end
 
 
@@ -399,8 +399,6 @@ function extract_points(points::Array{CartesianIndex{2},1})
     ys = map(x -> x[2], points)
     return xs, ys
 end
-
-
 
 """
 This function seperates bursts from waves It completes tasks in this order
