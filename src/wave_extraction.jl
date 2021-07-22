@@ -55,7 +55,13 @@ function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <
     return hcat(tseries[diff_starts], tseries[diff_ends])
 end
 
-get_timestamps(spike_array::Vector{Bool}; dt = 0.1) = get_timestamps(spike_array, collect((1*dt):dt:(length(spike_array)*dt)))
+function get_timestamps(spike_array::Matrix{Float32}, timestamps::Vector{T}) where T <: Real
+    tstamps = Vector{Matrix{Float32}}(undef, size(spike_array,1))
+    for i in 1:size(spike_array, 1)
+        tstamps[i] = get_timestamps(spike_array[i, :], timestamps)
+    end
+    return tstamps
+end
 
 # For if no range has been provided but a threshold has
 function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
@@ -64,11 +70,7 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
     if dt == -Inf #Adaptive timestamp finding
         data_select = sol |> Array |> Array{T}
         spike_array = (data_select .> threshold) |> Array
-        tstamps = Vector{Matrix{Float32}}(undef, size(spike_array,1))
-        for i in 1:size(spike_array, 1)
-            tstamps[i] = get_timestamps(spike_array[i, :], sol.t |> Array)
-            #push!(tstamps, arr)
-        end
+        tstamps = get_timestamps(spike_array, sol.t |> Array)
         return tstamps
     else   
         get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
@@ -306,13 +308,25 @@ end
 """
 Extract the waves
 """
-function extract_waves(sol::DiffEqBase.AbstractODESolution, thresholds::Matrix{T}) where T<:Real
+function extract_waves(sol::DiffEqBase.AbstractODESolution, thresholds::Matrix{T};
+        wave_min = 200 #This is the minimum number of points in the wave    
+    ) where T<:Real
     nx = ny = round(Int64, sqrt(size(sol,1))) #This is the x and y dimension of the graph
     spike_array = (sol |> Array).>thresholds
     spike_array = reshape(spike_array, (nx, ny, size(sol,2)))
     markers = label_components(spike_array)
-    println(size(markers))
-    return markers
+    #Maybe reshaping markers would help
+    markers = reshape(markers, (nx*ny, size(markers,3)))
+    n_markers = maximum(markers)
+    good_markers = zeros(size(markers))
+    for i = 1:10 #This simply prunes all unnecessary coordinates
+        idxs = (markers .== i)
+        if sum(idxs) >= wave_min #We can consider this a wave
+            println(i)
+            good_markers .+= idxs
+        end
+    end
+    return good_markers
 end
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
