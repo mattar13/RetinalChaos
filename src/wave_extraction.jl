@@ -55,7 +55,7 @@ function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <
     return hcat(tseries[diff_starts], tseries[diff_ends])
 end
 
-function get_timestamps(spike_array::Matrix{Float32}, timestamps::Vector{T}) where T <: Real
+function get_timestamps(spike_array::Matrix{Bool}, timestamps::Vector{T}) where T <: Real
     tstamps = Vector{Matrix{Float32}}(undef, size(spike_array,1))
     for i in 1:size(spike_array, 1)
         tstamps[i] = get_timestamps(spike_array[i, :], timestamps)
@@ -326,8 +326,11 @@ function extract_waves(sol::DiffEqBase.AbstractODESolution, thresholds::Matrix{T
             good_markers .+= idxs
         end
     end
-    return good_markers
+    return good_markers.==1.0
 end
+
+
+
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
 """
