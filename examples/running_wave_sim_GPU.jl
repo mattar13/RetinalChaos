@@ -1,12 +1,14 @@
 using Revise
 using RetinalChaos
 using Dates, Plots, JLD2
-using CUDA, DifferentialEquations, ResettableStacks, RandomNumbers, LinearAlgebra
+using StatsBase, StatsPlots
+#using CUDA, DifferentialEquations, ResettableStacks, RandomNumbers, LinearAlgebra
 using TimerOutputs #This is for benchmarking
 #Configure the logger
 using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
+
 
 #Load the telegram client and env
 dotenv("D:\\TelegramAccessEnv\\.env")
@@ -16,28 +18,22 @@ RetinalChaos.CUDA.allowscalar(false)
 # Load the needed files to run the model
 p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
 u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
-
-for mu in LinRange(0.05, 1.0, 25)
+#%%
+for mu in LinRange(0.0, 0.50, 4)
     try
         #BotNotify("{Waves} Running simulation for mu = $mu")
-        save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
+        save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_$(round(Int64, mu*100))\\"
         p_dict[:μ] = mu
-        p_dict[:t_warm] = 120e3 #Reduce the time it takes to warmup the model
         NetSol = load_model(save_path, p_dict, u_dict)
         timestamps, data = timeseries_analysis(save_path, NetSol)
         #Maybe we are running out of GPU memory and need to reset here
         NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-        BotNotify("{Waves} Running simulation for mu = $mu completed")
+        println("{Waves} Running simulation for mu = $mu completed")
+        #BotNotify("{Waves} Running simulation for mu = $mu completed")
     catch error
         BotNotify("{Waves} has encountered an error: $error")
     end
 end
-#%% Lets figure out what went wrong
-load_bug = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_21\\"
-p_dict[:t_warm] = 120e3 #Lets try to reduce the warmup time since we may need to truncate this
-bug = load_model(load_bug, p_dict, u_dict)
-
-
 
 #%% This is for a replication experiment
 #for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
