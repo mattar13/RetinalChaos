@@ -19,7 +19,8 @@ RetinalChaos.CUDA.allowscalar(false)
 p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
 u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
 #%%
-for mu in LinRange(0.0, 0.50, 4)
+#for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
+for mu in [0.0, 0.125, 0.25, 0.50]
     try
         #BotNotify("{Waves} Running simulation for mu = $mu")
         save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_$(round(Int64, mu*100))\\"
@@ -34,6 +35,12 @@ for mu in LinRange(0.0, 0.50, 4)
         BotNotify("{Waves} has encountered an error: $error")
     end
 end
+
+#Run a simulation on it's own
+save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_52"
+p_dict[:μ] = 0.525 #Change the parameter
+NetSol = load_model(save_path, p_dict, u_dict, reset_model = true)
+timestamps, data = timeseries_analysis(save_path, NetSol)
 
 #%% This is for a replication experiment
 #for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
