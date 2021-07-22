@@ -135,7 +135,11 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     
     if isfile("$(file_root)\\conds.bson") 
         BSON.@load "$(file_root)\\conds.bson" warmup #This is the BSON file way
-        u0 = warmup |> cu
+        if gpu
+            u0 = warmup |> cu
+        else
+            u0 = warmup
+        end
         #Construct the model and ODE problem
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
         NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
@@ -145,7 +149,11 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         end
     elseif isfile("$(file_root)\\conds.jld2")
         JLD2.@load "$(file_root)\\conds.jld2" warmup #Load the solution from the JSON file
-        u0 = warmup |> cu
+        if gpu
+            u0 = warmup |> cu
+        else
+            u0 = warmup
+        end
         #Construct the model and ODE problem
         net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
         NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
