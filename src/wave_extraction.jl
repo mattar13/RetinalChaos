@@ -303,7 +303,17 @@ function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolut
     return timestamps, data
 end
 
-
+"""
+Extract the waves
+"""
+function extract_waves(sol::DiffEqBase.AbstractODESolution, thresholds::Matrix{T}) where T<:Real
+    nx = ny = round(Int64, sqrt(size(sol,1))) #This is the x and y dimension of the graph
+    spike_array = (sol |> Array).>thresholds
+    spike_array = reshape(spike_array, (nx, ny, size(sol,2)))
+    markers = label_components(spike_array)
+    println(size(markers))
+    return markers
+end
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
 """

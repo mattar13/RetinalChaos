@@ -57,7 +57,7 @@ using Distributions
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
 using Statistics, StatsBase
-    
+using ImageSegmentation
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
@@ -85,6 +85,7 @@ export codim_map
 include("wave_extraction.jl")
 export calculate_threshold
 export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
+export extract_waves
 #println("Fininshed Importing")
 
 
