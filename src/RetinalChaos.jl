@@ -57,7 +57,7 @@ using Distributions
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
 using Statistics, StatsBase
-using ImageSegmentation
+using Images, ImageSegmentation
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
 
