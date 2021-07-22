@@ -9,6 +9,7 @@ using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 
+
 #Load the telegram client and env
 dotenv("D:\\TelegramAccessEnv\\.env")
 #Activate the GPU
