@@ -17,8 +17,9 @@ RetinalChaos.CUDA.allowscalar(false)
 
 # Load the needed files to run the model
 p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
-p_dict[:t_run] = 120e3 #Extend the simulation time so we can find longer bursts
+p_dict[:t_run] = 100e3 #Extend the simulation time so we can find longer bursts
 u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
+
 #%%
 #for mu in [0.0, 0.125, 0.25, 0.50]
 for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
@@ -27,7 +28,7 @@ for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extractio
         save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
         p_dict[:μ] = mu
         NetSol = load_model(save_path, p_dict, u_dict)
-        timestamps, data = timeseries_analysis(save_path, NetSol)
+        timestamps, data = timeseries_analysis(save_path, NetSol, reltol = 1e-2)
         #Maybe we are running out of GPU memory and need to reset here
         NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
         println("{Waves} Running simulation for mu = $mu")
@@ -38,11 +39,11 @@ for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extractio
 end
 
 #%% Run a simulation on it's own
-save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_60"
-p_dict[:t_run] = 60e3 #Extend the simulation time so we can find longer bursts
-p_dict[:μ] = 0.6041667 #Change the parameter
-NetSol = load_model(save_path, p_dict, u_dict, abstol = 2e-2, reltol = 2e-2)
-timestamps, data = timeseries_analysis(save_path, NetSol)
+#save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_60"
+#p_dict[:t_run] = 60e3 #Extend the simulation time so we can find longer bursts
+#p_dict[:μ] = 0.6041667 #Change the parameter
+#NetSol = load_model(save_path, p_dict, u_dict, abstol = 2e-2, reltol = 1e-2)
+#timestamps, data = timeseries_analysis(save_path, NetSol)
 
 #%% This is for a replication experiment
 #for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
