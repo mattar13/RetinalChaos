@@ -267,82 +267,125 @@ end
 # ╔═╡ 6c2abaec-8214-4c20-94ed-6cda1f216ee0
 begin #Heatmap range
 	nx, ny = (125, 125)
+		plt_trace = plot(layout = grid(4,1), 
+		#right_margin = 10.0mm, 
+		#left_margin = 5.0mm,
+		grid = false, xformatter = x -> x/1000
+	)
 	plt_grid = plot(layout = grid(4,4), 
 		yticks = false, xticks = false, yaxis = false, xaxis = false,
 		ratio = :equal, cbar = false,
 		xlims = (0, nx), ylims = (0, ny), margin = 0.0mm, 
-		size = (500,500)
+		#size = (500,500)
 	)
-	plt_trace = plot(layout = grid(4,1), grid = false, xformatter = x -> x/1000)
+
 	#Plot the 0% mu
 	
 	plot!(plt_trace[1], sol_mu0, vars = collect(1:7), label = false, 
 		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "Vt (mV)", ylims = (-80.0, 0.0), 
-		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
+		ylabel = "μ = 0%\nVt (mV)", ylims = (-80.0, 0.0), 
+		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y), 
+		
 	)
 	for (idx, frame) in enumerate(LinRange(40e3, 50e3, 4))
 		grid_sim = reshape(sol_mu0(frame), nx, ny)
 		plot!(plt_grid[1,idx], grid_sim, 
-			c = :curl, st = :heatmap, clims = (-70.0, 0.0)
+			c = :curl, st = :heatmap, clims = (-70.0, 0.0), 
+			#ylabel = idx == 1 ? "μ = 0%" : ""
 		)
-		annotate!(plt_grid[1,idx], round(Int64,125/2), 20, "t", :white)
+		annotate!(plt_grid[1,idx], round(Int64,125/2), 20, 
+			Plots.text(
+				"t = $(round(Int64, frame/1000))s", :white, 12
+			)
+		)
 	end
 	
 	plot!(plt_trace[2], sol_mu12, vars = collect(1:7), label = false, 
 		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "Vt (mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 12%\nVt (mV)", ylims = (-80.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(10e3, 20e3, 4))
 		grid_sim = reshape(sol_mu12(frame), nx, ny)
 		plot!(plt_grid[2,idx], grid_sim, 
-			c = :curl, st = :heatmap, clims = (-70.0, 0.0)
+			c = :curl, st = :heatmap, clims = (-70.0, 0.0), 
+			#ylabel = idx == 1 ? "μ = 12.5%" : ""
 		)
-		annotate!(plt_grid[2,idx], round(Int64,125/2), 20, "t", :white)
+		annotate!(plt_grid[2,idx], round(Int64,125/2), 20, 
+			Plots.text(
+				"t = $(round(Int64, frame/1000))s", :white, 12
+			)
+		)
 	end
 	
 	plot!(plt_trace[3], sol_mu25, vars = collect(1:7), label = false, 
 		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "Vt(mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 25%\nVt(mV)", ylims = (-80.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(4e4, 5e4, 4))
 		grid_sim = reshape(sol_mu25(frame), nx, ny)
 		plot!(plt_grid[3,idx], grid_sim, 
-			c = :curl, st = :heatmap, clims = (-70.0, 0.0)
+			c = :curl, st = :heatmap, clims = (-70.0, 0.0), 
+			#ylabel = idx == 1 ? "μ = 25%" : ""
 		)
-		annotate!(plt_grid[3,idx], round(Int64,125/2), 20, "t", :white)
+		annotate!(plt_grid[3,idx], round(Int64,125/2), 20, 
+			Plots.text(
+				"t = $(round(Int64, frame/1000))s", :white, 12
+			)
+		)
 	end
 	
 	plot!(plt_trace[4], sol_mu50, vars = collect(1:7), label = false, 
 		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
 		xlabel = "Time (s)", 
-		ylabel = "Vt (mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 25%\nVt (mV)", ylims = (-80.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	
-	for (idx, frame) in enumerate(LinRange(5e3, 15e3, 4))
+	for (idx, frame) in enumerate(LinRange(30e3, 40e3, 4))
 		grid_sim = reshape(sol_mu50(frame), nx, ny)
 		plot!(plt_grid[4,idx], grid_sim, 
-			c = :curl, st = :heatmap, clims = (-70.0, 0.0)
+			c = :curl, st = :heatmap, clims = (-70.0, 0.0), 
+			#ylabel = idx == 1 ? "μ = 50%" : ""
 		)
-		annotate!(plt_grid[4,idx], round(Int64,125/2), 20, "t", :white)
+		annotate!(plt_grid[4,idx], round(Int64,125/2), 20, 
+			Plots.text(
+				"t = $(round(Int64, frame/1000))s", :white, 12
+			)
+		)
 	end
 	
 	fig5_BC = plot(plt_trace, plt_grid, size = (1000, 500))
 end
 
 # ╔═╡ 19cc489d-8df4-4d32-93f0-a0c842fc1f64
-fig5 = plot(
-	plt_burst_ridge, fig5_BC, 
+begin
+
+	fig5_labels = plot(
+			layout = grid(2,1), 
+			xaxis = false, yaxis = false, xticks = false, yticks = false
+		)
+	#Place 3 annotations
+	annotate!(fig5_labels[1], [0.5], [0.99], "A", font("Sans",24))
+	annotate!(fig5_labels[2], [0.5], [0.99], "B", font("Sans",24))
+
+
+	fig5_boxes = plot(
+		plt_burst_ridge, fig5_BC, 
+
+		bottom_margin = 0.0mm,
+		layout = grid(2,1)
+		) 
+	fig5 = plot(fig5_labels, fig5_boxes, 
+		size = (1000, 1000), dpi = 500,
+		layout = grid(1,2, widths = (0.05, 0.95))
+	)
 	
-	bottom_margin = 0.0mm,
-	layout = grid(2,1), size = (1000, 1000), dpi = 500
-	) 
+end
 
 # ╔═╡ e3d313db-b96f-4213-b695-16ddec786806
 begin
@@ -363,6 +406,6 @@ end
 # ╟─9d2d5214-9d52-4048-a99f-71fc5403cdff
 # ╠═29487316-45cd-4630-8472-72c1e8cae38a
 # ╟─c7a91138-02db-42a6-a42d-138fef07836d
-# ╟─6c2abaec-8214-4c20-94ed-6cda1f216ee0
+# ╠═6c2abaec-8214-4c20-94ed-6cda1f216ee0
 # ╠═19cc489d-8df4-4d32-93f0-a0c842fc1f64
 # ╠═e3d313db-b96f-4213-b695-16ddec786806
