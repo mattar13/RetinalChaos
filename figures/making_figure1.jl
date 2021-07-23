@@ -52,6 +52,9 @@ end
 #Solve the problem
 @time sol = solve(prob, progress = true); 
 
+# ╔═╡ e947f63f-4e94-4bb5-8a9a-5da29fbd2be1
+plot(sol)
+
 # ╔═╡ 578be207-80cb-4738-aa39-3db181b7c058
 begin 
 	#Run analysis 
@@ -62,11 +65,11 @@ begin
 end
 
 # ╔═╡ e275d737-a497-493f-867b-e93721f8da65
-timestamps["Bursts"][1]
+timestamps["Bursts"]
 
 # ╔═╡ 4e11ec08-cbb3-462d-8c5f-6eb37c5c79f9
 begin 	
-	burst_lims = timestamps["Bursts"][2]	#lets set the limits for area of interest
+	burst_lims = timestamps["Bursts"][1][2,:]#lets set the limits for area of interest
 	t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
 	#Plot A tick intervals and limits
 	A_dx = 20 #the tick interval is 20ms
@@ -80,8 +83,8 @@ begin
 	B_trng = B_xlims[1]:1.0:B_xlims[2]
 	#Plot C tick intervals and limits
 	C_dx = 10e3
-	C_xlims = (timestamps["Bursts"][2][1], timestamps["Bursts"][4][1])
-	C_xticks = collect(C_xlims[1]:C_dx:C_xlims[2]) 
+	C_xlims = (timestamps["Bursts"][1][2,1], timestamps["Bursts"][1][3,2])
+	C_xticks = collect((C_xlims[1]|>Float64):C_dx:(C_xlims[2]|>Float64))
 	C_trng = C_xlims[1]:1.0:C_xlims[2]
 end
 
@@ -119,7 +122,7 @@ begin
 	fig1_A = plot(fig1_Aa, fig1_Ab, 
 		layout = grid(1,2, widths = (0.75, 0.25)), margin = 0mm
 	)
-	title!(fig1_A[1], "A", titlepos = :left)
+	#title!(fig1_A[1], "A", titlepos = :left)
 end
 
 # ╔═╡ 4e2a0bb6-4999-4519-931d-52c415205bac
@@ -147,7 +150,7 @@ begin
 		lw = 3.0, c = :green, label = "", linestyle = :dash, grid = false
 	)
 	fig1_B = plot(fig1_Ba, fig1_Bb, layout = grid(1,2, widths = (0.75, 0.25)))
-	title!(fig1_B[1], "B", titlepos = :left)
+	#title!(fig1_B[1], "B", titlepos = :left)
 end
 
 # ╔═╡ b516f41c-4e30-47d2-aab7-acbfb561a7d4
@@ -199,14 +202,30 @@ begin
 		plot(fig1_Cb, fig1_Cc, fig1_Cd, layout = grid(3,1)), 
 		layout = grid(1,2, widths = (0.75, 0.25))
 	)
-	title!(fig1_C[1], "C", titlepos = :left)
+	#title!(fig1_C[1], "C", titlepos = :left)
 end
 
 # ╔═╡ 41af4f36-94a4-4d18-be6a-ca402e98801f
-fig1 = plot(fig1_A, fig1_B, fig1_C, 
-    layout = grid(3,1, heights = [0.2, 0.3, 0.5]), 
-    size = (1000, 1000), grid = false
-    )
+begin
+	fig1_labels = plot(
+		layout = grid(3,1, heights = (0.2, 0.3, 0.5)), 
+		xaxis = false, yaxis = false, xticks = false, yticks = false
+	)
+	annotate!(fig1_labels[1], [0.5], [0.99], "A", font("Sans",24))
+	annotate!(fig1_labels[2], [0.5], [0.99], "B", font("Sans",24))
+	annotate!(fig1_labels[3], [0.5], [0.99], "C", font("Sans",24))
+	
+	
+	
+	fig1_boxes = plot(fig1_A, fig1_B, fig1_C, 
+		layout = grid(3,1, heights = [0.2, 0.3, 0.5]), 
+		 grid = false
+		)
+	fig1 = plot(
+		fig1_labels, fig1_boxes, 
+		layout = grid(1,2, widths = (0.05, 0.95)), size = (1000, 800),
+	)
+end
 
 # ╔═╡ 327ff679-53b5-4b48-a579-327ea49312e1
 savefig(fig1, "E:\\Projects\\2021_Modelling_Paper\\Figures\\Fig1_Model_Dynamics.png")
@@ -218,11 +237,12 @@ savefig(fig1, "E:\\Projects\\2021_Modelling_Paper\\Figures\\Fig1_Model_Dynamics.
 # ╠═e908115c-8389-49a1-8d0a-530d292f70c0
 # ╟─1cb6ef5d-ddb0-4c90-9bc0-0c3924399fbe
 # ╠═b215888a-6acf-4b9e-aa7e-4dec87b8738b
+# ╠═e947f63f-4e94-4bb5-8a9a-5da29fbd2be1
 # ╠═578be207-80cb-4738-aa39-3db181b7c058
 # ╠═e275d737-a497-493f-867b-e93721f8da65
 # ╠═4e11ec08-cbb3-462d-8c5f-6eb37c5c79f9
 # ╠═abb10995-b168-4c2a-83a8-5cc386bca927
-# ╠═4e2a0bb6-4999-4519-931d-52c415205bac
-# ╠═b516f41c-4e30-47d2-aab7-acbfb561a7d4
+# ╟─4e2a0bb6-4999-4519-931d-52c415205bac
+# ╟─b516f41c-4e30-47d2-aab7-acbfb561a7d4
 # ╠═41af4f36-94a4-4d18-be6a-ca402e98801f
 # ╠═327ff679-53b5-4b48-a579-327ea49312e1
