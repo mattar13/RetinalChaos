@@ -256,7 +256,10 @@ begin #Load all the paths
 	#Mu = 12%
 	load_path12 = "E:\\Data\\Modelling\\mu_12\\"
 	sol_mu12 = load_model(load_path12, p_dict, u_dict, gpu = false)
-	
+	#Mu = 25%
+	load_path25 = "E:\\Data\\Modelling\\mu_25\\"
+	sol_mu25 = load_model(load_path25, p_dict, u_dict, gpu = false)
+	#Mu = 50%
 	load_path50 = "E:\\Data\\Modelling\\mu_50\\"
 	sol_mu50 = load_model(load_path50, p_dict, u_dict, gpu = false)
 end	
@@ -301,14 +304,14 @@ begin #Heatmap range
 		annotate!(plt_grid[2,idx], round(Int64,125/2), 20, "t", :white)
 	end
 	
-	plot!(plt_trace[3], sol_mu12, vars = collect(1:7), label = false, 
+	plot!(plt_trace[3], sol_mu25, vars = collect(1:7), label = false, 
 		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
 		xlabel = "", xticks = false, 
 		ylabel = "Vt(mV)", ylims = (-80.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(4e4, 5e4, 4))
-		grid_sim = rand(125,125)
+		grid_sim = reshape(sol_mu25(frame), nx, ny)
 		plot!(plt_grid[3,idx], grid_sim, 
 			c = :curl, st = :heatmap, clims = (-70.0, 0.0)
 		)
@@ -338,11 +341,14 @@ fig5 = plot(
 	plt_burst_ridge, fig5_BC, 
 	
 	bottom_margin = 0.0mm,
-	layout = grid(2,1), size = (1000, 1000)
+	layout = grid(2,1), size = (1000, 1000), dpi = 500
 	) 
 
 # ╔═╡ e3d313db-b96f-4213-b695-16ddec786806
-
+begin
+	save_fig = "E:\\Projects\\2021_Modelling_Paper\\Figures\\"
+	savefig(fig5, "$(save_fig)\\Fig5_Bursts_and_nullification.png")
+end
 
 # ╔═╡ Cell order:
 # ╠═2756958e-e5b1-11eb-3da6-6f800a6d618c

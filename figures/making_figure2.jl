@@ -111,29 +111,31 @@ end
 
 # ╔═╡ 74f7a4e8-cfd4-4b37-b835-cf42d21301d4
 begin
-	burst_lims = timestamps["Bursts"][2]
-	A_dx = 500 #the tick interval is 20ms
-	A_xlims = (burst_lims[1]-2000, burst_lims[2]+3000)
+	burst_lims = timestamps["Bursts"][1][2,:]
+	A_dx = 1000 #the tick interval is 20ms
+	A_xlims = (burst_lims[1]-2000, burst_lims[2]+4000)
 	A_xticks = A_xlims[1]:A_dx:A_xlims[2] #Do I actually need to collect here
 	A_trng = A_xlims[1]:dt:A_xlims[2]
 	
 	#Pick 3 evenly spaced sections to plot
-	frame_stops = LinRange(burst_lims[1], burst_lims[2]+500, 3)
+	frame_stops = LinRange(burst_lims[1], burst_lims[2]+1000, 6)
 	ach_stops = sol(frame_stops, idxs = 6)
 end
 
 # ╔═╡ 88b02dbb-2108-43f8-911c-949538105ac1
 begin
-	fig2_Aa1 = plot(A_trng, sol(A_trng, idxs = 1),
+	fig2_Aa1 = plot(A_trng, sol(A_trng, idxs = 1), label = "",
 		xlabel = "", ylabel = "Vₜ (mV)", 
 		lw = 3.0, c = v_color, grid = false,
-		xlims = A_xlims, xticks = false
+		xlims = A_xlims, xticks = false, 
+		yticks = LinRange(-70.0, -20.0, 3)
 	)
-	fig2_Aa2 = plot(A_trng, sol(A_trng, idxs = 6),
+	fig2_Aa2 = plot(A_trng, sol(A_trng, idxs = 6), label = "",
 		xlabel = "Time (s)", ylabel = "Eₜ (μM)", 
 		lw = 3.0, c = e_color, grid = false,
 		xlims = A_xlims, xticks = A_xticks, 
-		x_formatter = x -> (x-A_xlims[1])/1000
+		x_formatter = x -> (x-A_xlims[1])/1000, 
+		ylims = (0.0, 2.0), yticks = LinRange(0, 2.0, 3)
 	)
 	fig2_Aa = plot(fig2_Aa1, fig2_Aa2, layout = grid(2,1))	
 	plot!(fig2_Aa[2], frame_stops, ach_stops, label = "Frame stops",
@@ -142,11 +144,11 @@ begin
 	
 	fig2_Ab = plot(v -> Φ(v, p[:k], p[:V0]), -90, 10, 
         legend = false, xlabel = "Vₜ (mV)", ylabel = "Φ (Normalized ACh release)",
-		c = e_color, lw = 3.0, grid = false, linestyle = :dash
+		c = e_color, lw = 3.0, grid = false, linestyle = :dash, 
     )
 	
 	fig2_A = plot(fig2_Aa, fig2_Ab, 
-		layout = grid(1,2, widths = (0.75, 0.25)), margin = 0.0mm
+		layout = grid(1,2, widths = (0.75, 0.25)), margin = 3.0mm
 	)
 end
 
@@ -154,7 +156,7 @@ end
 begin 
 	#Run a short wave lattice simulation
 	sim_rng = A_trng
-	nx, ny = (50, 50) #Set up the size of the sim
+	nx, ny = (125, 125) #Set up the size of the sim
 	c1x, c1y = (1, round(Int, nx/2)) #Pick midpoints to place the cell
 	
 	bp_model = Network(nx, ny, μ = 0.15, version = :gACh) #Make the network
@@ -180,7 +182,7 @@ begin
 	#This is for coloring on B and C
 	top_lim = 0.2
 	n_samples = 6
-	cell_samples = round.(Int64, LinRange(2, c1y, n_samples))
+	cell_samples = round.(Int64, LinRange(2, c1y/2, n_samples))
 	mapping = LinRange(0.0, top_lim, n_samples)
 
 	d_frame = 200
@@ -219,7 +221,7 @@ end
 # ╔═╡ 21e5b5eb-d4ad-433f-b37e-2d7ee42ab0b3
 begin
 	fig2_B_map = plot(
-		xlims = (0, nx), ylims = (0, ny), 
+		xlims = (0, nx/2), ylims = (0, ny), 
 		layout = grid(1, length(frame_stops)), 
 		colorbar_titlefontsize = 0.2,
 		#margin = 1mm
@@ -234,9 +236,9 @@ begin
 			xaxis = false, yaxis = false, 
 			xticks = false, yticks = false,
 			c = :thermal, clims = (0.0, top_lim), 
-			top_margin = -10.0mm,
+			#top_margin = 0.0mm,
 			margins = -1.0mm, 
-			bottom_margin = -20.0mm
+			bottom_margin = -5.0mm
 			)
 		
 		for (color_i,cix) in enumerate(cell_samples)
@@ -245,15 +247,15 @@ begin
 				markercolor = :jet,
 				marker = :hex,
 				marker_z = mapping[color_i],
-				label = idx == 3 ? "cell $color_i" : ""
+				label = idx == 1 ? "cell $color_i" : ""
 			)
 		end
-		annotate!(fig2_B_map[idx], [25], [5], 
-			"t = $(round((sim_rng[frame_idx]-sim_rng[1])/1000, digits = 1)) ms", 				:white
+		annotate!(fig2_B_map[idx], [30], [5], 
+			Plots.text(
+				"t = $(round((sim_rng[frame_idx]-sim_rng[1])/1000, digits = 1)) ms", 				:white, 10
 				)
+			)
 	end
-	
-
 	
 	fig2_B_cbar = heatmap(
 		repeat(collect(LinRange(0.0, top_lim, 16)), 1, 2)', 
@@ -271,7 +273,7 @@ begin
 	)
 
 	fig2_B
-end
+end;
 
 # ╔═╡ d3c0428a-0904-49a9-a43d-af225d83a991
 begin
@@ -289,9 +291,10 @@ begin
 			c = :jet, line_z = mapping[color_i], 
 			lw = 3.0, grid = false, cbar = false,
 			label = "",
-			xlabel = "Time (s)", ylabel = "Extracellular Eₜ (μM)", 
+			xlabel = "Time (s)", ylabel = "Eₜ (μM)", 
 			xticks = sim_rng[1]:1000:sim_rng[end], 
-			x_formatter = x -> round(x -sim_rng[1])/1000
+			x_formatter = x -> round(x -sim_rng[1])/1000, 
+			ylims = (0.0, 2.0), yticks = LinRange(0, 2.0, 3)
 		)
 		plot!(fig2_Cb, sim_rng, I_ach.(lattice_c[c1y, cix, :]),
 			c = :jet, line_z = mapping[color_i], 
@@ -299,11 +302,18 @@ begin
 			label = "",
 			xlabel = "Time (s)", ylabel = "I_ACh (pA)", 
 			xticks = sim_rng[1]:1000:sim_rng[end], 
-			x_formatter = x -> round(x -sim_rng[1])/1000		
+			x_formatter = x -> round(x -sim_rng[1])/1000, 
+			yticks = LinRange(0, 125.0, 3)
 		)
 	end
+	plot!(fig2_Ca, A_trng, sol(A_trng, idxs = 6), label = "ACh Release",
+		lw = 3.0, c = e_color, linestyle = :dash,
+		x_formatter = x -> round(x -sim_rng[1])/1000, 
+		ylims = (0.0, 2.0), yticks = LinRange(0, 2.0, 3)
+	)
+	
 	fig2_C = plot(fig2_Ca, fig2_Cb, layout = grid(1,2))
-end
+end;
 
 # ╔═╡ f3679820-7e5e-4bef-b6d6-412c3262b11f
 begin
@@ -317,7 +327,7 @@ begin
 	annotate!(fig2_labels[3], [0.5], [0.99], "C", font("Sans",24))
 	fig2_boxes = plot(fig2_A, fig2_B, fig2_C, 
 		layout = grid(3,1, heights = (0.3, 0.4, 0.3)), 
-		size = (800, 1000)
+		size = (1000, 1000)
 		)
 
 	fig2 = plot(fig2_labels, fig2_boxes, layout = grid(1,2, widths = (0.05, 0.95)))
@@ -344,15 +354,15 @@ savefig(binom_boxes,"$(saveroot)\\Binomial.png")
 # ╠═d3b0c671-734f-4fff-a26c-0f6c2ded5d3a
 # ╠═15393dea-28b8-4234-8e03-35f7e0f8cf56
 # ╠═3d1a1189-dd11-4f12-add2-44ba7c0b26e2
-# ╠═d26aa235-c403-4ce3-8934-a598c5566be5
+# ╟─d26aa235-c403-4ce3-8934-a598c5566be5
 # ╠═74f7a4e8-cfd4-4b37-b835-cf42d21301d4
-# ╟─88b02dbb-2108-43f8-911c-949538105ac1
+# ╠═88b02dbb-2108-43f8-911c-949538105ac1
 # ╟─a9faf5c6-e40e-4b3d-bdc9-3ea0b3207c25
 # ╟─277d5329-62ae-461a-b094-bae821fd739f
 # ╟─21e5b5eb-d4ad-433f-b37e-2d7ee42ab0b3
 # ╟─d3c0428a-0904-49a9-a43d-af225d83a991
-# ╟─eda807d8-a93d-45a4-be52-9f50174f091b
-# ╠═f3679820-7e5e-4bef-b6d6-412c3262b11f
+# ╠═eda807d8-a93d-45a4-be52-9f50174f091b
+# ╟─f3679820-7e5e-4bef-b6d6-412c3262b11f
 # ╠═ba39a93d-15e1-4f29-8f55-ddbcd2350aa5
 # ╠═09be5084-2914-4a65-a904-ca37062c5c96
 # ╟─078ff5f2-fa34-4b7b-9a10-4e0c77a1dea6
