@@ -176,19 +176,11 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
 
         #Warmup the problem
         print("[$(now())]: Warming up the solution... ")
-        if gpu
-            @time sol = solve(NetProb, SOSRI(), EnsembleGPUArray(),
-                    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-                    progress = true, progress_steps = 1, 
-                    save_everystep = false
-                )
-        else
-            @time sol = solve(NetProb, SOSRI(),
-                    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-                    progress = true, progress_steps = 1, 
-                    save_everystep = false
-                )
-        end
+        @time sol = solve(NetProb, SOSRI(),
+                abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+                progress = true, progress_steps = 1, 
+                save_everystep = false
+            )
         
         #Save the warmed up solution
         warmup = sol[end]|>Array #Keep this one as the original 
@@ -223,19 +215,11 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
         print("[$(now())]: Running the model... ")
         NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p)
         #Run the solution to fruition
-        if gpu
-            @time sol = solve(NetProb, SOSRI(), EnsembleGPUArray(),
-                abstol = abstol, reltol = reltol, maxiters = maxiters,
-                save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-                progress = true, progress_steps = 1
-            )
-        else
-            @time sol = solve(NetProb, SOSRI(),
-                abstol = abstol, reltol = reltol, maxiters = maxiters,
-                save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-                progress = true, progress_steps = 1
-            )
-        end
+        @time sol = solve(NetProb, SOSRI(),
+            abstol = abstol, reltol = reltol, maxiters = maxiters,
+            save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
+            progress = true, progress_steps = 1
+        )
 
         print("[$(now())]: Saving the simulation...")
         sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU

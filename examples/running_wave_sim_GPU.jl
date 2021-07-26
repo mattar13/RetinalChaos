@@ -42,7 +42,7 @@ save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu
 p_dict[:t_run] = 60e3 #Extend the simulation time so we can find longer bursts
 p_dict[:t_warm] = 120e3
 p_dict[:μ] = 0.6041667 #Change the parameter
-NetSol = load_model(save_path, p_dict, u_dict, reltol = 1e-2)
+NetSol = load_model(save_path, p_dict, u_dict, reltol = 0.1)
 timestamps, data = timeseries_analysis(save_path, NetSol)
 
 #%% This is for a replication experiment
