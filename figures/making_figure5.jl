@@ -1,14 +1,8 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.14.9
 
 using Markdown
 using InteractiveUtils
-
-# ╔═╡ 5b9def57-b45c-4701-a4e0-6f38e60496dc
-begin
-	using Pkg
-	Pkg.activate("C:\\Users\\RennaLabSA1\\Documents\\GithubRepositories\\RetinalChaos")
-end
 
 # ╔═╡ 2756958e-e5b1-11eb-3da6-6f800a6d618c
 using Revise
@@ -252,38 +246,23 @@ begin
 	plt_IBI_ridge
 end
 
-# ╔═╡ d471ed41-83e2-4e29-b523-f5bbd10e1a9a
-pdir = "C:\\Users\\mtarc\\OneDrive\\Documents\\GithubRepositories\\RetinalChaos\\params"
-
-# ╔═╡ f5014bfb-34d5-4ba6-bd08-9d41871604e8
-p_dict = read_JSON("$pdir\\params.json", is_type = Dict{Symbol, Float32})
-
-# ╔═╡ 7e430565-1e64-48ef-aa40-3b3657b4e763
-u_dict = read_JSON("$pdir\\conds.json", is_type = Dict{Symbol, Float32})
-
 # ╔═╡ c7a91138-02db-42a6-a42d-138fef07836d
 begin #Load all the paths
-	#load_path0 = "E:\\Data\\Modelling\\mu_0\\"
-	#p_dict = read_JSON("$(load_path0)\\params.json", is_type = Dict{Symbol, Float32})
-	#u_dict = read_JSON("$(load_path0)\\iconds.json", is_type = Dict{Symbol, Float32}) 
-	#Mu = 0%
-	#sol_mu0 = load_model(load_path0, p_dict, u_dict, gpu = false)
-	#Mu = 12%
-	#load_path12 = "E:\\Data\\Modelling\\mu_12\\"
-	#sol_mu12 = load_model(load_path12, p_dict, u_dict, gpu = false)
-	#Mu = 25%
-	#load_path25 = "E:\\Data\\Modelling\\mu_25\\"
-	#sol_mu25 = load_model(load_path25, p_dict, u_dict, gpu = false)
-	#Mu = 50%
-	#load_path50 = "E:\\Data\\Modelling\\mu_50\\"
-	#sol_mu50 = load_model(load_path50, p_dict, u_dict, gpu = false)
-end	
-
-# ╔═╡ 2bc3417e-88ae-4fa6-8632-1ef53d313d23
-begin
 	load_path0 = "E:\\Data\\Modelling\\mu_0\\"
-	JLD2.@load "$(load_path0)\\sol.jld2" sol 
-end
+	p_dict = read_JSON("$(load_path0)\\params.json", is_type = Dict{Symbol, Float32})
+	u_dict = read_JSON("$(load_path0)\\iconds.json", is_type = Dict{Symbol, Float32}) 
+	#Mu = 0%
+	sol_mu0 = load_model(load_path0, p_dict, u_dict, gpu = false)
+	#Mu = 12%
+	load_path12 = "E:\\Data\\Modelling\\mu_12\\"
+	sol_mu12 = load_model(load_path12, p_dict, u_dict, gpu = false)
+	#Mu = 25%
+	load_path25 = "E:\\Data\\Modelling\\mu_25\\"
+	sol_mu25 = load_model(load_path25, p_dict, u_dict, gpu = false)
+	#Mu = 50%
+	load_path50 = "E:\\Data\\Modelling\\mu_50\\"
+	sol_mu50 = load_model(load_path50, p_dict, u_dict, gpu = false)
+end	
 
 # ╔═╡ 6c2abaec-8214-4c20-94ed-6cda1f216ee0
 begin #Heatmap range
@@ -415,7 +394,6 @@ begin
 end
 
 # ╔═╡ Cell order:
-# ╠═5b9def57-b45c-4701-a4e0-6f38e60496dc
 # ╠═2756958e-e5b1-11eb-3da6-6f800a6d618c
 # ╠═09475831-f6a1-4989-8884-2369e29e16fc
 # ╠═63786ca7-4b1a-4805-be1e-eae87fedab19
@@ -427,11 +405,7 @@ end
 # ╟─a32fbb84-c681-492c-a37c-3867db567b7a
 # ╟─9d2d5214-9d52-4048-a99f-71fc5403cdff
 # ╠═29487316-45cd-4630-8472-72c1e8cae38a
-# ╠═d471ed41-83e2-4e29-b523-f5bbd10e1a9a
-# ╠═f5014bfb-34d5-4ba6-bd08-9d41871604e8
-# ╠═7e430565-1e64-48ef-aa40-3b3657b4e763
-# ╠═c7a91138-02db-42a6-a42d-138fef07836d
-# ╠═2bc3417e-88ae-4fa6-8632-1ef53d313d23
+# ╟─c7a91138-02db-42a6-a42d-138fef07836d
 # ╠═6c2abaec-8214-4c20-94ed-6cda1f216ee0
 # ╟─19cc489d-8df4-4d32-93f0-a0c842fc1f64
 # ╠═e3d313db-b96f-4213-b695-16ddec786806

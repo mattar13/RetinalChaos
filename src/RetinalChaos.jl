@@ -29,7 +29,7 @@ else
      using Plots, Measures 
 end
 
-using DifferentialEquations, DiffEqGPU
+using DifferentialEquations
 #using ModelingToolkit, DiffEqBase
 import DiffEqBase.AbstractODEProblem
 export SDEProblem, ODEProblem, solve, SOSRI
