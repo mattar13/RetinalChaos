@@ -115,12 +115,10 @@ uuid = "00ebfdb7-1f24-5e51-bd34-a7502290713f"
 version = "3.2.3"
 
 [[CUDA]]
-deps = ["AbstractFFTs", "Adapt", "BFloat16s", "CEnum", "CompilerSupportLibraries_jll", "ExprTools", "GPUArrays", "GPUCompiler", "LLVM", "LazyArtifacts", "Libdl", "LinearAlgebra", "Logging", "Printf", "Random", "Random123", "RandomNumbers", "Reexport", "Requires", "SparseArrays", "SpecialFunctions", "TimerOutputs"]
-git-tree-sha1 = "92e9bcfdac479ba84dd9696a9dbd707256071a31"
-repo-rev = "master"
-repo-url = "https://github.com/JuliaGPU/CUDA.jl.git"
+deps = ["AbstractFFTs", "Adapt", "BFloat16s", "CEnum", "CompilerSupportLibraries_jll", "DataStructures", "ExprTools", "GPUArrays", "GPUCompiler", "LLVM", "LazyArtifacts", "Libdl", "LinearAlgebra", "Logging", "Printf", "Random", "Random123", "RandomNumbers", "Reexport", "Requires", "SparseArrays", "SpecialFunctions", "TimerOutputs"]
+git-tree-sha1 = "5e696e37e51b01ae07bd9f700afe6cbd55250bce"
 uuid = "052768ef-5323-5732-b1bb-66c8b64840ba"
-version = "3.4.0"
+version = "3.3.4"
 
 [[CUDAKernels]]
 deps = ["Adapt", "CUDA", "Cassette", "KernelAbstractions", "SpecialFunctions", "StaticArrays"]
