@@ -92,14 +92,14 @@ end
 begin
 	fig1_Aa1 = plot(A_trng, sol(A_trng, idxs = 1), label = "",
 		ylabel = "Vₜ (mV)", xlabel = "", 
-		lw = 2.0, c = v_color, grid = false,
+		lw = 4.0, c = v_color, grid = false,
 		xlims = A_xlims, xticks = false, 
 		margin = 0.0mm
 	)
 	
 	fig1_Aa2 = plot(A_trng, sol(A_trng, idxs = 2), label = "",
 		ylabel = "Nₜ", xlabel = "Time (ms)",
-		lw = 2.0, c = n_color, grid = false,
+		lw = 4.0, c = n_color, grid = false,
 		xlims = A_xlims, xticks = A_xticks, 
 		x_formatter = x -> round(Int64,x-A_xlims[1]),
 		margin = 0.0mm	
@@ -113,7 +113,7 @@ begin
 	#)
 	
 	fig1_Ab = plot(sol(A_trng, idxs = 2), sol(A_trng, idxs = 1), 
-		xlabel = "Nₜ", ylabel = "Vₜ (mV)", label = "", c = :black
+		xlabel = "Nₜ", ylabel = "Vₜ (mV)", lw = 3.0, label = "", c = :black
 	)
 	#hline!(fig1_Ab, [v_thresh], seriestype = :scatter,
 	#	label = "Spike threshold",  c = :red, legend = :bottomright
@@ -129,14 +129,14 @@ end
 begin
 	fig1_Ba1 = plot(B_trng, sol(B_trng, idxs = 1), label = "",
 		ylabel = "Vₜ (mV)", xlabel = "", 
-		lw = 2.0, c = v_color, grid = false,
+		lw = 4.0, c = v_color, grid = false,
 		xlims = B_xlims, xticks = false, 
 		margin = 0.0mm
 	)
 	
 	fig1_Ba2 = plot(B_trng, sol(B_trng, idxs = 3), label = "",
 		ylabel = "[Cₜ] (μM)", xlabel = "Time (s)",
-		lw = 2.0, c = c_color, grid = false,
+		lw = 4.0, c = c_color, grid = false,
 		xlims = B_xlims, xticks = B_xticks, 
 		x_formatter = x -> round((x-B_xlims[1])/1000, digits = 3),
 		margin = 0.0mm	
@@ -157,25 +157,25 @@ end
 begin	
 	fig1_Ca1 = plot(C_trng, sol(C_trng, idxs = 3), label = "",
 		ylabel = "[Cₜ] (μM)", xlabel = "", 
-		lw = 2.0, c = c_color, grid = false,
+		lw = 4.0, c = c_color, grid = false,
 		xlims = C_xlims, xticks = false, 
 	)
 	
 	fig1_Ca2 = plot(C_trng, sol(C_trng, idxs = 4), label = "",
 		ylabel = "Aₜ", xlabel = "",
-		lw = 2.0, c = a_color, grid = false,
+		lw = 4.0, c = a_color, grid = false,
 		xlims = C_xlims, xticks =false,
 	)
 
 	fig1_Ca3 = plot(C_trng, sol(C_trng, idxs = 5), label = "",
 		ylabel = "Bₜ", xlabel = "", 
-		lw = 2.0, c = b_color, grid = false,
+		lw = 4.0, c = b_color, grid = false,
 		xlims = C_xlims, xticks = false, 
 	)
 	
 	fig1_Ca4 = plot(C_trng, sol(C_trng, idxs = 1), label = "",
 		ylabel = "Vₜ (mV)", xlabel = "Time (s)",
-		lw = 2.0, c = v_color, grid = false,
+		lw = 4.0, c = v_color, grid = false,
 		xlims = C_xlims, xticks = C_xticks, 
 		x_formatter = x -> round(Int64, (x-C_xlims[1])/1000),
 		margin = 0.0mm	
@@ -184,17 +184,17 @@ begin
 	fig1_Ca = plot(fig1_Ca1, fig1_Ca2, fig1_Ca3, fig1_Ca4,layout = grid(4,1))
 	fig1_Cb = plot(sol(C_trng, idxs = 4), sol(C_trng, idxs = 3), label = "", 
 		ylabel = "[Cₜ] (μM)", xlabel = "Aₜ", 
-		lw = 3.0, c = a_color, grid = false
+		lw = 4.0, c = a_color, grid = false
 	)
 	
 	fig1_Cc = plot(sol(C_trng, idxs = 5), sol(C_trng, idxs = 4), label = "", 
 		ylabel = "Aₜ", xlabel = "Bₜ", 
-		lw = 3.0, c = b_color, linewidth = 3.0, grid = false
+		lw = 4.0, c = b_color, linewidth = 3.0, grid = false
 	)
 	
 	fig1_Cd = plot(sol(C_trng, idxs = 1), sol(C_trng, idxs = 5), label = "", 
 		ylabel = "Bₜ", xlabel = "Vₜ (mV)", 
-		lw = 3.0, c = v_color, grid = false
+		lw = 4.0, c = v_color, grid = false
 	)
 	
 	fig1_C = plot(

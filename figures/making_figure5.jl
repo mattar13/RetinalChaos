@@ -288,7 +288,7 @@ begin #Heatmap range
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y), 
 		
 	)
-	for (idx, frame) in enumerate(LinRange(40e3, 50e3, 4))
+	for (idx, frame) in enumerate(LinRange(30e3, 40e3, 4))
 		grid_sim = reshape(sol_mu0(frame), nx, ny)
 		plot!(plt_grid[1,idx], grid_sim, 
 			c = :curl, st = :heatmap, clims = (-70.0, 0.0), 
@@ -326,7 +326,7 @@ begin #Heatmap range
 		ylabel = "μ = 25%\nVt(mV)", ylims = (-80.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
-	for (idx, frame) in enumerate(LinRange(4e4, 5e4, 4))
+	for (idx, frame) in enumerate(LinRange(40e3, 50e3, 4))
 		grid_sim = reshape(sol_mu25(frame), nx, ny)
 		plot!(plt_grid[3,idx], grid_sim, 
 			c = :curl, st = :heatmap, clims = (-70.0, 0.0), 
@@ -407,5 +407,5 @@ end
 # ╠═29487316-45cd-4630-8472-72c1e8cae38a
 # ╟─c7a91138-02db-42a6-a42d-138fef07836d
 # ╠═6c2abaec-8214-4c20-94ed-6cda1f216ee0
-# ╠═19cc489d-8df4-4d32-93f0-a0c842fc1f64
+# ╟─19cc489d-8df4-4d32-93f0-a0c842fc1f64
 # ╠═e3d313db-b96f-4213-b695-16ddec786806
