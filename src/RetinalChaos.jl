@@ -1,7 +1,7 @@
 module RetinalChaos
 
 const version = :stable
-version_info() = println(mode)
+version_info() = println(version)
 
 using Plots: text_box_width
 const verbose = false #Adjust the to print out statments relevant to the module import
