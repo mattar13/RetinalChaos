@@ -1,6 +1,6 @@
 module RetinalChaos
 
-const mode = :development
+const version = :development
 version_info() = println(mode)
 
 using Plots: text_box_width
