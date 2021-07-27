@@ -77,6 +77,7 @@ begin
 	#we need to sort the mus
 	n_plots = length(mus)
 	idxs = sortperm(mus)
+	
 	mus = mus[idxs]
 	avg_spike_dur = avg_spike_dur[idxs]
 	avg_burst_dur = avg_burst_dur[idxs]
@@ -94,7 +95,7 @@ begin
 		cbar = false,
 		yaxis = false, grid = false,
 		xlims = (0.0, Inf),
-		xticks = (0:0.5:n_plots/2, round.(Int64, mus.*100)), xlabel = "Mu (%)"
+		xticks = (0:0.5:(n_plots-1)/2, round.(Int64, mus.*100)), xlabel = "Mu (%)"
 	)
 
 	for i in reverse(1:n_plots)
@@ -134,7 +135,7 @@ begin
 		cbar = false,
 		yaxis = false, grid = false,
 		xlims = (0.0, Inf),
-		xticks = (0:0.5:n_plots/2, round.(Int64, mus.*100)), xlabel = "Mu (%)"
+		xticks = (0:0.5:(n_plots-1)/2, round.(Int64, mus.*100)), xlabel = "Mu (%)"
 	)
 
 	for i in reverse(1:n_plots)
@@ -174,7 +175,7 @@ begin
 		yaxis = false, grid = false,
 		cbar = false,
 		xlims = (0.0, Inf),
-		xticks = (0:0.5:n_plots/2, round.(Int64, mus.*100)), xlabel = "Mu (%)"
+		xticks = (0:0.5:(n_plots-1)/2, round.(Int64, mus.*100)), xlabel = "Mu (%)"
 	)
 	max_val = map(fbd -> maximum(fbd), full_burst_dur) |> maximum
 	for i in reverse(1:n_plots)
@@ -227,7 +228,7 @@ begin
 				left_margin = 20.0mm,
 				weights, edges, 
 				fill_z = i,
-				fillrange = [2.0, 2.0], fillcolor = :jet, 
+				fillrange = [0.0, 0.0], fillcolor = :jet, 
 				ylabel = "Interburst Interval (s)", label = ""
 			)
 		else
@@ -235,7 +236,7 @@ begin
 				#right_margin = -10.0mm, 
 				weights.+((i-1)/2), edges,
 				fill_z = i,
-				fillrange = [2.0, 2.0], fillcolor = :jet, 
+				fillrange = [0.0, 0.0], fillcolor = :jet, 
 			)
 		end
 	end
@@ -264,6 +265,16 @@ begin #Load all the paths
 	sol_mu50 = load_model(load_path50, p_dict, u_dict, gpu = false)
 end	
 
+# ╔═╡ cf2af573-3cf9-4fda-94e5-02b7dbeee674
+begin
+	added = Int64[]
+	samples = round.(Int64, LinRange(1, size(sol_mu0,1)-5,3))
+	for i in samples
+		push!(added, i+5)
+	end
+	samples = vcat(added, samples) |> sort
+end
+
 # ╔═╡ 6c2abaec-8214-4c20-94ed-6cda1f216ee0
 begin #Heatmap range
 	nx, ny = (125, 125)
@@ -280,11 +291,11 @@ begin #Heatmap range
 	)
 
 	#Plot the 0% mu
-	
-	plot!(plt_trace[1], sol_mu0, vars = collect(1:7), label = false, 
-		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
+	plot!(plt_trace[1], sol_mu0, vars = samples, label = false, 
+		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)), 
+		cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "μ = 0%\nVt (mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 0%\nVt (mV)", ylims = (-90.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y), 
 		
 	)
@@ -301,10 +312,10 @@ begin #Heatmap range
 		)
 	end
 	
-	plot!(plt_trace[2], sol_mu12, vars = collect(1:7), label = false, 
-		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
+	plot!(plt_trace[2], sol_mu12, vars = samples, label = false, 
+		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)),  			cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "μ = 12%\nVt (mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 12%\nVt (mV)", ylims = (-90.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(10e3, 20e3, 4))
@@ -320,10 +331,10 @@ begin #Heatmap range
 		)
 	end
 	
-	plot!(plt_trace[3], sol_mu25, vars = collect(1:7), label = false, 
-		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
+	plot!(plt_trace[3], sol_mu25, vars = samples, label = false, 
+		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)),  			cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "μ = 25%\nVt(mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 25%\nVt(mV)", ylims = (-90.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(40e3, 50e3, 4))
@@ -339,10 +350,10 @@ begin #Heatmap range
 		)
 	end
 	
-	plot!(plt_trace[4], sol_mu50, vars = collect(1:7), label = false, 
-		c = :rainbow, line_z = collect(1:7)', clims = (1,7), cbar = false,
+	plot!(plt_trace[4], sol_mu50, vars = samples, label = false, 
+		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)),  			cbar = false,
 		xlabel = "Time (s)", 
-		ylabel = "μ = 25%\nVt (mV)", ylims = (-80.0, 0.0), 
+		ylabel = "μ = 25%\nVt (mV)", ylims = (-90.0, 0.0), 
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	
@@ -404,8 +415,9 @@ end
 # ╟─c9db69d3-cc2a-40e6-9f88-c28615868f9d
 # ╟─a32fbb84-c681-492c-a37c-3867db567b7a
 # ╟─9d2d5214-9d52-4048-a99f-71fc5403cdff
-# ╠═29487316-45cd-4630-8472-72c1e8cae38a
+# ╟─29487316-45cd-4630-8472-72c1e8cae38a
 # ╟─c7a91138-02db-42a6-a42d-138fef07836d
+# ╠═cf2af573-3cf9-4fda-94e5-02b7dbeee674
 # ╠═6c2abaec-8214-4c20-94ed-6cda1f216ee0
 # ╟─19cc489d-8df4-4d32-93f0-a0c842fc1f64
 # ╠═e3d313db-b96f-4213-b695-16ddec786806
