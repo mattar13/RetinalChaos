@@ -39,11 +39,10 @@ for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extractio
 end
 
 #%% Run a simulation on it's own
-#save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_60"
-#p_dict[:t_run] = 60e3 #Extend the simulation time so we can find longer bursts
-#p_dict[:μ] = 0.6041667 #Change the parameter
-#NetSol = load_model(save_path, p_dict, u_dict, abstol = 2e-2, reltol = 1e-2)
-#timestamps, data = timeseries_analysis(save_path, NetSol)
+save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_60"
+p_dict[:μ] = 0.6041667 #Change the parameter
+NetSol = load_model(save_path, p_dict, u_dict)
+timestamps, data = timeseries_analysis(save_path, NetSol)
 
 #%% This is for a replication experiment
 #for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
