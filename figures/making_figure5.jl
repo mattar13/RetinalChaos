@@ -295,7 +295,8 @@ begin #Heatmap range
 		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)), 
 		cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "μ = 0%\nVt (mV)", ylims = (-90.0, 0.0), 
+		#ylabel = "μ = 25%\nVt (mV)", ylims = (-90.0, 0.0), 
+		ylabel = "Vt (mV)", ylims = (-90.0, 0.0),
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y), 
 		
 	)
@@ -315,7 +316,8 @@ begin #Heatmap range
 	plot!(plt_trace[2], sol_mu12, vars = samples, label = false, 
 		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)),  			cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "μ = 12%\nVt (mV)", ylims = (-90.0, 0.0), 
+		#ylabel = "μ = 25%\nVt (mV)", ylims = (-90.0, 0.0), 
+		ylabel = "Vt (mV)", ylims = (-90.0, 0.0),
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(10e3, 20e3, 4))
@@ -334,7 +336,8 @@ begin #Heatmap range
 	plot!(plt_trace[3], sol_mu25, vars = samples, label = false, 
 		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)),  			cbar = false,
 		xlabel = "", xticks = false, 
-		ylabel = "μ = 25%\nVt(mV)", ylims = (-90.0, 0.0), 
+		#ylabel = "μ = 25%\nVt (mV)", ylims = (-90.0, 0.0), 
+		ylabel = "Vt (mV)", ylims = (-90.0, 0.0),
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	for (idx, frame) in enumerate(LinRange(40e3, 50e3, 4))
@@ -353,7 +356,8 @@ begin #Heatmap range
 	plot!(plt_trace[4], sol_mu50, vars = samples, label = false, 
 		c = :rainbow, line_z = (1:length(samples))', clims = (1,length(samples)),  			cbar = false,
 		xlabel = "Time (s)", 
-		ylabel = "μ = 25%\nVt (mV)", ylims = (-90.0, 0.0), 
+		#ylabel = "μ = 25%\nVt (mV)", ylims = (-90.0, 0.0), 
+		ylabel = "Vt (mV)", ylims = (-90.0, 0.0),
 		yticks = LinRange(-80.0,0.0, 4), yformatter = y -> round(Int64, y)
 	)
 	
@@ -370,7 +374,17 @@ begin #Heatmap range
 		)
 	end
 	
-	fig5_BC = plot(plt_trace, plt_grid, size = (1000, 500))
+	bar_vals = repeat(LinRange(0.5, 0.0, 100), 1,2)
+	sidebar = plot(bar_vals, 
+		yticks = (LinRange(10,90,4), [50, 25, 12.5, 0]),
+		ylabel = "μ", yguidefontrotation = -90.0, 
+		xticks = false, cbar = false, c = :grays, 
+		right_margin = 0mm, 
+		st = :heatmap)
+	fig5_BC = plot(sidebar, plt_trace, plt_grid, 
+		layout = grid(1,3, widths = (0.01, 0.495, 0.495)), 
+		size = (1000, 500)
+	)
 end
 
 # ╔═╡ 19cc489d-8df4-4d32-93f0-a0c842fc1f64
