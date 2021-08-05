@@ -1,7 +1,7 @@
 module RetinalChaos
 
 const version = :master
-param_dir = join(pwd(), "params")
+param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
 version_info() = println(version)
 
 using Plots: text_box_width
