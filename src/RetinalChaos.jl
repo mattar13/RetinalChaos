@@ -1,6 +1,7 @@
 module RetinalChaos
 
 const version = :master
+param_dir = join(pwd(), "params")
 version_info() = println(version)
 
 using Plots: text_box_width
@@ -15,7 +16,6 @@ export now
 using Telegram, Telegram.API, ConfigEnv
 using ProgressMeter
 if verbose 
-
      println("[$(now())]: Small functions imported")
 end
 
