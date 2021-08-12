@@ -114,9 +114,8 @@ end
 function get_timestamps(sol::DiffEqBase.AbstractODESolution; 
         idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
     ) where T <: Real
-    println("This isn't exactly ready yet")
-    threshold = calculate_threshold(sol; idx = idx, Z = Z, dt = dt)
-    get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
+    threshold = calculate_threshold(sol; idx = idx, Z = Z)
+    get_timestamps(sol, threshold; idx = idx, dt = dt)
 end
 
 function extract_interval(timestamps::Matrix{T}; 
