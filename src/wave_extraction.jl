@@ -56,7 +56,7 @@ function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <
 end
 
 function get_timestamps(spike_array::Matrix{Bool}, timestamps::Vector{T}) where T <: Real
-    tstamps = Vector{Matrix{Float32}}(undef, size(spike_array,1))
+    tstamps = Vector{Matrix{T}}(undef, size(spike_array,1))
     for i in 1:size(spike_array, 1)
         tstamps[i] = get_timestamps(spike_array[i, :], timestamps)
     end
