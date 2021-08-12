@@ -68,10 +68,18 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
         idx::Int64 = 1, dt::Float64 = -Inf
     ) where T <: Real
     if dt == -Inf #Adaptive timestamp finding
-        data_select = sol |> Array |> Array{T}
-        spike_array = (data_select .> threshold) |> Array
-        tstamps = get_timestamps(spike_array, sol.t |> Array)
-        return tstamps
+        #we need to find a way to do 2D arrays vs 1D
+        if length(size(sol.u0)) == 2
+            data_select = sol(sol.t[1]:sol.t[end]; idxs = idx) |> Array |> Array{T}
+            spike_array = (data_select .> threshold) |> Array
+            tstamps = get_timestamps(spike_array, sol.t |> Array)
+            return tstamps
+        elseif length(size(sol.u0)) == 3
+            data_select = sol |> Array |> Array{T}
+            spike_array = (data_select .> threshold) |> Array
+            tstamps = get_timestamps(spike_array, sol.t |> Array)
+            return tstamps
+        end
     else   
         get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
     end
@@ -153,7 +161,7 @@ This function uses the Maximum Interval Sorting method to sort bursts in a singl
 A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
 """
 function max_interval_algorithim(timestamps::Matrix{T}; 
-        ISIstart::T = 0.500, ISIend::T = 0.500, IBImin::T = 1.000, DURmin::T = 0.500, SPBmin::Int64 = 4, 
+        ISIstart::T = 500, ISIend::T = 500, IBImin::T = 1000, DURmin::T = 500, SPBmin::Int64 = 4, 
         verbose = false
     ) where T <: Real
     burst_timestamps = Tuple[]
