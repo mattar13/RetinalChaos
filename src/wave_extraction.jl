@@ -69,12 +69,12 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::Abstract
     ) where T <: Real
     if dt == -Inf #Adaptive timestamp finding
         #we need to find a way to do 2D arrays vs 1D
-        if length(size(sol.u0)) == 2
+        if length(size(sol.u)) == 1
             data_select = sol(sol.t[1]:sol.t[end]; idxs = idx) |> Array |> Array{T}
             spike_array = (data_select .> threshold) |> Array
             tstamps = get_timestamps(spike_array, sol.t |> Array)
             return tstamps
-        elseif length(size(sol.u0)) == 3
+        elseif length(size(sol.u)) == 2
             data_select = sol |> Array |> Array{T}
             spike_array = (data_select .> threshold) |> Array
             tstamps = get_timestamps(spike_array, sol.t |> Array)
