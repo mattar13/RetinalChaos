@@ -7,15 +7,23 @@ import RetinalChaos.param_path
 load_path = "E:\\Data\\Modelling\\mu_12\\"
 p_dict = read_JSON("$(load_path)\\params.json", is_type = Dict{Symbol, Float32})
 u_dict = read_JSON("$(load_path)\\iconds.json", is_type = Dict{Symbol, Float32})
-sol_mu12 = load_model(load_path, p_dict, u_dict, gpu = false)
+sol = load_model(load_path, p_dict, u_dict, gpu = false)
 #%%
-sol = sol_mu12
-new_sol = SciMLBase.build_solution(sol.prob, sol.alg, sol.t, sol.u) #we can use this to build a solution without GPU
+
+RetinalChaos.save_solution(sol, load_path)
 #%%
-#Save everything but the solution
-bson("$(load_path)\\testing_saving.bson", 
-          Dict(:sol_prob => sol.prob, :sol_alg => sol.alg, :sol_t => sol.t)
-     )
+sol_data = BSON.load("$(load_path)\\sol_data.bson")
+#%%
+#remake net
+net = Network()
+#%%
+bson("$(load_path)\\sol_2.bson", 
+     Dict(:sol_d => Array(sol))
+)
+#%% Loading solution
+reconstruct_u = map(x -> Vector(sol[:, x]), 1:length(sol.t))
+sol_load = SciMLBase.build_solution(sol.prob, sol.alg, sol.t, reconstruct_u) #we can use this to build a solution without GPU
+using StochasticDiffEq, LinearAlgebra
 
 #%%
 timestamps = BSON.load("$(load_path)\\timestamps.bson") #Access timestamps
