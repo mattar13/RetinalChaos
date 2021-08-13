@@ -257,11 +257,12 @@ function save_solution(sol, save_path::String; mode = :bson)
         bson("$(save_path)\\sol_data.bson", 
             Dict(
                 #:sol_prob_f => sol.prob.f, 
-                :sol_prob_g => sol.prob.g, 
-                :sol_prob_u0 => sol.prob.u0, :sol_prob_p => sol.prob.p, 
+                #:sol_prob_g => sol.prob.g, 
+                :sol_prob_u0 => sol.prob.u0, 
+                :sol_prob_p => sol.prob.p, 
                 :sol_prob_tspan => sol.prob.tspan,  
-                :sol_alg => sol.alg, :sol_t => sol.t, 
-                #:sol_u => sol.u
+                :sol_alg => sol.alg, 
+                :sol_t => sol.t, 
                 )
         )
         try #This will fail if the file is too big
@@ -292,6 +293,6 @@ function load_solution(load_path)
     end
     p_dict = read_JSON("$(load_path)\\params.json", is_type = Dict{Symbol, Float32})
     net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ])
-    sol_prob = SDEProblem(net, sol_data[:sol_prob_g], sol_data[:sol_prob_u0], sol_data[:sol_prob_tspan], sol_data[:sol_prob_p])
+    sol_prob = SDEProblem(net, noise, sol_data[:sol_prob_u0], sol_data[:sol_prob_tspan], sol_data[:sol_prob_p])
     SciMLBase.build_solution(sol_prob, sol_data[:sol_alg], sol_data[:sol_t], sol_u) #we can use this to build a solution without GPU
 end
