@@ -258,10 +258,10 @@ function save_solution(sol, save_path::String; mode = :bson)
             Dict(
                 #:sol_prob_f => sol.prob.f, 
                 #:sol_prob_g => sol.prob.g, 
-                :sol_prob_u0 => sol.prob.u0, 
-                :sol_prob_p => sol.prob.p, 
-                :sol_prob_tspan => sol.prob.tspan,  
-                :sol_alg => sol.alg, 
+                #:sol_prob_u0 => sol.prob.u0, 
+                #:sol_prob_p => sol.prob.p, 
+                #:sol_prob_tspan => sol.prob.tspan,  
+                #:sol_alg => sol.alg, 
                 :sol_t => sol.t, 
                 )
         )
@@ -282,7 +282,7 @@ function save_solution(sol, save_path::String; mode = :bson)
 end
 
 function load_solution(load_path)
-    sol_data = BSON.load("$(load_path)\\sol_data.bson")
+    sol_t = BSON.load("$(load_path)\\sol_data.bson")[:sol_t]
     sol_u = try 
         BSON.load("$(load_path)\\sol_array.bson")[:sol_u]
     catch
@@ -292,7 +292,8 @@ function load_solution(load_path)
         vcat(sol_array_pt1, sol_array_pt2)
     end
     p_dict = read_JSON("$(load_path)\\params.json", is_type = Dict{Symbol, Float32})
+    p0 = p_dict |> extract_dict
     net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ])
-    sol_prob = SDEProblem(net, noise, sol_data[:sol_prob_u0], sol_data[:sol_prob_tspan], sol_data[:sol_prob_p])
-    SciMLBase.build_solution(sol_prob, sol_data[:sol_alg], sol_data[:sol_t], sol_u) #we can use this to build a solution without GPU
+    sol_prob = SDEProblem(net, noise, sol_u[1], (0f0 , p_dict[:t_warm]), p0)
+    SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
 end
