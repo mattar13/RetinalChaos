@@ -103,6 +103,7 @@ function convert_to_cpu(model::RODESolution)
     return RetinalChaos.DiffEqBase.build_solution(prob_remade, alg, t, u, W=W)
 end
 
+#eventually we will need to go through this and redit load and save
 function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
             reset_model::Bool = false, gpu::Bool = true, version = :gACh,
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
@@ -250,3 +251,29 @@ function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Sym
     #We want to return the solution
     return sol
 end 
+
+function save_solution(sol, save_path::String; mode = :bson)
+    if mode == :bson
+        bson("$(save_path)\\sol_data.bson", 
+            Dict(
+                #:sol_prob_f => sol.prob.f, 
+                :sol_prob_g => sol.prob.g, 
+                :sol_prob_u0 => sol.prob.u0, :sol_prob_p => sol.prob.p, 
+                :sol_prob_tspan => sol.prob.tspan,  
+                :sol_alg => sol.alg, :sol_t => sol.t, 
+                :sol_u => sol.u
+                )
+        )
+    else
+        println("TODO implement JLD2")
+    end
+end
+
+function load_solution(load_path)
+    warmup = BSON.load("$(load_path)conds.bson")
+    sol_data = BSON.load("$(load_path)\\sol_data.bson")
+    p_dict = read_JSON("$(load_path)\\params.json", is_type = Dict{Symbol, Float32})
+    net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ])
+    sol_prob = SDEProblem(net, sol_data[:sol_prob_g], sol_data[:sol_prob_u0], sol_data[:sol_prob_tspan], sol_data[:sol_prob_p])
+    SciMLBase.build_solution(sol_prob, sol_data[:sol_alg], sol_data[:sol_t], sol_data[:sol_u]) #we can use this to build a solution without GPU
+end

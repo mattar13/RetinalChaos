@@ -40,15 +40,6 @@ function ∇(du, u, D)
     end
 end
 
-#mutable struct Network{T, N} <: Function
-#      Mx::Tridiagonal{T,Array{T,1}}
-#      My::Tridiagonal{T,Array{T,1}}
-#      MyE::Array{T,2}
-#      EMx::Array{T,2}
-#      DE::Array{T,2}
-#      null::Array{T,2}
-#end
-
 mutable struct Network{T, N} <: Function
       Mx::AbstractArray{T,2}
       My::AbstractArray{T,2}

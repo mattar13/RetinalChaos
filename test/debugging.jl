@@ -1,6 +1,6 @@
 using Revise
 using RetinalChaos #Load the package
-using BSON
+using BSON, JLD2
 #%%Lets figure out how to extract the waves
 import RetinalChaos.param_path
 
@@ -12,18 +12,8 @@ sol = load_model(load_path, p_dict, u_dict, gpu = false)
 
 RetinalChaos.save_solution(sol, load_path)
 #%%
-sol_data = BSON.load("$(load_path)\\sol_data.bson")
-#%%
-#remake net
-net = Network()
-#%%
-bson("$(load_path)\\sol_2.bson", 
-     Dict(:sol_d => Array(sol))
-)
-#%% Loading solution
-reconstruct_u = map(x -> Vector(sol[:, x]), 1:length(sol.t))
-sol_load = SciMLBase.build_solution(sol.prob, sol.alg, sol.t, reconstruct_u) #we can use this to build a solution without GPU
-using StochasticDiffEq, LinearAlgebra
+RetinalChaos.load_solution(load_path)
+
 
 #%%
 timestamps = BSON.load("$(load_path)\\timestamps.bson") #Access timestamps
