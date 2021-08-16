@@ -66,42 +66,7 @@ function lagged_loss(Ŷ, Y; accuracy = 1000, weights = [1, 1])
 end
 
 
-function monte_func(prob, i, repeat; pars = :all, dists = [Normal()])
-    if pars == :all
-        new_pars = map(x -> typeof(x) != Float64 ? rand(x) : x , dists);
-        if new_pars[(:σ |> p_find)[1]] > 0.0
-            stochastic = true
-        end
-        #new_conds = map(x -> typeof(x) != Float64 ? rand(x) : x,  dists);
-        if stochastic
-            return SDEProblem(BurstModel, noise, prob.u0, prob.tspan, new_pars)
-        else
-            return ODEProblem(BurstModel, prob.u0, prob.tspan, new_pars)
-        end
-    else
-        stochastic = false
-        new_pars = prob.p
-        new_conds = prob.u0
-        if prob.p[(:σ |> p_find)[1]] > 0.0
-            stochastic = true
-        end
-        for (idx, var) in enumerate(pars)
-            conds = var |> u_find
-            pars = var |> p_find
-            if length(conds) > 0
-                new_conds[conds[1]] = rand(dists[idx])
-            elseif length(pars) > 0
-                new_pars[pars[1]] = rand(dists[idx])
-            end
-        end
 
-        if stochastic
-            return SDEProblem(BurstModel, noise, new_conds, prob.tspan, new_pars)
-        else
-            return ODEProblem(BurstModel, new_conds, prob.tspan, new_pars)
-        end
-    end
-end
 
 function evolve(prob, d_dict, Y_norm; 
         alg = SOSRI(), abstol = 2e-1, reltol = 2e-1, maxiters = 1e7, saveat = 1.0,

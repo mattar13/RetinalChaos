@@ -1,5 +1,83 @@
-#Used for loading Phys data
-using PyCall
+"""
+ensemble_func()  sets up a ensemble problem
+"""
+
+function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars, verbose = false)
+    if run_func_on == :pars
+        if verbose
+            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
+        end
+        prob.p[idx] = val_rng[i]
+        prob
+    elseif run_func_on == :conds
+        if verbose
+            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
+        end
+        prob.u0[idx] = val_rng[i]
+        prob
+    end
+end
+
+function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose = false)
+    idx_cond = sym |> u_find
+    idx_par = sym |> p_find
+
+    if !isnothing(idx_par) 
+        if verbose
+            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
+        end
+        prob.p[idx_par] = val_rng[i]
+    end    
+    
+    if !isnothing(idx_cond)
+        if verbose
+            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
+        end
+        prob.u0[idx_cond] = val_rng[i]
+    end
+    
+    prob
+end
+
+"""
+monte_func() sets up a monte carlo problem
+"""
+function monte_func(prob, i, repeat; pars = :all, dists = [Normal()])
+    if pars == :all
+        new_pars = map(x -> typeof(x) != Float64 ? rand(x) : x , dists);
+        if new_pars[(:σ |> p_find)[1]] > 0.0
+            stochastic = true
+        end
+        #new_conds = map(x -> typeof(x) != Float64 ? rand(x) : x,  dists);
+        if stochastic
+            return SDEProblem(BurstModel, noise, prob.u0, prob.tspan, new_pars)
+        else
+            return ODEProblem(BurstModel, prob.u0, prob.tspan, new_pars)
+        end
+    else
+        stochastic = false
+        new_pars = prob.p
+        new_conds = prob.u0
+        if prob.p[(:σ |> p_find)[1]] > 0.0
+            stochastic = true
+        end
+        for (idx, var) in enumerate(pars)
+            conds = var |> u_find
+            pars = var |> p_find
+            if length(conds) > 0
+                new_conds[conds[1]] = rand(dists[idx])
+            elseif length(pars) > 0
+                new_pars[pars[1]] = rand(dists[idx])
+            end
+        end
+
+        if stochastic
+            return SDEProblem(BurstModel, noise, new_conds, prob.tspan, new_pars)
+        else
+            return ODEProblem(BurstModel, new_conds, prob.tspan, new_pars)
+        end
+    end
+end
 
 #Reading and writing JSON files
 """

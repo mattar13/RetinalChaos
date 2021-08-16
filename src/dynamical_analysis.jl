@@ -1,45 +1,4 @@
-"""
-This function is a work of progress. Things I want it to include
-- Using the symbols to declare the changing parameter or initial condition
-- Changing multiple parameters at once
-"""
 
-function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars, verbose = false)
-    if run_func_on == :pars
-        if verbose
-            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
-        end
-        prob.p[idx] = val_rng[i]
-        prob
-    elseif run_func_on == :conds
-        if verbose
-            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
-        end
-        prob.u0[idx] = val_rng[i]
-        prob
-    end
-end
-
-function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose = false)
-    idx_cond = sym |> u_find
-    idx_par = sym |> p_find
-
-    if !isnothing(idx_par) 
-        if verbose
-            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
-        end
-        prob.p[idx_par] = val_rng[i]
-    end    
-    
-    if !isnothing(idx_cond)
-        if verbose
-            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
-        end
-        prob.u0[idx_cond] = val_rng[i]
-    end
-    
-    prob
-end
 
 function phase_plane(prob::ODEProblem; vars::Array{Symbol, 1} = [:v, :n], xlims = (-90.0, 10.0), ylims = (-0.10, 5.0), resolution = 100)
     var_idx = [(vars[1]|>u_find), (vars[2]|>u_find)]
