@@ -256,12 +256,6 @@ function save_solution(sol, save_path::String; mode = :bson)
     if mode == :bson
         bson("$(save_path)\\sol_data.bson", 
             Dict(
-                #:sol_prob_f => sol.prob.f, 
-                #:sol_prob_g => sol.prob.g, 
-                #:sol_prob_u0 => sol.prob.u0, 
-                #:sol_prob_p => sol.prob.p, 
-                #:sol_prob_tspan => sol.prob.tspan,  
-                #:sol_alg => sol.alg, 
                 :sol_t => sol.t, 
                 )
         )
