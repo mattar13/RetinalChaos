@@ -79,6 +79,54 @@ function monte_func(prob, i, repeat; pars = :all, dists = [Normal()])
     end
 end
 
+
+"""
+Current_Clamp experiment
+
+In order to conduct one of these experiments we can set up an epoch table. 
+"""
+function IC_callback(step_begin, duration, level; duration_delta = 0, level_delta = 0, give_warning = false)
+    if duration_delta == 0 && level_delta == 0 #We are only doing one duration vs a tar_conds
+        condition(u, t, integrator) = step_begin < t < step_begin + duration
+        affect!(integrator) = integrator.p[:I_app |> p_find] = level
+        cb = DiscreteCallback(condition, affect!)
+        return cb
+    elseif duration_delta != 0 && level_delta == 0
+        #These callbacks will be called in an ensemble solution
+        if give_warning
+            @warn begin
+                "These solutions will instead return an ensemble solution"
+            end
+        end
+        condition(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
+        affect!(integrator) = integrator.p[:I_app |> p_find] = level
+        cb(i) = DiscreteCallback((u, t, integrator) -> condition(u, t, integrator,  i), affect!)
+        return cb
+    elseif duration_delta != 0 && level_delta != 0
+        if give_warning
+            @warn begin
+                "These solutions will only work with an ensemble solution"
+            end
+        end
+        condition(u, t, integrator) = step_begin < t < step_begin + duration
+        affect!(integrator, i) = integrator.p[:I_app |> p_find] = level + level_delta*i
+        cb(i) = DiscreteCallback(condition, integrator -> affect!(integrator, i))
+        return cb
+    else
+        if give_warning
+            @warn begin
+                "These solutions will only work with an ensemble solution"
+            end
+        end
+        condition(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
+        affect!(integrator, i) = integrator.p[:I_app |> p_find] = level + (level_delta*i)
+        cb(i) = DiscreteCallback(
+            (u, t, integrator) -> condition(u, t, integrator,  i), 
+            integrator -> affect!(integrator, i)
+            )
+        return cb
+    end    
+end
 #Reading and writing JSON files
 """
 This file writes either a named tuple or a dictionary into a JSON file
