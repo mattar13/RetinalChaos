@@ -229,155 +229,13 @@ function convert_to_cpu(model::RODESolution)
     return RetinalChaos.DiffEqBase.build_solution(prob_remade, alg, t, u, W=W)
 end
 
-#eventually we will need to go through this and redit load and save
-function load_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
-            reset_model::Bool = false, gpu::Bool = true, version = :gACh,
-            abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-            animate_solution = true, animate_dt = 60.0, 
-            model_file_type = :jld2,
-            notify = false #set this to true in order to get phone notifications
-        ) where T <: Real
-    
-    if reset_model && isdir(file_root)
-        rm(file_root, force = true, recursive = true)
-    end
+"""
+This function saves the solution. 
+In order to save the solution correctly, ensure to run: 
+    julia> sol = sol |> convert_to_cpu
+    julia> save_solution(sol, save_path)
 
-    if !isdir(file_root)
-        println("[$(now())]: Making experiment file")
-        mkdir(file_root)
-    end
-
-    #We first check to see if there is a param loaded
-    if isfile("$(file_root)\\params.json")
-        p_dict = read_JSON("$(file_root)\\params.json", is_type = Dict{Symbol, T}) 
-        p = p_dict |> extract_dict
-    else
-        #In this scenario we need to use a new dictionary
-        println("[$(now())]: Writing a new dictionary")
-        p = p_dict |> extract_dict
-
-        write_JSON(p_dict, "$(file_root)\\params.json") #write the parameters to save for later
-        write_JSON(u_dict, "$(file_root)\\iconds.json") #write the 
-    end
-    
-    if isfile("$(file_root)\\conds.bson") 
-        BSON.@load "$(file_root)\\conds.bson" warmup #This is the BSON file way
-        if gpu
-            u0 = warmup |> cu
-        else
-            u0 = warmup
-        end
-        #Construct the model and ODE problem
-        net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-        NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
-        
-        if model_file_type == :jld2 && !isfile("$(file_root)\\conds.jld2") #In this case we want to make a backup of the file
-            JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
-        end
-    elseif isfile("$(file_root)\\conds.jld2")
-        JLD2.@load "$(file_root)\\conds.jld2" warmup #Load the solution from the JSON file
-        if gpu
-            u0 = warmup |> cu
-        else
-            u0 = warmup
-        end
-        #Construct the model and ODE problem
-        net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-        NetProb = SDEProblem(net, noise, u0, (0f0 , 0f1), p)
-
-        if model_file_type == :bson && !isfile("$(file_root)\\conds.bson") #In this case we want to make a backup of the file
-            BSON.@save "$(file_root)\\conds.bson" warmup #as a BSON file
-        end 
-    else
-        println("[$(now())]: Model loaded from new")
-        #Load the initial conditions
-        if gpu
-            u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
-        else
-            u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny])
-        end
-
-        #Load the model and ODE interface
-        net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-        NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p)
-
-        #Warmup the problem
-        print("[$(now())]: Warming up the solution... ")
-        @time sol = solve(NetProb, SOSRI(), 
-                abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-                progress = true, progress_steps = 1, 
-                save_everystep = false
-            )
-        
-        #Save the warmed up solution
-        warmup = sol[end]|>Array #Keep this one as the original 
-        if model_file_type == :bson
-            BSON.@save "$(file_root)\\conds.bson" warmup #This is the BSON file way
-        elseif model_file_type == :jld2
-            JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
-        end
-
-        warmup = sol[end] #Convert this one to CPU
-        if gpu
-            sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-        end
-    end
-    if notify
-        BotNotify("{Waves} Model warmup solution loaded")
-    end
-    
-    #Now we want to test whether or not we have run the simulation
-    if isfile("$(file_root)\\sol.bson") #Always try to load BSON first
-        BSON.@load "$(file_root)\\sol.bson" sol #This is the BSON file way
-        if model_file_type == :jld2 && !isfile("$(file_root)\\sol.jld2") #This means we have to backup the file
-            JLD2.@save "$(file_root)\\sol.jld2" sol #This is the BSON file way   
-        end
-    elseif isfile("$(file_root)\\sol.jld2")
-        #Load the solution from the JSON file
-        JLD2.@load "$(file_root)\\sol.jld2" sol #This is only here to try to save the older files
-        if model_file_type == :bson && !isfile("$(file_root)\\sol.bson")
-            BSON.@save "$(file_root)\\sol.bson" sol #This is the BSON file way            
-        end
-    else
-        print("[$(now())]: Running the model... ")
-        NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p)
-        #Run the solution to fruition
-        @time sol = solve(NetProb, SOSRI(), 
-            abstol = abstol, reltol = reltol, maxiters = maxiters,
-            save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-            progress = true, progress_steps = 1
-        )
-
-        print("[$(now())]: Saving the simulation...")
-        sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
-        if model_file_type == :bson
-            BSON.@save "$(file_root)\\sol.bson" sol #This is the BSON file way
-        elseif model_file_type == :jld2
-            JLD2.@save "$(file_root)\\sol.jld2" sol #This is only here to try to save the older files
-        end
-        println("Completed")
-
-    end
-    if notify
-        BotNotify("{Waves} Model solution loaded")
-    end
-
-    if !isfile("$(file_root)\\animation.gif") && animate_solution
-        println("[$(now())]: Animating simulation...")
-        anim = @animate for t = 1.0:animate_dt:sol.t[end]
-            frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
-            heatmap(frame_i, ratio = :equal, grid = false,
-                    xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
-                    c = :curl, clims = (-70.0, 0.0),
-            )
-        end
-        gif(anim, "$(file_root)\\animation.gif", fps = 1000.0/animate_dt)
-    end
-
-    #We want to return the solution
-    return sol
-end 
-
+"""
 function save_solution(sol, save_path::String; mode = :bson)
     if mode == :bson
         bson("$(save_path)\\sol_data.bson", 
@@ -417,3 +275,84 @@ function load_solution(load_path)
     sol_prob = SDEProblem(net, noise, sol_u[1], (0f0 , p_dict[:t_warm]), p0)
     SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
 end
+
+"""
+This function runs the model using the indicated parameters
+
+"""
+function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
+            gpu::Bool = true, version = :gACh,
+            abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
+            animate_solution = true, animate_dt = 60.0, 
+            model_file_type = :bson,
+            notify = false #set this to true in order to get phone notifications
+        ) where T <: Real
+    
+    #First write the parameters to the root
+    write_JSON(p_dict, "$(file_root)\\params.json") #write the parameters to save for later
+    write_JSON(u_dict, "$(file_root)\\iconds.json") #write the 
+    
+    #Load the network interface
+    if gpu
+        u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
+    else
+        u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny])
+    end
+
+    #Load the model and ODE interface
+    net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
+    NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p)
+
+    print("[$(now())]: Warming up the solution... ")
+    @time sol = solve(NetProb, SOSRI(), 
+        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+        progress = true, progress_steps = 1, 
+        save_everystep = false
+    )
+
+    warmup = sol[end]|>Array #Keep this one as the original 
+    #Save the warmed up solution
+    if model_file_type == :bson #In this case we want to make a backup of the file
+        BSON.@save "$(file_root)\\conds.bson" warmup #as a BSON file
+    elseif model_file_type == :jld2  #In this case we want to make a backup of the file
+        JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
+    end
+
+    if notify
+        BotNotify("{Waves} Model warmup solution loaded")
+    end
+    
+    #Now we want to run the actual simulation
+    print("[$(now())]: Running the model... ")
+    NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p)
+    #Run the solution to fruition
+    @time sol = solve(NetProb, SOSRI(), 
+        abstol = abstol, reltol = reltol, maxiters = maxiters,
+        save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
+        progress = true, progress_steps = 1
+    )
+
+    print("[$(now())]: Saving the simulation...")
+    sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
+    save_solution(sol, file_root; mode = model_file_type) 
+    println("Completed")
+
+    if notify
+        BotNotify("{Waves} Model solution loaded")
+    end
+
+    if animate_solution
+        println("[$(now())]: Animating simulation...")
+        anim = @animate for t = 1.0:animate_dt:sol.t[end]
+            frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
+            heatmap(frame_i, ratio = :equal, grid = false,
+                    xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
+                    c = :curl, clims = (-70.0, 0.0),
+            )
+        end
+        gif(anim, "$(file_root)\\animation.gif", fps = 1000.0/animate_dt)
+    end
+
+    #We want to return the solution
+    return sol
+end 
