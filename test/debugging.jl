@@ -47,8 +47,10 @@ plot!([step_begin], st = :vline)
 plot!([step_begin+duration], st = :vline)
 plot!([step_begin2], st = :vline)
 plot!([step_begin2+duration2], st = :vline)
+
+
 #%%
-load_path = "E:\\Data\\Modelling\\mu_25\\"
+load_path = "F:\\Data\\Modelling\\mu_0\\"
 p_dict = read_JSON("$(load_path)\\params.json", is_type = Dict{Symbol, Float32})
 u_dict = read_JSON("$(load_path)\\iconds.json", is_type = Dict{Symbol, Float32})
 sol = load_model(load_path, p_dict, u_dict, gpu = false)
@@ -56,19 +58,3 @@ sol = load_model(load_path, p_dict, u_dict, gpu = false)
 RetinalChaos.save_solution(sol, load_path)
 #%%
 sol_loaded = RetinalChaos.load_solution(load_path)
-#%%
-println("[$(now())]: Animating simulation...")
-anim = @animate for t = 1.0:100.0:sol.t[end]
-     println(t)
-     frame_i = reshape(sol_loaded(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
-     heatmap(frame_i, ratio = :equal, grid = false,
-          xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
-          c = :curl, clims = (-70.0, 0.0),
-     )
-end
-#%%
-gif(anim, "animation.gif", fps = 1000.0/100.0)
-
-#%%
-timestamps = BSON.load("$(load_path)\\timestamps.bson") #Access timestamps
-data = BSON.load("$(load_path)\\data.bson") #Access Thresholds
