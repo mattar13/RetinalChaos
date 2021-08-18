@@ -17,9 +17,12 @@ RetinalChaos.CUDA.allowscalar(false)
 
 # Load the needed files to run the model
 param_root = RetinalChaos.param_path
-p_dict = read_JSON("$(param_root)\\params.json", is_type = Dict{Symbol, Float32})
+#params/params.json
+p_dict = read_JSON("params/params.json", is_type = Dict{Symbol, Float32})
 p_dict[:t_run] = 100e3 #Extend the simulation time so we can find longer bursts
-u_dict = read_JSON("$(param_root)\\conds.json", is_type = Dict{Symbol, Float32})
+u_dict = read_JSON("params/conds.json", is_type = Dict{Symbol, Float32})
+save_path = "/home/john/Documents/modelling/mu_18"
+NetSol = run_model(save_path, p_dict, u_dict)
 
 #%%
 #for mu in [0.0, 0.125, 0.25, 0.50]
