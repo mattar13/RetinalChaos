@@ -237,7 +237,9 @@ In order to save the solution correctly, ensure to run:
     julia> save_solution(sol, save_path)
 
 """
-function save_solution(sol_t::AbstractArray, sol_u::AbstractArray, save_path::String; name = "sol", partitions = 1, mode = :bson)
+function save_solution(sol_t::Vector{T}, sol_u::Array{Vector{T}, 1}, save_path::String; 
+    name = "sol", partitions = 1, mode = :bson
+    ) where T <: Real
     
     if mode == :bson
         if partitions == -1 #This means data is getting appended
@@ -264,11 +266,11 @@ function save_solution(sol_t::AbstractArray, sol_u::AbstractArray, save_path::St
             partition_idxs = round.(Int64, LinRange(1, length(sol_t), partitions+1))
             for idx in 1:length(partition_idxs)-1
                 if idx == 1
-                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol_t[1:partition_idxs[idx+1]]))
-                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol_u[1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:t => sol_t[1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:u => sol_u[1:partition_idxs[idx+1]]))
                 else
-                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol_t[partition_idxs[idx]+1:partition_idxs[idx+1]]))
-                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol_u[partition_idxs[idx]+1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:t => sol_t[partition_idxs[idx]+1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:u => sol_u[partition_idxs[idx]+1:partition_idxs[idx+1]]))
                 end
             end
         end
@@ -278,7 +280,7 @@ function save_solution(sol_t::AbstractArray, sol_u::AbstractArray, save_path::St
 end
 
 save_solution(sol, save_path::String; kwargs...) = save_solution(sol.t, sol.u; karwgs...)
-
+save_solution(res::DiffEqCallbacks.SavedValues{Float64, Vector{Float64}}, save_path::String; kwargs...) = save_solution(res.t, res.saveval, save_path; kwargs...)
 
 function load_solution(load_path)
     file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(load_path)\\file_contents.json")
@@ -311,8 +313,7 @@ This function runs the model using the indicated parameters
 function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
         gpu::Bool = true, version::Symbol = :gACh,
         abstol::Float64 = 2e-2, reltol::Float64 = 0.2, maxiters::Float64 = 1e7,
-        save_sol = false, save_partitions = 1,
-        animate_solution = true, animate_dt = 60.0, 
+        save_sol = false, save_partitions = 1, 
         model_file_type = :bson, 
         iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
     ) where T <: Real
@@ -368,26 +369,21 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
         save_everystep = false, 
         progress = true, progress_steps = 1
     )
-    #sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
-    if save_sol
-        print("[$(now())]: Saving the simulation...")
-        save_solution(results.t, results.saveval, file_root; mode = model_file_type, partitions = save_partitions) 
-        println("Completed")
-    end
-
-    sol = nothing; GC.gc(true); CUDA.reclaim()
-    if animate_solution
-        println("[$(now())]: Animating simulation...")
-        anim = @animate for t = 1.0:animate_dt:sol.t[end]
-            frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
-            heatmap(frame_i, ratio = :equal, grid = false,
-                    xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
-                    c = :curl, clims = (-70.0, 0.0),
-            )
-        end
-        gif(anim, "$(file_root)\\animation.gif", fps = 1000.0/animate_dt)
-    end
-
     #We want to return the solution
     return results
 end 
+
+function animate_solultion(sol::RODESolution, save_path::String;
+    animate_dt = 60.0 
+    )
+    sol = SciMLBase.build_solution(NetProb, SOSRI(), results.t, results.saveval) #we can use this to build a solution without GPU
+    println("[$(now())]: Animating simulation...")
+    anim = @animate for t = 1.0:animate_dt:sol.t[end]
+        frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
+        heatmap(frame_i, ratio = :equal, grid = false,
+                xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
+                c = :curl, clims = (-70.0, 0.0),
+        )
+    end
+    gif(anim, "$(save_path)\\animation.gif", fps = 1000.0/animate_dt)
+end
