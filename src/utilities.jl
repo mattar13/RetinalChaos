@@ -326,7 +326,7 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     
     #Now we want to run the actual simulation
     print("[$(now())]: Running the model... ")
-    NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p)
+    NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
     #Run the solution to fruition
     @time sol = solve(NetProb, SOSRI(), 
         abstol = abstol, reltol = reltol, maxiters = maxiters,
