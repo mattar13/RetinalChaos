@@ -277,6 +277,46 @@ function save_solution(sol, save_path::String; name = "sol", partitions = 1, mod
     end
 end
 
+function save_solution(sol_t::AbstractArray, sol_u::AbstractArray, save_path::String; name = "sol", partitions = 1, mode = :bson)
+    
+    if mode == :bson
+        if partitions == -1 #This means data is getting appended
+            #check to see if a file_contents file exists
+            file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(save_path)\\file_contents.json")
+            push!(file_contents[:t], "$(name)_t.bson")
+            push!(file_contents[:u], "$(name)_u.bson")
+            write_JSON(file_contents, "$(save_path)\\file_contents.json")
+            bson("$(save_path)\\$(name)_t.bson", Dict(:t => sol_t))
+            bson("$(save_path)\\$(name)_u.bson", Dict(:u => sol_u))
+        elseif partitions == 1
+            file_contents = Dict(:t => ["$(name)_t.bson"], :u => ["$(name)_u.bson"])
+            #write the details to a 
+            write_JSON(file_contents, "$(save_path)\\file_contents.json")
+            bson("$(save_path)\\$(name)_t.bson", Dict(:t => sol_t))
+            bson("$(save_path)\\$(name)_u.bson", Dict(:u => sol_u))
+        else
+            file_contents = Dict(:t => ["$(name)1_t.bson"], :u => ["$(name)1_u.bson"])
+            for i in 2:partitions
+                push!(file_contents[:t], "$(name)$(i)_t.bson")
+                push!(file_contents[:u], "$(name)$(i)_u.bson")
+            end
+            write_JSON(file_contents, "$(save_path)\\file_contents.json")
+            partition_idxs = round.(Int64, LinRange(1, length(sol_t), partitions+1))
+            for idx in 1:length(partition_idxs)-1
+                if idx == 1
+                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol_t[1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol_u[1:partition_idxs[idx+1]]))
+                else
+                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol_t[partition_idxs[idx]+1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol_u[partition_idxs[idx]+1:partition_idxs[idx+1]]))
+                end
+            end
+        end
+    else
+        println("TODO implement JLD2")
+    end
+end
+
 function load_solution(load_path)
     file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(load_path)\\file_contents.json")
     n_partitions = length(file_contents[:u])
@@ -363,7 +403,37 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
             println("Completed")
         end
     else
-        #for i in iterations
+        u_start = warmup
+        println(u_start |> size)
+        t_0 = 0f0
+        t_end = p_dict[:t_run]
+        for i in 1:iterations
+            print("[$(now())]: Running iteration $i of the model... ")
+            NetProb = SDEProblem(net, noise, u_start, (t_0 , t_end), p0)
+            #Run the solution to fruition
+            @time sol = solve(NetProb, SOSRI(), 
+                abstol = abstol, reltol = reltol, maxiters = maxiters,
+                #save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
+                progress = true, progress_steps = 1
+            )
+            sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
+            if save_sol
+                print("[$(now())]: Saving the simulation...")
+                if i == 1
+                    save_solution(sol, file_root; mode = model_file_type)
+                else
+                    save_solution(sol, file_root; mode = model_file_type, name = "sol$i", partitions = -1)
+                end
+                println("Completed")
+            end
+            t_0 += p_dict[:t_run]+1
+            t_end += p_dict[:t_run]
+            u_start = reshape(sol[end], size(warmup))
+            println(u_start |> size)
+            println("moving solution $(p_dict[:t_run]) forward")
+            #finally clear the memory 
+            sol = nothing; GC.gc(true); CUDA.reclaim()
+        end
     end
     
     if animate_solution
