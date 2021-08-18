@@ -318,9 +318,9 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
         JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
     end
 
-    if notify
-        BotNotify("{Waves} Model warmup solution loaded")
-    end
+    #if notify
+    #    BotNotify("{Waves} Model warmup solution loaded")
+    #end
     
     #Now we want to run the actual simulation
     print("[$(now())]: Running the model... ")
@@ -337,9 +337,9 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     save_solution(sol, file_root; mode = model_file_type) 
     println("Completed")
 
-    if notify
-        BotNotify("{Waves} Model solution loaded")
-    end
+    #if notify
+    #    BotNotify("{Waves} Model solution loaded")
+    #end
 
     if animate_solution
         println("[$(now())]: Animating simulation...")
