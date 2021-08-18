@@ -240,7 +240,8 @@ function save_solution(sol, save_path::String; mode = :bson)
     if mode == :bson
         bson("$(save_path)\\sol_data.bson", 
             Dict(
-                :sol_t => sol.t, 
+                :sol_t => sol.t,
+                #:sol_mu => sol.prob.f.f.null 
                 )
         )
         try #This will fail if the file is too big
@@ -312,7 +313,7 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
         save_everystep = false
     )
 
-    warmup = sol[end]|>Array #Keep this one as the original 
+    warmup = sol[end] #Keep this one as the original 
     #Save the warmed up solution
     if model_file_type == :bson #In this case we want to make a backup of the file
         BSON.@save "$(file_root)\\conds.bson" warmup #as a BSON file
