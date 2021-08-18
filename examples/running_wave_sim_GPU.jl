@@ -3,7 +3,7 @@ using RetinalChaos
 using Dates, Plots, JLD2
 using StatsBase, StatsPlots
 using CUDA, DifferentialEquations, ResettableStacks, RandomNumbers, LinearAlgebra
-using TimerOutputs #This is for benchmarking
+#using TimerOutputs #This is for benchmarking
 #Configure the logger
 using Logging: global_logger
 using TerminalLoggers: TerminalLogger
@@ -16,9 +16,10 @@ dotenv("D:\\TelegramAccessEnv\\.env")
 RetinalChaos.CUDA.allowscalar(false)
 
 # Load the needed files to run the model
-p_dict = read_JSON("params\\params.json", is_type = Dict{Symbol, Float32})
+param_root = RetinalChaos.param_path
+p_dict = read_JSON("$(param_root)\\params.json", is_type = Dict{Symbol, Float32})
 p_dict[:t_run] = 100e3 #Extend the simulation time so we can find longer bursts
-u_dict = read_JSON("params\\conds.json", is_type = Dict{Symbol, Float32})
+u_dict = read_JSON("$(param_root)\\conds.json", is_type = Dict{Symbol, Float32})
 
 #%%
 #for mu in [0.0, 0.125, 0.25, 0.50]
@@ -27,7 +28,7 @@ for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extractio
         BotNotify("{Waves} Running simulation for mu = $mu")
         save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
         p_dict[:μ] = mu
-        NetSol = load_model(save_path, p_dict, u_dict)
+        NetSol = run_model(save_path, p_dict, u_dict)
         timestamps, data = timeseries_analysis(save_path, NetSol, reltol = 1e-2)
         #Maybe we are running out of GPU memory and need to reset here
         NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
