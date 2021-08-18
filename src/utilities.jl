@@ -238,6 +238,7 @@ In order to save the solution correctly, ensure to run:
 
 """
 function save_solution(sol, save_path::String; name = "sol", partitions = 1, mode = :bson)
+    
     if mode == :bson
         if partitions == 1
             file_contents = Dict(:t => ["$(name)_t.bson"], :u => ["$(name)_u.bson"])
@@ -246,16 +247,21 @@ function save_solution(sol, save_path::String; name = "sol", partitions = 1, mod
             bson("$(save_path)\\$(name)_t.bson", Dict(:t => sol.t))
             bson("$(save_path)\\$(name)_u.bson", Dict(:u => sol.u))
         else
-            file_contents = Dict(:sol_t => ["$(name)1_t_.bson"], :sol_u => ["$(name)1_u.bson"])
+            file_contents = Dict(:t => ["$(name)1_t.bson"], :u => ["$(name)1_u.bson"])
             for i in 2:partitions
                 push!(file_contents[:t], "$(name)$(i)_t.bson")
                 push!(file_contents[:u], "$(name)$(i)_u.bson")
             end
             write_JSON(file_contents, "$(save_path)\\file_contents.json")
-            partition_idxs = LinRange(1, length(t), partitions+1)
+            partition_idxs = round.(Int64, LinRange(1, length(sol.t), partitions+1))
             for idx in 1:length(partition_idxs)-1
-                bson("$(save_path)\\$(name)_t.bson", Dict(:sol_t => sol.t[partition_idxs[idx]:partition_idxs[idx+1]]))
-                bson("$(save_path)\\$(name)_u.bson", Dict(:sol_u => sol.u[partition_idxs[idx]:partition_idxs[idx+1]]))
+                if idx == 1
+                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol.t[1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol.u[1:partition_idxs[idx+1]]))
+                else
+                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol.t[partition_idxs[idx]+1:partition_idxs[idx+1]]))
+                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol.u[partition_idxs[idx]+1:partition_idxs[idx+1]]))
+                end
             end
         end
     else
@@ -264,20 +270,34 @@ function save_solution(sol, save_path::String; name = "sol", partitions = 1, mod
 end
 
 function load_solution(load_path)
-    sol_t = BSON.load("$(load_path)\\sol_data.bson")[:sol_t]
-    sol_u = try 
-        BSON.load("$(load_path)\\sol_array.bson")[:sol_u]
-    catch
-        println("Loading method 2")
-        sol_array_pt1 = BSON.load("$(load_path)\\sol_array_pt1.bson")[:sol_u]
-        sol_array_pt2 = BSON.load("$(load_path)\\sol_array_pt2.bson")[:sol_u]
-        vcat(sol_array_pt1, sol_array_pt2)
+    file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(load_path)\\file_contents.json")
+    n_partitions = length(file_contents[:u])
+    if n_partitions == 1 #there are no partitions in the file
+        sol_t = BSON.load("$(load_path)\\$(file_contents[:t][1])")[:sol_t]
+        sol_u = BSON.load("$(load_path)\\$(file_contents[:u][1])")[:sol_u]
+    else
+        sol_t_arr  = Float64[]
+        sol_u_arr = Vector{Vector{Float64}}()
+        for i in 1:n_partitions
+            sol_t = BSON.load("$(load_path)\\$(file_contents[:t][i])")[:sol_t]
+            sol_u = BSON.load("$(load_path)\\$(file_contents[:u][i])")[:sol_u]
+            push!(sol_t_arr, sol_t...)
+            push!(sol_u_arr, sol_u...)
+            println(size(sol_u_arr))
+        end
     end
-    p_dict = read_JSON(Dict{Symbol, Float32}, "$(load_path)\\params.json")
-    p0 = p_dict |> extract_dict
-    net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ])
-    sol_prob = SDEProblem(net, noise, sol_u[1], (0f0 , p_dict[:t_warm]), p0)
-    SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
+
+    #catch
+    #    println("Loading method 2")
+    #    sol_array_pt1 = BSON.load("$(load_path)\\sol_array_pt1.bson")[:sol_u]
+    #    sol_array_pt2 = BSON.load("$(load_path)\\sol_array_pt2.bson")[:sol_u]
+    #    vcat(sol_array_pt1, sol_array_pt2)
+    #end
+    #p_dict = read_JSON(Dict{Symbol, Float32}, "$(load_path)\\params.json")
+    #p0 = p_dict |> extract_dict
+    #net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ])
+    #sol_prob = SDEProblem(net, noise, sol_u[1], (0f0 , p_dict[:t_warm]), p0)
+    #SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
 end
 
 """
@@ -287,9 +307,10 @@ This function runs the model using the indicated parameters
 function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
             gpu::Bool = true, version = :gACh,
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
+            save_sol = true, save_partitions = 1,
             animate_solution = true, animate_dt = 60.0, 
             model_file_type = :bson, 
-            iterations = 5 #this option sets the model up into sections so that we can break up the saving of the solutions
+            iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
         ) where T <: Real
     
     #First write the parameters to the root
@@ -324,10 +345,6 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
         JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
     end
 
-    #if notify
-    #    BotNotify("{Waves} Model warmup solution loaded")
-    #end
-    
     #Now we want to run the actual simulation
     if iterations == 1
         print("[$(now())]: Running the model... ")
@@ -338,19 +355,16 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
             save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
             progress = true, progress_steps = 1
         )
+        sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
+        if save_sol
+            print("[$(now())]: Saving the simulation...")
+            save_solution(sol, file_root; mode = model_file_type, partitions = save_partitions) 
+            println("Completed")
+        end
     else
         #for i in iterations
     end
-
-    print("[$(now())]: Saving the simulation...")
-    sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
-    save_solution(sol, file_root; mode = model_file_type) 
-    println("Completed")
-
-    #if notify
-    #    BotNotify("{Waves} Model solution loaded")
-    #end
-
+    
     if animate_solution
         println("[$(now())]: Animating simulation...")
         anim = @animate for t = 1.0:animate_dt:sol.t[end]
