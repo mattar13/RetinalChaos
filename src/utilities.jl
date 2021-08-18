@@ -237,9 +237,19 @@ In order to save the solution correctly, ensure to run:
     julia> save_solution(sol, save_path)
 
 """
-function save_solution(sol, save_path::String; name = "sol", mode = :bson)
+function save_solution(sol, save_path::String; name = "sol", partitions = 1, mode = :bson)
     if mode == :bson
-        details = Dict()
+        if partitions == 1
+            details = Dict(:sol_t => "sol_t.bson", :sol_u => "sol_u.bson")
+            write_JSON("$(save_path)\\file_contents.json", details)
+        else
+            details = Dict(:sol_t => ["sol1_t_.bson"], :sol_u => ["sol1_u.bson"])
+            for i in 2:partitions
+                push!(details[:sol_t], "sol$(i)_t.bson")
+                push!(details[:sol_u], "sol$(i)_u.bson")
+            end
+            write_JSON("$(save_path)\\file_contents.json", details)
+        end
         bson("$(save_path)\\sol_data.bson", 
             Dict(
                 :sol_t => sol.t,
