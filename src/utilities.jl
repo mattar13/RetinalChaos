@@ -141,14 +141,15 @@ end
 """
 This function reads JSON files into whatever type is_type is.
 """
-function read_JSON(name_file::String; is_type = Dict{Symbol, Float64})
+function read_JSON(::Type{T}, name_file::String) where T <: Dict
     nt = nothing
     open(name_file, "r") do f
-        nt = JSON2.read(f, is_type)
+        nt = JSON2.read(f, T)
     end
     nt
 end
 
+read_JSON(name_file::String) = read_JSON(Dict{Symbol, Float64}, name_file)
 """
 Extract a parameter, condition dictionary
 USAGE:
@@ -236,8 +237,9 @@ In order to save the solution correctly, ensure to run:
     julia> save_solution(sol, save_path)
 
 """
-function save_solution(sol, save_path::String; mode = :bson)
+function save_solution(sol, save_path::String; name = "sol", mode = :bson)
     if mode == :bson
+        details = Dict()
         bson("$(save_path)\\sol_data.bson", 
             Dict(
                 :sol_t => sol.t,
@@ -270,7 +272,7 @@ function load_solution(load_path)
         sol_array_pt2 = BSON.load("$(load_path)\\sol_array_pt2.bson")[:sol_u]
         vcat(sol_array_pt1, sol_array_pt2)
     end
-    p_dict = read_JSON("$(load_path)\\params.json", is_type = Dict{Symbol, Float32})
+    p_dict = read_JSON(Dict{Symbol, Float32}, "$(load_path)\\params.json")
     p0 = p_dict |> extract_dict
     net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ])
     sol_prob = SDEProblem(net, noise, sol_u[1], (0f0 , p_dict[:t_warm]), p0)
@@ -285,8 +287,8 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
             gpu::Bool = true, version = :gACh,
             abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
             animate_solution = true, animate_dt = 60.0, 
-            model_file_type = :bson,
-            notify = false #set this to true in order to get phone notifications
+            model_file_type = :bson, 
+            iterations = 5 #this option sets the model up into sections so that we can break up the saving of the solutions
         ) where T <: Real
     
     #First write the parameters to the root
@@ -326,14 +328,18 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     #end
     
     #Now we want to run the actual simulation
-    print("[$(now())]: Running the model... ")
-    NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
-    #Run the solution to fruition
-    @time sol = solve(NetProb, SOSRI(), 
-        abstol = abstol, reltol = reltol, maxiters = maxiters,
-        save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-        progress = true, progress_steps = 1
-    )
+    if iterations == 1
+        print("[$(now())]: Running the model... ")
+        NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
+        #Run the solution to fruition
+        @time sol = solve(NetProb, SOSRI(), 
+            abstol = abstol, reltol = reltol, maxiters = maxiters,
+            save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
+            progress = true, progress_steps = 1
+        )
+    else
+        #for i in iterations
+    end
 
     print("[$(now())]: Saving the simulation...")
     sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
