@@ -242,7 +242,7 @@ function save_solution(sol, save_path::String; name = "sol", partitions = 1, mod
     if mode == :bson
         if partitions == -1 #This means data is getting appended
             #check to see if a file_contents file exists
-            file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(load_path)\\file_contents.json")
+            file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(save_path)\\file_contents.json")
             push!(file_contents[:t], "$(name)_t.bson")
             push!(file_contents[:u], "$(name)_u.bson")
             write_JSON(file_contents, "$(save_path)\\file_contents.json")
@@ -281,14 +281,14 @@ function load_solution(load_path)
     file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(load_path)\\file_contents.json")
     n_partitions = length(file_contents[:u])
     if n_partitions == 1 #there are no partitions in the file
-        sol_t = BSON.load("$(load_path)\\$(file_contents[:t][1])")[:sol_t]
-        sol_u = BSON.load("$(load_path)\\$(file_contents[:u][1])")[:sol_u]
+        sol_t = BSON.load("$(load_path)\\$(file_contents[:t][1])")[:t]
+        sol_u = BSON.load("$(load_path)\\$(file_contents[:u][1])")[:u]
     else
         sol_t = Float64[]
         sol_u = Vector{Vector{Float64}}()
         for i in 1:n_partitions
-            sol_ti = BSON.load("$(load_path)\\$(file_contents[:t][i])")[:sol_t]
-            sol_ui = BSON.load("$(load_path)\\$(file_contents[:u][i])")[:sol_u]
+            sol_ti = BSON.load("$(load_path)\\$(file_contents[:t][i])")[:t]
+            sol_ui = BSON.load("$(load_path)\\$(file_contents[:u][i])")[:u]
             push!(sol_t, sol_ti...)
             push!(sol_u, sol_ui...)
         end

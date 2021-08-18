@@ -20,23 +20,16 @@ param_root = RetinalChaos.param_path
 #params/params.json
 p_dict = read_JSON(Dict{Symbol, Float32}, "params/params.json")
 p_dict[:t_warm] = 1000.0
-p_dict[:t_run] = 1000.0 #Extend the simulation time so we can find longer bursts
+p_dict[:t_run] = 10e3 #Extend the simulation time so we can find longer bursts
 p_dict[:μ] = 0.18
 u_dict = read_JSON(Dict{Symbol, Float32}, "params/conds.json")
 save_path = "/home/john/Documents/modelling/mu_18/"
-NetSol = run_model(save_path, p_dict, u_dict)
-#%%
-t = collect(1:1000) .* 5.0e-3
+NetSol = run_model(save_path, p_dict, u_dict, animate_solution = false)
+#%% Load the model
+save_solution(NetSol1, save_path, name = "test")
+save_solution(NetSol2, save_path, name = "test2", partitions = -1)
+sol_loaded = load_solution(save_path)
 
-LinRange(1, length(t), 4)[1:end-1]
-
-
-file_contents = Dict(
-    :sol_t => ["sol_t.bson"],
-    :sol_u => ["sol_u.bson"]
-)
-write_JSON(file_contents, "file_contents.json")
-read_JSON(Dict{String, Array}, "file_contents.json")
 #%%
 #for mu in [0.0, 0.125, 0.25, 0.50]
 for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
