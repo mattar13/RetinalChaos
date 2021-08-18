@@ -131,9 +131,9 @@ end
 """
 This file writes either a named tuple or a dictionary into a JSON file
 """
-function write_JSON(data, name_file)
+function write_JSON(data::T, filename::String) where T
     string_data = JSON2.write(data)
-    open(name_file, "w") do f
+    open(filename, "w") do f
         write(f, string_data)
     end
 end
@@ -240,32 +240,23 @@ In order to save the solution correctly, ensure to run:
 function save_solution(sol, save_path::String; name = "sol", partitions = 1, mode = :bson)
     if mode == :bson
         if partitions == 1
-            details = Dict(:sol_t => "sol_t.bson", :sol_u => "sol_u.bson")
-            write_JSON("$(save_path)\\file_contents.json", details)
+            file_contents = Dict(:t => ["$(name)_t.bson"], :u => ["$(name)_u.bson"])
+            #write the details to a 
+            write_JSON(file_contents, "$(save_path)\\file_contents.json")
+            bson("$(save_path)\\$(name)_t.bson", Dict(:t => sol.t))
+            bson("$(save_path)\\$(name)_u.bson", Dict(:u => sol.u))
         else
-            details = Dict(:sol_t => ["sol1_t_.bson"], :sol_u => ["sol1_u.bson"])
+            file_contents = Dict(:sol_t => ["$(name)1_t_.bson"], :sol_u => ["$(name)1_u.bson"])
             for i in 2:partitions
-                push!(details[:sol_t], "sol$(i)_t.bson")
-                push!(details[:sol_u], "sol$(i)_u.bson")
+                push!(file_contents[:t], "$(name)$(i)_t.bson")
+                push!(file_contents[:u], "$(name)$(i)_u.bson")
             end
-            write_JSON("$(save_path)\\file_contents.json", details)
-        end
-        bson("$(save_path)\\sol_data.bson", 
-            Dict(
-                :sol_t => sol.t,
-                #:sol_mu => sol.prob.f.f.null 
-                )
-        )
-        try #This will fail if the file is too big
-            
-            bson("$(save_path)\\sol_array.bson", 
-                Dict(:sol_u => sol.u)
-            )
-        catch
-            println("cannot save something this large. Breaking it up")
-            n_half = round(Int64, size(sol.u, 1)/2)
-            bson("$(save_path)\\sol_array_pt1.bson", Dict(:sol_u => sol.u[1:n_half-1]))
-            bson("$(save_path)\\sol_array_pt2.bson", Dict(:sol_u => sol.u[n_half:end]))
+            write_JSON(file_contents, "$(save_path)\\file_contents.json")
+            partition_idxs = LinRange(1, length(t), partitions+1)
+            for idx in 1:length(partition_idxs)-1
+                bson("$(save_path)\\$(name)_t.bson", Dict(:sol_t => sol.t[partition_idxs[idx]:partition_idxs[idx+1]]))
+                bson("$(save_path)\\$(name)_u.bson", Dict(:sol_u => sol.u[partition_idxs[idx]:partition_idxs[idx+1]]))
+            end
         end
     else
         println("TODO implement JLD2")
