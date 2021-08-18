@@ -1,14 +1,13 @@
 using Revise
 using RetinalChaos
-using Dates, Plots, JLD2
+using Dates, Plots, BSON
 using StatsBase, StatsPlots
-using CUDA, DifferentialEquations, ResettableStacks, RandomNumbers, LinearAlgebra
-#using TimerOutputs #This is for benchmarking
+#using CUDA, DifferentialEquations, ResettableStacks, RandomNumbers, LinearAlgebra
 #Configure the logger
 using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
-
+import RetinalChaos.param_path
 
 #Load the telegram client and env
 dotenv("D:\\TelegramAccessEnv\\.env")
@@ -16,15 +15,17 @@ dotenv("D:\\TelegramAccessEnv\\.env")
 RetinalChaos.CUDA.allowscalar(false)
 
 # Load the needed files to run the model
-param_root = RetinalChaos.param_path
-#params/params.json
-p_dict = read_JSON(Dict{Symbol, Float32}, "params/params.json")
-p_dict[:t_warm] = 1000.0
-p_dict[:t_run] = 10e3 #Extend the simulation time so we can find longer bursts
-p_dict[:μ] = 0.18
-u_dict = read_JSON(Dict{Symbol, Float32}, "params/conds.json")
-save_path = "/home/john/Documents/modelling/mu_18/"
-NetSol = run_model(save_path, p_dict, u_dict, animate_solution = false)
+u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
+p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
+save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_18"
+NetSol = run_model(save_path, p_dict, u_dict)
+
+u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
+p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
+p_dict[:μ] = 0.0
+save_path = "/home/john/Documents/modelling/mu_0/"
+NetSol = run_model(save_path, p_dict, u_dict)
+
 #%% Load the model
 save_solution(NetSol1, save_path, name = "test")
 save_solution(NetSol2, save_path, name = "test2", partitions = -1)

@@ -3,16 +3,24 @@ using RetinalChaos #Load the package
 using BSON, JLD2
 #%%Lets figure out how to extract the waves
 import RetinalChaos.param_path
-import RetinalChaos.DiscreteCallback
-#%% Load a model and make a Current injection step
-using DiffEqCallbacks
-tspan = (0.0, 10e3)
-params_file = joinpath(param_path, "params.json")
-conds_file = joinpath(param_path, "conds.json")
-u0 = read_JSON(conds_file)|> extract_dict;
-p = read_JSON(params_file) 
-p[:g_ACh] = 0.0
-p0 = p |> extract_dict
+
+#%% lets try to make a save callback
+p_dict[:t_warm] = 1000.0
+p_dict[:t_run] = 1000.0
+p0 = p_dict |> extract_dict
+u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
+gpu = true 
+version = :gACh
+net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
+NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p0)
+print("[$(now())]: Warming up the solution... ")
+
+@time sol = solve(NetProb, SOSRI(), 
+    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
+    progress = true, progress_steps = 1, 
+    save_everystep = false
+)
+
 
 #Lets set up a callback for the current step
 step_begin = 500.0
