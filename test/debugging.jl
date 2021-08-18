@@ -4,8 +4,17 @@ using BSON, JLD2
 #%%Lets figure out how to extract the waves
 import RetinalChaos.param_path
 
+u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
+p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
+
 #%% lets try to make a save callback
-p_dict[:t_warm] = 1000.0
+results = RetinalChaos.SavedValues(Float64, Vector{Float64})
+cb = RetinalChaos.SavingCallback(
+    (u, t, integrator) -> reshape(u[:,:,1], size(u,1) * size(u,2)), 
+    results
+)
+
+p_dict[:t_warm] = 300e3
 p_dict[:t_run] = 1000.0
 p0 = p_dict |> extract_dict
 u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
@@ -16,26 +25,23 @@ NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p0)
 print("[$(now())]: Warming up the solution... ")
 
 @time sol = solve(NetProb, SOSRI(), 
+    callback = cb, 
     abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
     progress = true, progress_steps = 1, 
     save_everystep = false
 )
+#We can the null out the solution because GPU is expensive
+#%%
+results.saveval
+#first we want to save 
 
-
-#Lets set up a callback for the current step
+#%% Experiments with Current Clamp callbacks
 step_begin = 500.0
 duration = 10.0
 level = 1.0
 cb = RetinalChaos.IC_callback(step_begin, duration, level)
 
-#step_begin2 = step_begin + duration
-#duration2 = 1000.0
-#level2 = -100.0
-#cb2 = RetinalChaos.IC_callback(step_begin2, duration2, level2; level_delta = 10.0)
-#cb_set = RetinalChaos.CallbackSet(cb, cb2)
-
-prob_func(i) = SDEProblem(T_sde, noise, u0 , tspan, p0, callback = cb);
-prob = prob_func(10)
+prob = SDEProblem(T_sde, noise, u0 , tspan, p0, callback = cb);
 @time sol = solve(prob, SOSRI(), progress = true)
 plot(sol, vars = 1)
 #%% Set up a ensemble function
