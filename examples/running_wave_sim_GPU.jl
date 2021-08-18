@@ -18,36 +18,25 @@ RetinalChaos.CUDA.allowscalar(false)
 # Load the needed files to run the model
 param_root = RetinalChaos.param_path
 #params/params.json
-p_dict = read_JSON("params/params.json", is_type = Dict{Symbol, Float32})
-p_dict[:t_run] = 100e3 #Extend the simulation time so we can find longer bursts
+p_dict = read_JSON(Dict{Symbol, Float32}, "params/params.json")
+p_dict[:t_warm] = 1000.0
+p_dict[:t_run] = 1000.0 #Extend the simulation time so we can find longer bursts
 p_dict[:μ] = 0.18
-u_dict = read_JSON("params/conds.json", is_type = Dict{Symbol, Float32})
-save_path = "/home/john/Documents/modelling/mu_18"
+u_dict = read_JSON(Dict{Symbol, Float32}, "params/conds.json")
+save_path = "/home/john/Documents/modelling/mu_18/"
+NetSol = run_model(save_path, p_dict, u_dict)
+#%%
+t = collect(1:1000) .* 5.0e-3
 
-u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
-p0 = p_dict |> extract_dict
+LinRange(1, length(t), 4)[1:end-1]
 
-#NetSol = run_model(save_path, p_dict, u_dict)
-net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], gpu = true)
-NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p0)
 
-print("[$(now())]: Warming up the solution... ")
-@time sol = solve(NetProb, SOSRI(), 
-    abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-    progress = true, progress_steps = 1, 
-    save_everystep = false
+file_contents = Dict(
+    :sol_t => ["sol_t.bson"],
+    :sol_u => ["sol_u.bson"]
 )
-
-warmup = sol[end]
-
-NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
-#Run the solution to fruition
-@time NetSol = solve(NetProb, SOSRI(), 
-    abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-    save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-    progress = true, progress_steps = 1
-)
-
+write_JSON(file_contents, "file_contents.json")
+read_JSON(Dict{String, Array}, "file_contents.json")
 #%%
 #for mu in [0.0, 0.125, 0.25, 0.50]
 for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
