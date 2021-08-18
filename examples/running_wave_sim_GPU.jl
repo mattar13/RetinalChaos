@@ -14,12 +14,12 @@ dotenv("D:\\TelegramAccessEnv\\.env")
 #Activate the GPU
 RetinalChaos.CUDA.allowscalar(false)
 
-# Load the needed files to run the model
+#%% Load the needed files to run the model
 u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
 p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
 save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_18"
 NetSol = run_model(save_path, p_dict, u_dict)
-
+#%%
 u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
 p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
 p_dict[:μ] = 0.0
