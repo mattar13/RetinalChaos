@@ -337,7 +337,7 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::Str
         savefig(hist_plot, "$(save_file)\\histogram_plot.png")
     end
 
-    BotNotify("{Wave} Finished running timeseries analysis")
+    #BotNotify("{Wave} Finished running timeseries analysis")
     return timestamps, data
 end
 
