@@ -295,13 +295,15 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     #Load the network interface
     if gpu
         u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
+        p0 = p_dict |> extract_dict
     else
         u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny])
+        p0 = p_dict |> extract_dict
     end
 
     #Load the model and ODE interface
     net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-    NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p)
+    NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p0)
 
     print("[$(now())]: Warming up the solution... ")
     @time sol = solve(NetProb, SOSRI(), 
