@@ -32,7 +32,7 @@ else
      using Plots, Measures 
 end
 
-using DifferentialEquations, StochasticDiffEq
+using DifferentialEquations, StochasticDiffEq, DiffEqCallbacks
 #using ModelingToolkit, DiffEqBase
 import DiffEqBase.AbstractODEProblem
 export SDEProblem, ODEProblem, solve, SOSRI
