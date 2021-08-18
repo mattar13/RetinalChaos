@@ -15,22 +15,28 @@ dotenv("D:\\TelegramAccessEnv\\.env")
 RetinalChaos.CUDA.allowscalar(false)
 
 #%% Load the needed files to run the model
+BotNotify("{Waves} Running simulation for 18% started")
 u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
 p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
 save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_18"
 NetSol = run_model(save_path, p_dict, u_dict)
 save_solution(NetSol, save_path, partitions = 2)
-#%%
 sol = load_solution(save_path)
 animate_solution(sol, save_path)
-timeseries_analysis(sol, )
+timeseries_analysis(sol, save_path)
+BotNotify("{Waves} Running simulation for 18% completed")
 #%%
+BotNotify("{Waves} Running simulation for 0% started")
 u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
 p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
 p_dict[:μ] = 0.0
 save_path = "/home/john/Documents/modelling/mu_0/"
 NetSol = run_model(save_path, p_dict, u_dict)
-
+save_solution(NetSol, save_path, partitions = 2)
+sol = load_solution(save_path)
+animate_solution(sol, save_path)
+timeseries_analysis(sol, save_path)
+BotNotify("{Waves} Running simulation for 0% completed")
 #%% Load the model
 save_solution(NetSol1, save_path, name = "test")
 save_solution(NetSol2, save_path, name = "test2", partitions = -1)
