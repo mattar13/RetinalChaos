@@ -160,7 +160,7 @@ If your initial conditions are for a network, you can add the extra argument for
 
 > In[1]: dims = (64,64);
 > In[2]: p0 = extract_dict(p_dict, BurstModel.params, dims)
-> Out[2]: 64x64xN AbstractArray:
+> Out[2]: 125x125xN AbstractArray:
 """
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> Float64(dict_item[x]), pars)
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
@@ -390,56 +390,29 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
         JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
     end
 
-    #Now we want to run the actual simulation
-    if iterations == 1
-        print("[$(now())]: Running the model... ")
-        NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
-        #Run the solution to fruition
-        @time sol = solve(NetProb, SOSRI(), 
-            abstol = abstol, reltol = reltol, maxiters = maxiters,
-            save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-            progress = true, progress_steps = 1
-        )
-        sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
-        if save_sol
-            print("[$(now())]: Saving the simulation...")
-            save_solution(sol, file_root; mode = model_file_type, partitions = save_partitions) 
-            println("Completed")
-        end
-    else
-        u_start = warmup
-        println(u_start |> size)
-        t_0 = 0f0
-        t_end = p_dict[:t_run]
-        for i in 1:iterations
-            print("[$(now())]: Running iteration $i of the model... ")
-            NetProb = SDEProblem(net, noise, u_start, (t_0 , t_end), p0)
-            #Run the solution to fruition
-            @time sol = solve(NetProb, SOSRI(), 
-                abstol = abstol, reltol = reltol, maxiters = maxiters,
-                #save_idxs = [1:(Int64(p_dict[:nx]*p_dict[:ny]))...], 
-                progress = true, progress_steps = 1
-            )
-            sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
-            if save_sol
-                print("[$(now())]: Saving the simulation...")
-                if i == 1
-                    save_solution(sol, file_root; mode = model_file_type)
-                else
-                    save_solution(sol, file_root; mode = model_file_type, name = "sol$i", partitions = -1)
-                end
-                println("Completed")
-            end
-            t_0 += p_dict[:t_run]+1
-            t_end += p_dict[:t_run]
-            u_start = reshape(sol[end], size(warmup))
-            println(u_start |> size)
-            println("moving solution $(p_dict[:t_run]) forward")
-            #finally clear the memory 
-            sol = nothing; GC.gc(true); CUDA.reclaim()
-        end
+    results = RetinalChaos.SavedValues(Float64, Vector{Float64})
+    cb = RetinalChaos.SavingCallback(
+        (u, t, integrator) -> reshape(u[:,:,1], size(u,1) * size(u,2)), 
+        results
+    )
+
+    print("[$(now())]: Running the model... ")
+    NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
+    #Run the solution to fruition
+    @time sol = solve(NetProb, SOSRI(), 
+        callback = cb, #This saves the solution without actually saving anything to the GPU
+        abstol = abstol, reltol = reltol, maxiters = maxiters,
+        save_everystep = false, 
+        progress = true, progress_steps = 1
+    )
+    #sol = convert_to_cpu(sol) #Before saving we need to bump the file to CPU
+    if save_sol
+        print("[$(now())]: Saving the simulation...")
+        save_solution(results.t, results.saveval, file_root; mode = model_file_type, partitions = save_partitions) 
+        println("Completed")
     end
-    
+
+    sol = nothing; GC.gc(true); CUDA.reclaim()
     if animate_solution
         println("[$(now())]: Animating simulation...")
         anim = @animate for t = 1.0:animate_dt:sol.t[end]
@@ -453,5 +426,5 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     end
 
     #We want to return the solution
-    return sol
+    return results
 end 
