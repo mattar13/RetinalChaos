@@ -237,46 +237,6 @@ In order to save the solution correctly, ensure to run:
     julia> save_solution(sol, save_path)
 
 """
-function save_solution(sol, save_path::String; name = "sol", partitions = 1, mode = :bson)
-    
-    if mode == :bson
-        if partitions == -1 #This means data is getting appended
-            #check to see if a file_contents file exists
-            file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(save_path)\\file_contents.json")
-            push!(file_contents[:t], "$(name)_t.bson")
-            push!(file_contents[:u], "$(name)_u.bson")
-            write_JSON(file_contents, "$(save_path)\\file_contents.json")
-            bson("$(save_path)\\$(name)_t.bson", Dict(:t => sol.t))
-            bson("$(save_path)\\$(name)_u.bson", Dict(:u => sol.u))
-        elseif partitions == 1
-            file_contents = Dict(:t => ["$(name)_t.bson"], :u => ["$(name)_u.bson"])
-            #write the details to a 
-            write_JSON(file_contents, "$(save_path)\\file_contents.json")
-            bson("$(save_path)\\$(name)_t.bson", Dict(:t => sol.t))
-            bson("$(save_path)\\$(name)_u.bson", Dict(:u => sol.u))
-        else
-            file_contents = Dict(:t => ["$(name)1_t.bson"], :u => ["$(name)1_u.bson"])
-            for i in 2:partitions
-                push!(file_contents[:t], "$(name)$(i)_t.bson")
-                push!(file_contents[:u], "$(name)$(i)_u.bson")
-            end
-            write_JSON(file_contents, "$(save_path)\\file_contents.json")
-            partition_idxs = round.(Int64, LinRange(1, length(sol.t), partitions+1))
-            for idx in 1:length(partition_idxs)-1
-                if idx == 1
-                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol.t[1:partition_idxs[idx+1]]))
-                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol.u[1:partition_idxs[idx+1]]))
-                else
-                    bson("$(save_path)\\$(name)$(idx)_t.bson", Dict(:sol_t => sol.t[partition_idxs[idx]+1:partition_idxs[idx+1]]))
-                    bson("$(save_path)\\$(name)$(idx)_u.bson", Dict(:sol_u => sol.u[partition_idxs[idx]+1:partition_idxs[idx+1]]))
-                end
-            end
-        end
-    else
-        println("TODO implement JLD2")
-    end
-end
-
 function save_solution(sol_t::AbstractArray, sol_u::AbstractArray, save_path::String; name = "sol", partitions = 1, mode = :bson)
     
     if mode == :bson
@@ -317,6 +277,9 @@ function save_solution(sol_t::AbstractArray, sol_u::AbstractArray, save_path::St
     end
 end
 
+save_solution(sol, save_path::String; kwargs...) = save_solution(sol.t, sol.u; karwgs...)
+
+
 function load_solution(load_path)
     file_contents = read_JSON(Dict{Symbol, Vector{String}}, "$(load_path)\\file_contents.json")
     n_partitions = length(file_contents[:u])
@@ -348,7 +311,7 @@ This function runs the model using the indicated parameters
 function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
         gpu::Bool = true, version::Symbol = :gACh,
         abstol::Float64 = 2e-2, reltol::Float64 = 0.2, maxiters::Float64 = 1e7,
-        save_sol = true, save_partitions = 1,
+        save_sol = false, save_partitions = 1,
         animate_solution = true, animate_dt = 60.0, 
         model_file_type = :bson, 
         iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
@@ -398,7 +361,7 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
 
     print("[$(now())]: Running the model... ")
     NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
-    #Run the solution to fruition
+    #Run the solution saving values to results
     @time sol = solve(NetProb, SOSRI(), 
         callback = cb, #This saves the solution without actually saving anything to the GPU
         abstol = abstol, reltol = reltol, maxiters = maxiters,
