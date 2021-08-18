@@ -346,14 +346,18 @@ This function runs the model using the indicated parameters
 
 """
 function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
-            gpu::Bool = true, version = :gACh,
-            abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-            save_sol = true, save_partitions = 1,
-            animate_solution = true, animate_dt = 60.0, 
-            model_file_type = :bson, 
-            iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
-        ) where T <: Real
+        gpu::Bool = true, version::Symbol = :gACh,
+        abstol::Float64 = 2e-2, reltol::Float64 = 0.2, maxiters::Float64 = 1e7,
+        save_sol = true, save_partitions = 1,
+        animate_solution = true, animate_dt = 60.0, 
+        model_file_type = :bson, 
+        iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
+    ) where T <: Real
     
+    if !isdir(file_root)
+        mkdir(file_root)
+    end
+
     #First write the parameters to the root
     write_JSON(p_dict, "$(file_root)\\params.json") #write the parameters to save for later
     write_JSON(u_dict, "$(file_root)\\iconds.json") #write the 
