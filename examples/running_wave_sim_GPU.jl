@@ -19,6 +19,11 @@ u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
 p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
 save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\example_animations\\mu_18"
 NetSol = run_model(save_path, p_dict, u_dict)
+save_solution(NetSol, save_path, partitions = 2)
+#%%
+sol = load_solution(save_path)
+animate_solution(sol, save_path)
+timeseries_analysis(sol, )
 #%%
 u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
 p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")

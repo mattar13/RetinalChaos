@@ -297,7 +297,7 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution;
 end
 
 
-function timeseries_analysis(save_file::String, sol::DiffEqBase.AbstractODESolution;
+function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::String,;
         plot_histograms = true, kwargs...   
     )
     timestamps, data = timeseries_analysis(sol; kwargs...)

@@ -313,7 +313,6 @@ This function runs the model using the indicated parameters
 function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
         gpu::Bool = true, version::Symbol = :gACh,
         abstol::Float64 = 2e-2, reltol::Float64 = 0.2, maxiters::Float64 = 1e7,
-        save_sol = false, save_partitions = 1, 
         model_file_type = :bson, 
         iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
     ) where T <: Real
