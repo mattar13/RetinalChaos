@@ -167,7 +167,7 @@ This function uses the Maximum Interval Sorting method to sort bursts in a singl
 A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
 """
 function max_interval_algorithim(timestamps::Matrix{T}; 
-        ISIstart::T = 500.0, ISIend::T = 500.0, IBImin::T = 1000.0, DURmin::T = 500.0, SPBmin::Int64 = 4, 
+        ISIstart::T = 500.0, ISIend::T = 500.0, IBImin::T = 1000.0, DURmin::T = 50.0, SPBmin::Int64 = 4, 
         verbose = false
     ) where T <: Real
     burst_timestamps = Tuple[]
@@ -275,7 +275,7 @@ end
 
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-        dt::Float64 = 100.0, Z::Int64 = 4,  
+        Z::Int64 = 4,  
         max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
     )
     thresholds = calculate_threshold(sol; Z = Z) #This takes really long
