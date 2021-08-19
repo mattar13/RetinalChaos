@@ -5,23 +5,29 @@
 
 Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation 
 """
-calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4) = [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
+function calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4, dims = -1)  
+    if dims == -1
+        return sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)
+    else
+        n = size(vm_arr, dims)
+        mean = sum(vm_arr, dims = dims)./n
+        dev = Z * std(vm_arr, dims = dims)
+        return mean + dev
+    end
+end
 
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64}; 
         idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 100.0,
     ) where {T, N, S}
     # We need to convert the dt into the correct form
     dt = convert(T, dt)
+    println(N)
     #We want to check how many dimensions the simulation is 
-    if length(size(sol.prob.u0)) == 1
-        data_section = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-        #println(data_section |> size)
+    data_section = sol(rng[1]:dt:rng[2]) 
+    if size(data_section, 2) == 7 #The array is just a single solution (Var, Time)
         return calculate_threshold(data_section; Z = Z)
-    else  
-        n = length(collect(rng[1]:dt:rng[2]))
-        mean = sum(sol(rng[1]:dt:rng[2]), dims = 2)./n
-        dev = Z * std(sol(rng[1]:dt:rng[2]))
-        return (mean .+ dev) |> Array
+    else #This means the array has a n of (X, Time). We want to summarize by X
+        return calculate_threshold(data_section; Z = Z, dims = 2)
     end
 end
 
@@ -273,7 +279,7 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution;
         dt::Float64 = 100.0, Z::Int64 = 4,  
         max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
     )
-    thresholds = calculate_threshold(sol; Z = Z, dt = dt) #This takes really long
+    thresholds = calculate_threshold(sol; Z = Z) #This takes really long
     spikes = get_timestamps(sol, thresholds)
     spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
     bursts, spb = max_interval_algorithim(spikes)
