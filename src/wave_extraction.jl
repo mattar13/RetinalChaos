@@ -21,7 +21,6 @@ function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::
     ) where {T, N, S}
     # We need to convert the dt into the correct form
     dt = convert(T, dt)
-    println(N)
     #We want to check how many dimensions the simulation is 
     data_section = sol(rng[1]:dt:rng[2]) 
     if size(data_section, 2) == 7 #The array is just a single solution (Var, Time)
