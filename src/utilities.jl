@@ -372,15 +372,16 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     return results
 end 
 
-function animate_solultion(sol::RODESolution, save_path::String;
-    animate_dt = 60.0 
+function animate_solution(sol::RODESolution, save_path::String;
+        animate_dt = 60.0 
     )
-    sol = SciMLBase.build_solution(NetProb, SOSRI(), results.t, results.saveval) #we can use this to build a solution without GPU
+    nx = ny = Int64(sqrt(size(sol,1)))
+    #we can use this to build a solution without GPU
     println("[$(now())]: Animating simulation...")
     anim = @animate for t = 1.0:animate_dt:sol.t[end]
-        frame_i = reshape(sol(t) |> Array, (p_dict[:nx]|>Int64, p_dict[:ny]|>Int64))
+        frame_i = reshape(sol(t) |> Array, (nx, ny))
         heatmap(frame_i, ratio = :equal, grid = false,
-                xaxis = "", yaxis = "", xlims = (0, p_dict[:nx]), ylims = (0, p_dict[:ny]),
+                xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0,ny),
                 c = :curl, clims = (-70.0, 0.0),
         )
     end
