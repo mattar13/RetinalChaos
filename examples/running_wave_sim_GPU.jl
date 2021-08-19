@@ -14,31 +14,6 @@ dotenv("D:\\TelegramAccessEnv\\.env")
 #Activate the GPU
 RetinalChaos.CUDA.allowscalar(false)
 
-#%% Run a longer simulation loop
-#for mu in LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
-for mu in [0.0, 0.125, 0.18, 0.25, 0.50]
-    println("Running simulation for $mu")
-    try
-        BotNotify("{Waves} Running simulation for 0% started")
-        u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
-        p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
-        p_dict[:μ] = 0.0
-        save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\mu_$(round(Int64, mu*100))\\"
-        NetSol = run_model(save_path, p_dict, u_dict)
-        BotNotify("{Waves} Running simulation for 18% completed")
-        save_solution(NetSol, save_path, partitions = 4)
-        BotNotify("{Waves} Saving simulation for 18% completed")
-        sol = load_solution(save_path)
-        animate_solution(sol, save_path)
-        BotNotify("{Waves} Animating simulation for 18% completed")
-        timeseries_analysis(sol, save_path)
-        BotNotify("{Waves} Timeseries analysis completed")
-    catch error
-        println(error)
-        BotNotify("{Waves} An error has occurred $(typeof(error))")
-    end
-end
-
 #%% Run a simulation on it's own
 try
     BotNotify("{Waves} Running simulation for 18% started")
@@ -62,14 +37,33 @@ catch
     BotNotify("{Waves} An error has occurred $(typeof(error))")
 end
 
-#%% This is for a replication experiment
-#for repeat in 1:4, mu in LinRange(0.05, 1.0, 25)
-#    BotNotify("{Waves} Running simulation for mu = $mu")
-#    save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\r_$(repeat)_mu_$(round(Int64, mu*100))\\"
-#    p_dict[:μ] = mu
-#    NetSol = load_model(save_path, p_dict, u_dict)
-#    timestamps, data = timeseries_analysis(save_path, NetSol)
-#    #Maybe we are running out of GPU memory and need to reset here
-#    NetSol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-#    BotNotify("{Waves} Running simulation for mu = $mu completed")
-#end
+#%% Run a longer simulation loop
+#param_range = LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
+param_test = :μ
+param_range = [0.0, 0.125, 0.25, 0.50]
+for x in param_range
+    println("Running simulation for $mu")
+    try
+        BotNotify("{Waves} Running simulation for $(string(param_test)) = $x started")
+        u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json")
+        p_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/params.json")
+        ############### If you want to modify parameters do it here ###############
+        p_dict[:t_run] = 300e3 #We want to make the run time longer
+        p_dict[param_test] = x
+        ############### If you want to modify parameters do it here ###############
+        save_path = "C:\\Users\\RennaLabSA1\\Documents\\ModellingData\\mu_experiment\\$(string(param_test))_$(round(Int64, x*100))\\"
+        NetSol = run_model(save_path, p_dict, u_dict)
+        BotNotify("{Waves} Running simulation for 18% completed")
+        save_solution(NetSol, save_path, partitions = 10)
+        BotNotify("{Waves} Saving simulation for 18% completed")
+        sol = load_solution(save_path)
+        animate_solution(sol, save_path)
+        BotNotify("{Waves} Animating simulation for 18% completed")
+        timeseries_analysis(sol, save_path)
+        BotNotify("{Waves} Timeseries analysis completed")
+    catch error
+        println(error)
+        BotNotify("{Waves} An error has occurred $(typeof(error))")
+    end
+end
+
