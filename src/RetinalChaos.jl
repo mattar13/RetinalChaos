@@ -75,7 +75,7 @@ export tar_conds, tar_pars, p_find, u_find
 
 include("utilities.jl")
 export extract_dict, read_JSON, write_JSON #Load the parameter loading functions 
-export run_model, save_solution, load_solution, convert_to_cpu
+export run_model, save_solution, load_solution, convert_to_cpu, animate_solution
 
 # Export functions for dynamical analysis
 include("dynamical_analysis.jl")
