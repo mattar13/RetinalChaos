@@ -368,17 +368,20 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
         save_everystep = false, 
         progress = true, progress_steps = 1
     )
+    #make sure to zero out the solution to save GPU space 
+    sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
     #We want to return the solution
     return results
 end 
 
 function animate_solution(sol::RODESolution, save_path::String;
-        animate_dt = 60.0 
+        animate_dt = 60.0, verbose = true
     )
     nx = ny = Int64(sqrt(size(sol,1)))
     #we can use this to build a solution without GPU
     println("[$(now())]: Animating simulation...")
     anim = @animate for t = 1.0:animate_dt:sol.t[end]
+
         frame_i = reshape(sol(t) |> Array, (nx, ny))
         heatmap(frame_i, ratio = :equal, grid = false,
                 xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0,ny),
