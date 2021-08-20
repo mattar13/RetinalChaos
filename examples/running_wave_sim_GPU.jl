@@ -37,7 +37,7 @@ try
     BotNotify("{Waves} Animating simulation for $(param_test) = $x completed")
     timeseries_analysis(sol, save_path) #conduct a timeseries analysis
     BotNotify("{Waves} Timeseries analysis completed")
-catch 
+catch error
     BotNotify("{Waves} An error has occurred $(typeof(error))")
 end
 
