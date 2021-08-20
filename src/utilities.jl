@@ -346,6 +346,9 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     )
 
     warmup = sol[end] #Keep this one as the original 
+    #Add this in because it seems that you need to constantly clean the function
+    sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
+
     #Save the warmed up solution
     if model_file_type == :bson #In this case we want to make a backup of the file
         BSON.@save "$(file_root)\\conds.bson" warmup #as a BSON file
@@ -370,6 +373,7 @@ function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symb
     )
     #make sure to zero out the solution to save GPU space 
     sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
+    
     #We want to return the solution
     return results
 end 
