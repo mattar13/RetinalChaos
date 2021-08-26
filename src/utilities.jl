@@ -1,3 +1,23 @@
+function data_bytesize(arr::Vector{T}; bson_header_bytes = 133) where T <: Real
+    data_bytes = sizeof(arr)
+    size_bytes = 11 #There is a section in the header that 
+    file_size = bson_header_bytes + data_bytes + size_bytes
+    return file_size
+end
+
+function data_bytesize(arr::Matrix{T}; bson_header_bytes = 133) where T <: Real
+    data_bytes = sizeof(arr)
+    size_bytes = 11 * ndims(arr) #There is a section in the header that 
+    file_size = bson_header_bytes + data_bytes + size_bytes
+    return file_size
+end
+
+function data_bytesize(arr::Vector{Vector{T}}; bson_header_bytes = 133) where T <: Real
+    data_bytes = sizeof(arr[1])
+    size_bytes = 111 * length(arr)
+    return bson_header_bytes + data_bytes + 111*length(arr)
+end
+
 """
 ensemble_func()  sets up a ensemble problem
 """

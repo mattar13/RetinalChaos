@@ -74,6 +74,7 @@ export Network, noise
 export tar_conds, tar_pars, p_find, u_find
 
 include("utilities.jl")
+export data_bytesize #we can use this to predict the approximate bytesize saved by BSON
 export extract_dict, read_JSON, write_JSON #Load the parameter loading functions 
 export run_model, save_solution, load_solution, convert_to_cpu, animate_solution
 
