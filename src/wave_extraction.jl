@@ -68,67 +68,42 @@ function get_timestamps(spike_array::Matrix{Bool}, timestamps::Vector{T}) where 
     return tstamps
 end
 
-# For if no range has been provided but a threshold has
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}; 
-        idx::Int64 = 1, dt::Float64 = -Inf
-    ) where T <: Real
-    if dt == -Inf #Adaptive timestamp finding
-        #we need to find a way to do 2D arrays vs 1D
-        if length(size(sol.u)) == 1
-            data_select = sol |> Array |> Array{T}
-            spike_array = (data_select .> threshold) |> Array
-            tstamps = get_timestamps(spike_array, sol.t |> Array)
-            return tstamps
-        elseif length(size(sol.u)) == 2
-            data_select = sol |> Array |> Array{T}
-            spike_array = (data_select .> threshold) |> Array
-            tstamps = get_timestamps(spike_array, sol.t |> Array)
-            return tstamps
-        end
-    else   
-        get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); idx = idx, dt = dt)
-    end
-end
-
 """
 If dt is set to Inf, the algorithim acts adaptive
 """
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, threshold::AbstractArray{T}, rng::Tuple{T,T}; 
-        idx::Int64 = 1, dt::Float64 = Inf
-    ) where T <: Real
+function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}; 
+        threshold == :calculate, rng == :calculate; 
+        idx::Int64 = 1, dt::Float64 = -Inf
+    ) where {T <: Real, N, S <: Vector} #When editing we need to focus on this section
     # Lets do this the integrated way
     # First we need to extract the spike array
-    if length(size(sol.prob.u0)) == 1
-        data_select = sol(rng[1]:dt:rng[2], idxs = idx) |> Array
-        spike_array = (data_select .> threshold[1])
-        get_timestamps(spike_array; dt = dt)
-    else
-        #For each data trace we have a corresponding threshold
+
+
+    if rng == :calculate
+        rng = (sol.t[1], sol.t[end])
+    end
+
+    if S == Vector{Vector{T}}
+        if dt == -Inf
+            time_rng = sol.t
+            data_select = sol |> Array
+        else
+            time_rng = rng[1]:dt:rng[2]
+            data_select = sol(rng[1]:dt:rng[2]) |> Array
+        end
+        if threshold == :calculate
+            threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
+        end
+
         timestamps = Tuple{T, T}[]
-        @showprogress "Extracting timestamps: " for c_idx in 1:size(sol,1)
-            data_select = sol(rng[1]:dt:rng[2], idxs = c_idx) |> Array
-            spike_array = (data_select .> threshold[c_idx])
-            stamps = get_timestamps(spike_array; dt = dt)
+        for i in 1:length(data_select)
+            spike_array = (data_select[i] .> threshold[i])
+            #println(spike_array |> size)
+            stamps = get_timestamps(spike_array, sol.t)
             push!(timestamps, stamps...)
         end
         return timestamps
     end   
-end
-
-# get timestamps will not work adaptively with a region defined
-function get_timestamps(sol::DiffEqBase.AbstractODESolution, rng::Tuple{T,T}; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
-    ) where T <: Real
-    threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-    get_timestamps(sol, threshold, rng; dt = dt)
-end
-
-# For if no range has been provided
-function get_timestamps(sol::DiffEqBase.AbstractODESolution; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::T = 0.1
-    ) where T <: Real
-    threshold = calculate_threshold(sol; idx = idx, Z = Z)
-    get_timestamps(sol, threshold; idx = idx, dt = dt)
 end
 
 function extract_interval(timestamps::Matrix{T}; 
@@ -275,11 +250,10 @@ end
 
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-        Z::Int64 = 4,  
-        max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
+        Z::Int64 = 4, dt = -Inf, max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
     )
     thresholds = calculate_threshold(sol; Z = Z) #This takes really long
-    spikes = get_timestamps(sol, thresholds)
+    spikes = get_timestamps(sol, thresholds; dt = dt)
     spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
     bursts, spb = max_interval_algorithim(spikes)
     burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
