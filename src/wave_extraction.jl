@@ -42,7 +42,7 @@ This function returns all the time stamps in a spike or burst array
 
 function get_timestamps(spike_array::Vector{Bool}, tseries::Vector{T}) where T <: Real
     diff_vals = map(i -> (spike_array[i]-spike_array[i+1]), 1:length(spike_array)-1)
-    diff_starts = findall(x -> x==-1, diff_vals).+1 #This is a list of all the starting points in the array
+    diff_starts = findall(x -> x==-1, diff_vals) #This is a list of all the starting points in the array
     diff_ends = findall(x -> x==1, diff_vals) #This is a list of all the ending points in the array
     #If there is one more end than start than we have to remove the last point from the diff_starts
 
@@ -68,16 +68,19 @@ function get_timestamps(spike_array::Matrix{Bool}, timestamps::Vector{T}) where 
     return tstamps
 end
 
+#This dispatch calls the function if the time series is in the form of a range vs a vector
+get_timestamps(spike_array, time_range::StepRangeLen{T, P, P}) where {T <: Real, P} = get_timestamps(spike_array, collect(time_range))
+
 """
 If dt is set to Inf, the algorithim acts adaptive
 """
 function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}; 
-        threshold == :calculate, rng == :calculate; 
-        idx::Int64 = 1, dt::Float64 = -Inf
+        threshold = :calculate, rng = :calculate, 
+        idx::Int64 = 1, dt::Float64 = -Inf, 
+        flatten = true
     ) where {T <: Real, N, S <: Vector} #When editing we need to focus on this section
     # Lets do this the integrated way
     # First we need to extract the spike array
-
 
     if rng == :calculate
         rng = (sol.t[1], sol.t[end])
@@ -86,23 +89,32 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S};
     if S == Vector{Vector{T}}
         if dt == -Inf
             time_rng = sol.t
-            data_select = sol |> Array
+            data_select = sol
         else
             time_rng = rng[1]:dt:rng[2]
-            data_select = sol(rng[1]:dt:rng[2]) |> Array
+            data_select = sol(time_rng)
         end
         if threshold == :calculate
             threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
         end
-
-        timestamps = Tuple{T, T}[]
-        for i in 1:length(data_select)
-            spike_array = (data_select[i] .> threshold[i])
-            #println(spike_array |> size)
-            stamps = get_timestamps(spike_array, sol.t)
-            push!(timestamps, stamps...)
+        #println(size(data_select,1))
+        if flatten
+            timestamps = full = Matrix{Float64}(undef, 0, 2) #This lacks cell structure
+            for i in 1:length(data_select)
+                spike_array = Vector{Bool}(data_select[i, :] .> threshold[i]) #This always needs to be a Vector of Bools
+                stamps = get_timestamps(spike_array, time_rng)
+                timestamps = vcat(timestamps, stamps)
+            end
+            return timestamps
+        else
+            timestamps = Vector{Matrix{T}}(undef,size(data_select,1)) #This keeps the cell structure
+            for i in 1:length(data_select)
+                spike_array = Vector{Bool}(data_select[i, :] .> threshold[i]) #This always needs to be a Vector of Bools
+                stamps = get_timestamps(spike_array, time_rng)
+                timestamps[i] = stamps
+            end
+            return timestamps
         end
-        return timestamps
     end   
 end
 
@@ -254,7 +266,7 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution;
         Z::Int64 = 4, dt = -Inf, max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
     )
     thresholds = calculate_threshold(sol; Z = Z) #This takes really long
-    spikes = get_timestamps(sol, thresholds; dt = dt)
+    spikes = get_timestamps(sol; threshold = thresholds, dt = dt)
     spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
     bursts, spb = max_interval_algorithim(spikes)
     burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
