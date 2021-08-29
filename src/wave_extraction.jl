@@ -77,16 +77,26 @@ If dt is set to Inf, the algorithim acts adaptive
 function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}; 
         threshold = :calculate, rng = :calculate, 
         idx::Int64 = 1, dt::Float64 = -Inf, 
-        flatten = false
+        flatten = false, verbose = false
     ) where {T <: Real, N, S <: Vector} #When editing we need to focus on this section
     # Lets do this the integrated way
     # First we need to extract the spike array
 
     if rng == :calculate
+        if verbose
+            println("Auto picking the range")
+        end
         rng = (sol.t[1], sol.t[end])
     end
 
     if S == Vector{Vector{T}}
+        if threshold == :calculate
+            if verbose
+                println("Calculating threshold")
+            end
+            threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
+        end
+
         if dt == -Inf
             time_rng = sol.t
             data_select = sol
@@ -94,13 +104,14 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S};
             time_rng = rng[1]:dt:rng[2]
             data_select = sol(time_rng)
         end
-        if threshold == :calculate
-            threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-        end
+
         #println(size(data_select,1))
         if flatten
             timestamps = full = Matrix{Float64}(undef, 0, 2) #This lacks cell structure
-            for i in 1:length(data_select)
+            for i in 1:size(data_select,1)
+                if verbose
+                    println("Analyzing cell $i of $(size(data_select,1))")
+                end
                 spike_array = Vector{Bool}(data_select[i, :] .> threshold[i]) #This always needs to be a Vector of Bools
                 stamps = get_timestamps(spike_array, time_rng)
                 timestamps = vcat(timestamps, stamps)
@@ -108,7 +119,10 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S};
             return timestamps
         else
             timestamps = Vector{Matrix{T}}(undef,size(data_select,1)) #This keeps the cell structure
-            for i in 1:length(data_select)
+            for i in 1:size(data_select, 1)
+                if verbose
+                    println("Analyzing cell $i of $(size(data_select,1))")
+                end
                 spike_array = Vector{Bool}(data_select[i, :] .> threshold[i]) #This always needs to be a Vector of Bools
                 stamps = get_timestamps(spike_array, time_rng)
                 timestamps[i] = stamps
@@ -262,12 +276,13 @@ end
 
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-        Z::Int64 = 4, dt = -Inf, max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5
+        Z::Int64 = 4, dt = 10.0, max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5, 
+        verbose = false
     )
     thresholds = calculate_threshold(sol; Z = Z) #This takes really long
-    spikes = get_timestamps(sol; threshold = thresholds, dt = dt)
+    spikes = get_timestamps(sol; threshold = thresholds, dt = dt, verbose = verbose)
     spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
-    bursts, spb = max_interval_algorithim(spikes)
+    bursts, spb = max_interval_algorithim(spikes, verbose = verbose)
     burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
 
     timestamps = Dict(
@@ -287,7 +302,6 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution;
     return timestamps, data
 end
 
-
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::String,;
         plot_histograms = true, kwargs...   
     )
@@ -295,6 +309,7 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::Str
     bson("$(save_file)\\timestamps.bson", timestamps)
     bson("$(save_file)\\data.bson", data)
 
+    println(data["SpikeDurs"] |> size)
     if plot_histograms && !isempty(data["SpikeDurs"])
         sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 1000))
         sdur_weights = sdur_hfit.weights/maximum(sdur_hfit.weights)
@@ -318,8 +333,7 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::Str
         
         p5 = histogram(data["Thresholds"], yaxis = :log, xlabel = "Voltage threshold")
         p6 = histogram(data["SpikesPerBurst"], yaxis = :log, xlabel = "Spiked per Burst")
-        
-        
+                
         hist_plot = plot(
             p1, p2, p3, p4, p5, p6, 
             layout = grid(3,2), ylabel = "Counts", 
