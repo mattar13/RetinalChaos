@@ -77,7 +77,7 @@ If dt is set to Inf, the algorithim acts adaptive
 function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}; 
         threshold = :calculate, rng = :calculate, 
         idx::Int64 = 1, dt::Float64 = -Inf, 
-        flatten = true
+        flatten = false
     ) where {T <: Real, N, S <: Vector} #When editing we need to focus on this section
     # Lets do this the integrated way
     # First we need to extract the spike array
@@ -152,7 +152,6 @@ end
 """
 This function uses the Maximum Interval Sorting method to sort bursts in a single trace. 
     It takes in timestamps and returns the burst durations and the spikes per burst
-A multiple dispatch of this function allows the max_interval to be calculated on a 3D array (x, y, and time) 
 """
 function max_interval_algorithim(timestamps::Matrix{T}; 
         ISIstart::T = 500.0, ISIend::T = 500.0, IBImin::T = 1000.0, DURmin::T = 50.0, SPBmin::Int64 = 4, 
@@ -247,15 +246,15 @@ function max_interval_algorithim(timestamps::Matrix{T};
 end
 
 function max_interval_algorithim(timestamp_arr::Vector{Matrix{T}}; kwargs...) where T <: Real
-    #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
     bursts = Matrix{T}[]
     spd = T[]
     for idx in 1:length(timestamp_arr)
-        
-        result = max_interval_algorithim(timestamp_arr[idx]; kwargs...)
-        if !isnothing(result)
-            push!(bursts, result[1])
-            push!(spd, result[2]...)
+        if isassigned(timestamp_arr, idx)
+            result = max_interval_algorithim(timestamp_arr[idx]; kwargs...)
+            if !isnothing(result)
+                push!(bursts, result[1])
+                push!(spd, result[2]...)
+            end
         end
     end
     return bursts, spd
