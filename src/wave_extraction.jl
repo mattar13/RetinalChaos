@@ -276,13 +276,13 @@ end
 
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-        Z::Int64 = 4, dt = 10.0, max_spike_duration::Float64 = 10.0, max_burst_duration::Float64 = 10e5, 
+        Z::Int64 = 4, dt = 10.0, max_spike_duration::Float64 = 50.0, max_burst_duration::Float64 = 10e5, 
         verbose = false
     )
     thresholds = calculate_threshold(sol; Z = Z) #This takes really long
     spikes = get_timestamps(sol; threshold = thresholds, dt = dt, verbose = verbose)
     spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
-    bursts, spb = max_interval_algorithim(spikes, verbose = verbose)
+    bursts, spb = max_interval_algorithim(spikes)
     burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
 
     timestamps = Dict(
