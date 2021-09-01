@@ -16,8 +16,9 @@ RetinalChaos.CUDA.allowscalar(false)
 
 #%% Run a simulation on it's own
 param_test = :μ #Set a single parameter
-x = 0.18 #Set it's value
+x = 0.50 #Set it's value
 NetSol = nothing #this allows the solution to be used outside of the try loop
+save_path = nothing
 try
     BotNotify("{Waves} Running simulation for $(param_test) = $x started")
     u_dict = read_JSON(Dict{Symbol, Float32}, "$(param_path)/conds.json") #Load initial conditions
@@ -36,21 +37,25 @@ catch error
     BotNotify("{Waves} An error has occurred $(typeof(error))")
     throw(error)
 end
-#%% Do all of these things later on
-save_solution(NetSol, save_path, partitions = 50) #Save the solution in 20 seperate parts
+
+#%% Save the solution
+try
+    save_solution(NetSol, save_path, partitions = 50) #Save the solution in 50 seperate parts
+    BotNotify("{Waves} Saving simulation for $(param_test) = $x completed")
+catch error
+    BotNotify("{Waves} Saving simulation for $(param_test) = $x failed")
+    throw(error)
+end
+#%%
 BotNotify("{Waves} Saving simulation for $(param_test) = $x completed")
 sol = load_solution(save_path) #Reload the solution for analysis
-animate_solution(sol, save_path) #Animate the solution
-BotNotify("{Waves} Animating simulation for $(param_test) = $x completed")
-timeseries_analysis(sol, save_path) #conduct a timeseries analysis
 
-thresholds = calculate_threshold(sol) #This takes really long
-spikes = get_timestamps(sol, thresholds; dt = 1.0)
+#BotNotify("{Waves} Animating simulation for $(param_test) = $x completed")
+timeseries_analysis(sol, save_path, dt = 1.0, verbose = true) #conduct a timeseries analysis
+animate_solution(sol, save_path) #Animate the solution
 BotNotify("{Waves} Timeseries analysis completed")
-#%%
-diff_t = map(i -> sol.t[i+1] - sol.t[i], 1:length(sol.t)-1)
-sol(1.0:1.0:10.0)
-sum(diff_t)/length(diff_t)
+data = BSON.load("$(save_path)\\data.bson")
+
 #%% Run a longer simulation loop
 #param_range = LinRange(0.05, 1.0, 25) #We want to rerun this exp with wave extraction
 param_test = :μ
