@@ -50,7 +50,7 @@ using JSON2, JLD2, BSON
 using ResettableStacks, RandomNumbers, LinearAlgebra
 
 #Imported for dynamical analysis
-using ForwardDiff, LinearAlgebra, NLsolve
+using ForwardDiff, NLsolve
 
 if verbose
      println("[$(now())]: Extra utilities imported")
