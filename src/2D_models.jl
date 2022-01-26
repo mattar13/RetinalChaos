@@ -1,89 +1,5 @@
 #Version 0: Model without nullout
-function (PDE::Network{T, :Default})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    W = view(U, :, :, 7)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
-
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
-
-    @. dv = (
-            - g_leak*(v-E_leak)
-            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-            - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            + I_app
-            + W
-        )/C_m
-
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyE, PDE.My, e)
-    mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
-    @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
-    @. dW = -W/τw
-    nothing
-end
-
-#Version 1: gTREK nullout
-function (PDE::Network{T, :gHCN})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    W = view(U, :, :, 7)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
-
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
-    
-    @. dv = (
-            - g_leak*(v-E_leak)
-            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-            - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K) 
-            - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            + I_app
-            + W
-        )/C_m
-
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyE, PDE.My, e)
-    mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
-    @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
-    @. dW = -W/τw
-    nothing
-end
-
-#Version 2: gACh nullout
-function (PDE::Network{T, :gACh})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
+function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -103,29 +19,31 @@ function (PDE::Network{T, :gACh})(dU::AbstractArray{T}, U::AbstractArray{T}, p::
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
     @. dv = (
-            - g_leak*(v-E_leak)
-            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-            - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh) .* PDE.null
-            + I_app
-            + W
-        )/C_m
+        -g_leak * (v - E_leak)
+        -
+        g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -
+        g_K * n * (v - E_K)
+        -
+        g_TREK * b * (v - E_K)
+        -
+        g_ACh * ħ(e, k_d) * (v - E_ACh)
+        + I_app
+        + W
+    ) / C_m
 
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyE, PDE.My, e)
-    mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
-    @. de = PDE.DE + (ρ*Φ(v, k, V0) - e)/τACh
-    @. dW = -W/τw
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
+    @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
+    @. da = (α * c^4 * (1 - a) - a) / τa
+    @. db = (β * a^4 * (1 - b) - b) / τb
+    @. de = (ρ * Φ(v, k, V0) - e) / τACh
+    ∇(de, e, D) #This is the diffusion step
+    @. dW = -W / τw
     nothing
 end
 
-#Version 3 :Acetylcholine release nullout
-function (PDE::Network{T, :ρ})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
+#Version 1: gTREK nullout
+function gHCN_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -140,34 +58,125 @@ function (PDE::Network{T, :ρ})(dU::AbstractArray{T}, U::AbstractArray{T}, p::Ab
     da = view(dU, :, :, 4)
     db = view(dU, :, :, 5)
     de = view(dU, :, :, 6)
-    dW = view(dU, :,:,7)
+    dW = view(dU, :, :, 7)
 
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 
     @. dv = (
-            - g_leak*(v-E_leak)
-            - g_Ca*R_INF(v, V1, V2)*(v-E_Ca)
-            - g_K*n*(v-E_K)
-            - g_TREK*b*(v-E_K)
-            - g_ACh*ħ(e, k_d)*(v-E_ACh)
-            + I_app
-            + W
-        )/C_m
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n)))/τn
-    @. dc = (C_0 + δ*(-g_Ca*R_INF(v, V1, V2)*(v - E_Ca)) - λ*c)/τc
-    @. da =  (α*c^4*(1-a) - a)/τa
-    @. db =  (β*a^4*(1-b) - b)/τb
-    mul!(PDE.MyE, PDE.My, e)
-    mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D*(PDE.MyE + PDE.EMx)
-    @. de = PDE.DE + (ρ*Φ(v, k, V0).*PDE.null - e)/τACh
-    @. dW = -W/τw
+        -g_leak * (v - E_leak)
+        -
+        g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -
+        g_K * n * (v - E_K)
+        -
+        g_TREK * b * (v - E_K)
+        -
+        g_ACh * ħ(e, k_d) * (v - E_ACh)
+        + I_app
+        + W
+    ) / C_m
+
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
+    @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
+    @. da = (α * c^4 * (1 - a) - a) / τa
+    @. db = (β * a^4 * (1 - b) - b) / τb
+
+    @. de = (ρ * Φ(v, k, V0) - e) / τACh
+    ∇(de, e, D) #This is the diffusion step
+    @. dW = -W / τw
+    nothing
+end
+
+#Version 2: gACh nullout
+function gACh_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
+    v = view(U, :, :, 1)
+    n = view(U, :, :, 2)
+    c = view(U, :, :, 3)
+    a = view(U, :, :, 4)
+    b = view(U, :, :, 5)
+    e = view(U, :, :, 6)
+    W = view(U, :, :, 7)
+
+    dv = view(dU, :, :, 1)
+    dn = view(dU, :, :, 2)
+    dc = view(dU, :, :, 3)
+    da = view(dU, :, :, 4)
+    db = view(dU, :, :, 5)
+    de = view(dU, :, :, 6)
+    dW = view(dU, :, :, 7)
+
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+
+    @. dv = (
+        -g_leak * (v - E_leak)
+        -
+        g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -
+        g_K * n * (v - E_K)
+        -
+        g_TREK * b * (v - E_K)
+        -
+        g_ACh * ħ(e, k_d) * (v - E_ACh) .* PDE.null
+        + I_app
+        + W
+    ) / C_m
+
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
+    @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
+    @. da = (α * c^4 * (1 - a) - a) / τa
+    @. db = (β * a^4 * (1 - b) - b) / τb
+    @. de = (ρ * Φ(v, k, V0) - e) / τACh
+    ∇(de, e, D) #This is the diffusion step
+    @. dW = -W / τw
+    nothing
+end
+
+#Version 3 :Acetylcholine release nullout
+function Rho_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
+    v = view(U, :, :, 1)
+    n = view(U, :, :, 2)
+    c = view(U, :, :, 3)
+    a = view(U, :, :, 4)
+    b = view(U, :, :, 5)
+    e = view(U, :, :, 6)
+    W = view(U, :, :, 7)
+
+    dv = view(dU, :, :, 1)
+    dn = view(dU, :, :, 2)
+    dc = view(dU, :, :, 3)
+    da = view(dU, :, :, 4)
+    db = view(dU, :, :, 5)
+    de = view(dU, :, :, 6)
+    dW = view(dU, :, :, 7)
+
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+
+    @. dv = (
+        -g_leak * (v - E_leak)
+        -
+        g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -
+        g_K * n * (v - E_K)
+        -
+        g_TREK * b * (v - E_K)
+        -
+        g_ACh * ħ(e, k_d) * (v - E_ACh)
+        + I_app
+        + W
+    ) / C_m
+    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
+    @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
+    @. da = (α * c^4 * (1 - a) - a) / τa
+    @. db = (β * a^4 * (1 - b) - b) / τb
+    @. de = (ρ * Φ(v, k, V0) .* PDE.null - e) / τACh
+    ∇(de, e, D) #This is the diffusion step
+    @. dW = -W / τw
     nothing
 end
 
 #Version 4: GABA sensitive model
-function (PDE::Network{T,:Default})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, D, τw, σ) = p
+function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, De, Di, τw, σ) = p
 
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
@@ -193,18 +202,18 @@ function (PDE::Network{T,:Default})(dU::AbstractArray{T}, U::AbstractArray{T}, p
     @. da = (α * c^4 * (1 - a) - a) / τa
     @. db = (β * a^4 * (1 - b) - b) / τb
 
-    mul!(PDE.MyE, PDE.My, e)
-    mul!(PDE.EMx, e, PDE.Mx)
-    @. PDE.DE = D * (PDE.MyE + PDE.EMx)
-    @. de = PDE.DE + (ρe * Φ(v, ke, V0e) - e) / τACh
+    @. de = (ρe * Φ(v, ke, V0e) - e) / τACh
+    ∇(de, e, De; dX = (1.5, 0.5), dY = (1.1, 0.9)) #This is the diffusion step
+
     @. di = (ρi * Φ(v, ki, V0i) - i) / τGABA
+    ∇(di, i, Di; dX = (0.9, 1.1), dY = (0.9, 1.1)) #This is the diffusion step
 
     @. dW = -W / τw
     nothing
 end
 
 #This is the Lansdell version of the SAC model
-function (PDE::Network{T, :Lansdell})(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
+function Lansdell_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where T
     v = view(U, :, :, 1)
     r = view(U, :, :, 2)
     s = view(U, :, :, 3)

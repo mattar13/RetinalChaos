@@ -1,49 +1,74 @@
-function ∇(du, u, D)
+function ∇(du, u, D; dX = (1.0, 1.0), dY = (1.0, 1.0))
     nx, ny = size(u)
     #These are boundary conditions for all x's at the first position
+    sum_dx = sum(dX)
+    sum_dy = sum(dY)
+    sum_d = sum_dx + sum_dy
     @inbounds for y in 2:ny-1
         x = 1
-        du[x, y] = D * (2u[x+1, y] + u[x, y+1] + u[x, y-1] - 4u[x, y])
+        du[x, y] += D * (
+            sum_dx * u[x+1, y] + 
+            dY[1] * u[x, y+1] + 
+            dY[2] * u[x, y-1] - 
+            sum_d * u[x, y])
     end
 
     #These are boundary conditions for all y's at the first position
     @inbounds for x in 2:nx-1
         y = 1
-        du[x, y] = D * (u[x-1, y] + u[x+1, y] + 2u[x, y+1] - 4u[x, y])
+        du[x, y] += D * (
+            dX[1] * u[x+1, y] + 
+            dX[2] * u[x-1, y] + 
+            sum_dy * u[x, y+1] - 
+            sum_d * u[x, y])
     end
 
     #These are boundary conditions for x's at the end
     @inbounds for y in 2:ny-1
         x = nx
-        du[x, y] = D * (2u[x-1, y] + u[x, y+1] + u[x, y-1] - 4u[x, y])
+        du[x, y] += D * (
+            sum_dx * u[x-1, y] + 
+            dY[1] * u[x, y+1] + 
+            dY[2] * u[x, y-1] - 
+            sum_d * u[x, y])
     end
 
-    #These are boundary conditions for all y's at the first position
+    #These are boundary conditions for all y's at end position
     @inbounds for x in 2:ny-1
         y = ny
-        du[x, y] = D * (u[x-1, y] + u[x+1, y] + 2u[x, y-1] - 4u[x, y])
+        du[x, y] += D * (
+            dX[1] * u[x+1, y] + 
+            dX[2] * u[x-1, y] + 
+            sum_dy * u[x, y-1] - 
+            sum_d * u[x, y])
     end
 
     @inbounds begin
         x = 1
         y = 1
-        du[x, y] = D * (2u[x+1, y] + 2u[x, y+1] - 4u[x, y])
+        du[x, y] += D * (sum_dx * u[x+1, y] + sum_dy * u[x, y+1] - sum_d * u[x, y])
         x = 1
         y = ny
-        du[x, y] = D * (2u[x+1, y] + 2u[x, y-1] - 4u[x, y])
+        du[x, y] += D * (sum_dx * u[x+1, y] + sum_dy * u[x, y-1] - sum_d * u[x, y])
         x = nx
         y = 1
-        du[x, y] = D * (2u[x-1, y] + 2u[x, y+1] - 4u[x, y])
+        du[x, y] += D * (sum_dx * u[x-1, y] + sum_dy * u[x, y+1] - sum_d * u[x, y])
         x = nx
         y = ny
-        du[x, y] = D * (2u[x-1, y] + 2u[x, y-1] - 4u[x, y])
+        du[x, y] += D * (sum_dx * u[x-1, y] + sum_dy * u[x, y-1] - sum_d * u[x, y])
     end
 
     @inbounds for x in 2:nx-1, y in 2:ny-1
-        du[x, y] = D * (u[x-1, y] + u[x+1, y] + u[x, y-1] + u[x, y+1] - 4u[x, y])
+        du[x, y] += D * (
+            dX[1] * u[x+1, y] + 
+            dX[2] * u[x-1, y] + 
+            dY[1] * u[x, y-1] + 
+            dY[2] * u[x, y+1] - 
+            sum_d * u[x, y])
     end
 end
 
+#= #We may switch to something that takes less memory like an unrolled stencil
 mutable struct Network{T,N} <: Function
     Mx::AbstractArray{T,2}
     My::AbstractArray{T,2}
@@ -63,9 +88,7 @@ struct Stencil{T}
 end
 
 
-function diffusion_stencil(nx::Int64, ny::Int64;
-    dX::Tuple{Float64,Float64} = (1.0, 1.0), dY::Tuple{Float64,Float64} = (1.0, 1.0)
-) where {T}
+function diffusion_stencil(nx::Int64, ny::Int64; dX::Tuple{Float64,Float64} = (1.0, 1.0), dY::Tuple{Float64,Float64} = (1.0, 1.0)) where {T}
     x_CENTER = repeat([-sum(dX)], nx)
     x_RIGHT = repeat([dX[1]], nx - 2)
     x_LEFT = repeat([dX[2]], nx - 2)
@@ -90,13 +113,7 @@ function diffuse(net::Stencil{T}, A::Array{T}, D::T) where T
     return DA + A
 end
 
-#=
-mutable struct Network2{T, N} >: Function
-    nx::Int64
-    ny::Int64
-    Stencils
-end
-=#
+
 
 """
 This is a constructor for the Network object with a version flag option
@@ -147,4 +164,4 @@ function Network(nx::Real, ny::Real;
     end
 end
 
-
+=#
