@@ -4,6 +4,9 @@ const version = :master
 param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
 version_info() = println(version)
 
+#============================================The utilites here are based on the Differential Equations Pack====#
+using DifferentialEquations
+
 #===========================================Loading the Parameters=============================================#
 #We need to import the readJSON interface
 include("utilities.jl")
