@@ -1,3 +1,7 @@
+"""
+This stencil function saves memory
+"""
+
 function ∇(du, u, D; dX = (1.0, 1.0), dY = (1.0, 1.0))
     nx, ny = size(u)
     #These are boundary conditions for all x's at the first position
