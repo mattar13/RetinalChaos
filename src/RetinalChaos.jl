@@ -4,6 +4,12 @@ const version = :master
 param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
 version_info() = println(version)
 
+#===========================================Loading the Parameters=============================================#
+#We need to import the readJSON interface
+include("utilities.jl")
+
+
+#=
 using Plots: text_box_width
 const verbose = false #Adjust the to print out statments relevant to the module import
 #Import small functions
@@ -115,5 +121,5 @@ export colormatch, colormap, colorschemes
 
 include("logging.jl")
 export dotenv, env_location, BotNotify, BotFigure
-
+=#
 end
