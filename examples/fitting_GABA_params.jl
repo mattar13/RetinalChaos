@@ -22,19 +22,29 @@ probSDE = SDEProblem(GABA_SDE, noise, u0, tspan, p);
 plt_a = plot(solSDE, vars = [1, 6, 7], layout = (3, 1))
 
 #%% We need to adjust the diffusion stencils
+import RetinalChaos.GABA_PDE
+nx = ny = 50;
+p_dict = read_JSON(params_file) #set up parameters
+p_dict[:g_GABA] = 1.2
+u_dict = read_JSON(conds_file) #Set up the initial conditions
+p_net = extract_dict(p_dict, GABA_pars)
+u0_net = extract_dict(u_dict, GABA_conds, (nx, ny))
+tspan = (0.0, 120e3)
+probPDE = SDEProblem(GABA_PDE, noise, u0_net, tspan, p_net)
+@time NetSol = solve(probPDE, SOSRI(),
+     abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
+     save_idxs = [1:(nx*ny)...],
+     progress = true, progress_steps = 1
+)
 
-nx = 10 
-ny = 100
-DX = (0.2, 1.8) #Bias right and left
-DY = (0.9, 1.1) #This breaks down to diffusion bias up and down
+#%%
+dFrame = 100.0
+anim = @animate for t in NetSol.t[1]:dFrame:NetSol.t[end]
+     println(t)
+     frame = reshape(NetSol(t), (nx, ny))
+     plot(frame, st = :heatmap, ratio = :equal, c = :jet, clims = (-70.0, 10.0))
+end
 
-StencilE = RetinalChaos.diffusion_stencil(nx, ny; dX = DX, dY = DY)
-a = zeros(nx, ny);
-a[5, 50] = 100.0;
-ai = RetinalChaos.diffuse(StencilE, a, 0.1)
-aii = RetinalChaos.diffuse(StencilE, ai, 0.1)
+gif(anim, fps = 10.0)
 
-p1 = Plots.heatmap(a, ratio = :equal);
-p2 = Plots.heatmap(ai, ratio = :equal);
-p3 = Plots.heatmap(aii, ratio = :equal);
-plot(p1, p2, p3, layout = (1, 3))
+plot(Array(NetSol)[2,:])
