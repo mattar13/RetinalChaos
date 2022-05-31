@@ -103,7 +103,22 @@ export v_color, n_color, c_color, a_color, b_color, e_color, w_color
 #    plot!(p[6], raster[pick_ten, 6, :]', lw = 4.0, c = :bgy, line_z = pick_ten', clims = pick_ten')
 #    p
 #end
+function animate_solution(sol::RODESolution, save_path::String;
+    animate_dt=60.0, verbose=true
+)
+    nx = ny = Int64(sqrt(size(sol, 1)))
+    #we can use this to build a solution without GPU
+    println("[$(now())]: Animating simulation...")
+    anim = @animate for t = 1.0:animate_dt:sol.t[end]
 
+        frame_i = reshape(sol(t) |> Array, (nx, ny))
+        heatmap(frame_i, ratio=:equal, grid=false,
+            xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
+            c=:curl, clims=(-70.0, 0.0),
+        )
+    end
+    gif(anim, "$(save_path)\\animation.gif", fps=1000.0 / animate_dt)
+end
 
 @recipe function f(eq::equilibria_object; vars = [:v, :n])
     seriestype := :scatter

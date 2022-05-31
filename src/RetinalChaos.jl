@@ -4,13 +4,17 @@ const version = :master
 param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
 version_info() = println(version)
 
-#============================================The utilites here are based on the Differential Equations Pack====#
-using DifferentialEquations
+#======================================Import all the pre-loaded packages======================================#
+using DifferentialEquations #Differential Equations packages
+#import DiffEqBase.AbstractODEProblem
+#export SDEProblem, ODEProblem, solve, SOSRI
+#export EnsembleProblem, EnsembleThreads
+
 
 #===========================================Loading the Parameters=============================================#
-#We need to import the readJSON interface
+using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
-
+export read_JSON
 
 #=
 using Plots: text_box_width
@@ -41,22 +45,7 @@ else
      using Plots, Measures 
 end
 
-using DifferentialEquations, StochasticDiffEq, DiffEqCallbacks
-#using ModelingToolkit, DiffEqBase
-import DiffEqBase.AbstractODEProblem
-export SDEProblem, ODEProblem, solve, SOSRI
-export EnsembleProblem, EnsembleThreads
-#These macros are only useful with ModelingToolkit which currently we are not using
-#export @parameters, @variables, @derivatives, @register
-#export ODESystem, SDESystem
-
-if verbose
-     println("[$(now())]Modelling utilities imported")
-end
-#Imports for reading and writing parameters and solutions
-using JSON2, JLD2, BSON
-#These packages are needed to load the problems
-using ResettableStacks, RandomNumbers, LinearAlgebra
+using ResettableStacks, RandomNumbers, LinearAlgebra #These packages are needed to load the problems
 
 #Imported for dynamical analysis
 using ForwardDiff, NLsolve
