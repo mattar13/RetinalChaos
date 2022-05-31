@@ -10,35 +10,36 @@ using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 
 
-save_file = "data\\$(Date(Dates.now()))\\"
-if isdir(save_file) == false
-    #The directory does not exist, we have to make it 
-    mkdir(save_file)
-end
+#Step 1: Set up the network properties
+nx = ny = 50
 
-#%% Run a network simulation and save it
-print("[$(Dates.now())]: Setting up the model...")
-nx = ny = 50; 
-p = read_JSON(params_file) 
-#Set up the initial conditions
-u0 = read_JSON(conds_file);
-net = Network(nx, ny; μ = 0.50, version = :gACh) #When running on my computer 
-p_net = extract_dict(p);
-u0_net = extract_dict(u0, nx, ny);
-warmup = (0.0, 300e3)
-tspan = (0.0 , 60e3)
-NetProb = SDEProblem(net, noise, u0_net, warmup, p_net)
-println("Completed")
-#%% Lets warm up the solution first (using GPU if available)
+#Step 1b: If using binomial nullification set that up now
+b = Binomial(1, 0.1)
+null = rand(b, nx, ny)
+net = (dU, U, p, t) -> gACh_PDE(dU, U, p, t, null)
 
-print("[$(Dates.now())]: Warming up the solution: ")
-@time NetSol = solve(NetProb, SOSRI(), 
-        abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-        progress = true, progress_steps = 1, 
-        save_everystep = false
-    )
-warmup_ics = NetSol[end]
-println("Completed")
+#Step 2: Import the initial conditions
+conds_dict = read_JSON("params\\conds.json")
+u0 = extract_dict(conds_dict, nx, ny)
+
+#Step 3: Import the parameters
+pars_dict = read_JSON(params_file)
+p = conds_dict |> extract_dict
+
+#Step 4: Determine the timespan
+tspan = (0.0, 60e3)
+
+#Step 5: Set up the problem
+prob = SDEProblem(net, noise, u0, tspan, p)
+
+
+#Step 6: Run the model
+@time NetSol = solve(NetProb, SOSRI(),
+    abstol=2e-2, reltol=0.2, maxiters=1e7,
+    progress=true, progress_steps=1,
+    save_everystep=false
+)
+
 
 #%% Save or load the warmed up solution
 print("[$(Dates.now())]: Loading or saving solution...")
@@ -49,11 +50,11 @@ println("Completed")
 #%% Run the simulation
 print("[$(Dates.now())]: Running the simulation... ")
 NetProb = SDEProblem(net, noise, warmup_ics, tspan, p_net)
-@time NetSol = solve(NetProb, SOSRI(), 
-        abstol = 2e-2, reltol = 0.2, maxiters = 1e7,
-        save_idxs = [1:(nx*ny)...], 
-        progress = true, progress_steps = 1
-    )
+@time NetSol = solve(NetProb, SOSRI(),
+    abstol=2e-2, reltol=0.2, maxiters=1e7,
+    save_idxs=[1:(nx*ny)...],
+    progress=true, progress_steps=1
+)
 println("Completed")
 
 #%% Save the solution, must be on drive first
@@ -61,17 +62,17 @@ print("[$(Dates.now())]: Saving the simulation...")
 JLD2.@save "$(save_file)\\sol.jld2" NetSol
 println("Completed")
 #%%
-plot(NetSol, idxs = 1)
+plot(NetSol, idxs=1)
 #%% Plotting animation
 anim = @animate for t = 1.0:10.0:NetSol.t[end]
     println("Animating frame $t")
     frame_i = reshape(NetSol(t) |> Array, (nx, ny))
-    heatmap(frame_i, ratio = :equal, grid = false,
-            xaxis = "", yaxis = "", xlims = (0, nx), ylims = (0, ny),
-            c = :curl, clims = (-70.0, 0.0),
+    heatmap(frame_i, ratio=:equal, grid=false,
+        xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
+        c=:curl, clims=(-70.0, 0.0),
     )
 end
-gif(anim, "$(save_file)\\animation.gif", fps = 20)
+gif(anim, "$(save_file)\\animation.gif", fps=20)
 
 #%%
 thresholds = RetinalChaos.calculate_threshold(NetSol) #This takes really long
