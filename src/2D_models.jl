@@ -37,7 +37,7 @@ function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T
     @. da = (α * c^4 * (1 - a) - a) / τa
     @. db = (β * a^4 * (1 - b) - b) / τb
     @. de = (ρ * Φ(v, k, V0) - e) / τACh
-    ∇(de, e, D) #This is the diffusion step
+    ∇(de, e, D; dX = dX, dY = dY) #This is the diffusion step
     @. dW = -W / τw
     nothing
 end
@@ -64,14 +64,10 @@ function gHCN_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t
 
     @. dv = (
         -g_leak * (v - E_leak)
-        -
-        g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
-        -
-        g_K * n * (v - E_K)
-        -
-        g_TREK * b * (v - E_K)
-        -
-        g_ACh * ħ(e, k_d) * (v - E_ACh)
+        -g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -g_K * n * (v - E_K)
+        -g_TREK * b * (v - E_K)
+        -g_ACh * ħ(e, k_d) * (v - E_ACh)
         + I_app
         + W
     ) / C_m
@@ -88,7 +84,7 @@ function gHCN_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t
 end
 
 #Version 2: gACh nullout
-function gACh_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
+function gACh_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T, null::AbstractArray{T}) where {T}
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -109,14 +105,10 @@ function gACh_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t
 
     @. dv = (
         -g_leak * (v - E_leak)
-        -
-        g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
-        -
-        g_K * n * (v - E_K)
-        -
-        g_TREK * b * (v - E_K)
-        -
-        g_ACh * ħ(e, k_d) * (v - E_ACh) .* PDE.null
+        -g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -g_K * n * (v - E_K)
+        -g_TREK * b * (v - E_K)
+        -g_ACh * ħ(e, k_d) * (v - E_ACh) .* null
         + I_app
         + W
     ) / C_m
