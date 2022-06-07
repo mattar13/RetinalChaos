@@ -19,3 +19,4 @@ prob = ODEProblem(T_ODE, u0, tspan, p)
 @time sol = solve(prob);
 
 #Once you have the solution you can do anything like plotting or other math
+plot(sol)

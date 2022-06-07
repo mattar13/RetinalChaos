@@ -78,7 +78,7 @@ end
 
 function GABA_ODE(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T}, t::T) where {T<:Real,T2}
      #Extract all of the parameters first
-     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, D, τw, σ) = p
+     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, De, Di, τw, σ) = p
      v = view(U, 1)
      n = view(U, 2)
      c = view(U, 3)
@@ -97,7 +97,7 @@ function GABA_ODE(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{
      di = view(dU, 7)
      dW = view(dU, 8)
 
-     @. dv = (-g_leak*(v - E_leak) - g_Ca*R_INF(v, V1, V2)*(v - E_Ca) - g_K*n*(v - E_K) - g_TREK*b*(v - E_K) - g_ACh*ħ(e, k_ACh)*(v - E_ACh) - g_GABA*ħ(i, k_GABA)*(v - E_GABA) + I_app) / C_m
+     @. dv = (-g_leak * (v - E_leak) - g_Ca * R_INF(v, V1, V2) * (v - E_Ca) - g_K * n * (v - E_K) - g_TREK * b * (v - E_K) - g_ACh * ħ(e, k_ACh) * (v - E_ACh) - g_GABA * ħ(i, k_GABA) * (v - E_GABA) + I_app) / C_m
      @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
      @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
      @. da = (α * c^4 * (1 - a) - a) / τa
@@ -111,7 +111,7 @@ end
 
 function GABA_SDE(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T}, t::T) where {T<:Real,T2}
      #Extract all of the parameters first
-     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, D, τw, σ) = p
+     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, De, Di, τw, σ) = p
      v = view(U, 1)
      n = view(U, 2)
      c = view(U, 3)
