@@ -92,14 +92,6 @@ include("pde_models.jl") #Includes all utilities for diffusion
 include("1D_models.jl") #Includes all 1D models
 include("2D_models.jl") #Includes all 2D models
 
-@register I_n(g_n, R, v, E_n)
-@register M_INF(v, V1, V2)
-@register N_INF(v, V3, V4)
-@register H_INF(v, V5, V6)
-@register Λ(v, V3, V4)
-@register Φ(v, κ, V0)
-@register ħ(e, k_d)
-
 #Noise models
 noise(du::Array{T,1}, u::Array{T,1}, p, t::T) where {T<:Real} = du[end] = p[end]
 noise(du::Array{T,3}, u::Array{T,3}, p, t::T) where {T<:Real} = du[:, :, end] .= p[end]
