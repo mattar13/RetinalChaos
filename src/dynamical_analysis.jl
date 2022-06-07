@@ -87,9 +87,9 @@ In order to conduct one of these experiments we can set up an epoch table.
 """
 function IC_callback(step_begin, duration, level; duration_delta = 0, level_delta = 0, give_warning = false)
     if duration_delta == 0 && level_delta == 0 #We are only doing one duration vs a tar_conds
-        condition(u, t, integrator) = step_begin < t < step_begin + duration
-        affect!(integrator) = integrator.p[:I_app |> p_find] = level
-        cb = DiscreteCallback(condition, affect!)
+        condition_fn(u, t, integrator) = step_begin < t < step_begin + duration
+        affect_fn!(integrator) = integrator.p[:I_app |> p_find] = level
+        cb = DiscreteCallback(condition_fn, affect_fn!)
         return cb
     elseif duration_delta != 0 && level_delta == 0
         #These callbacks will be called in an ensemble solution
@@ -98,10 +98,10 @@ function IC_callback(step_begin, duration, level; duration_delta = 0, level_delt
                 "These solutions will instead return an ensemble solution"
             end
         end
-        condition(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
-        affect!(integrator) = integrator.p[:I_app |> p_find] = level
-        cb(i) = DiscreteCallback((u, t, integrator) -> condition(u, t, integrator,  i), affect!)
-        return cb
+        condition_fn(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
+        affect_fn!(integrator) = integrator.p[:I_app |> p_find] = level
+        cb_fn(i) = DiscreteCallback((u, t, integrator) -> condition_fn(u, t, integrator,  i), affect_fn!)
+        return cb_fn
     elseif duration_delta != 0 && level_delta != 0
         if give_warning
             @warn begin
@@ -111,7 +111,7 @@ function IC_callback(step_begin, duration, level; duration_delta = 0, level_delt
         condition_fn(u, t, integrator) = step_begin < t < step_begin + duration
         affect_fn!(integrator, i) = integrator.p[:I_app |> p_find] = level + level_delta*i
         cb_fn(i) = DiscreteCallback(condition_fn, integrator -> affect_fn!(integrator, i))
-        return cb
+        return cb_fn
     else
         if give_warning
             @warn begin
