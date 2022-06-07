@@ -11,7 +11,9 @@ export now
 
 using DifferentialEquations #Differential Equations packages
 export ODEProblem, SDEProblem, solve
-export SOSRI #Export any algorithims
+export SOSRI, SOSRA, SROCK1, SRIW1, SKenCarp #Export any algorithims
+export SRIW1
+export SROCK1 #Needs a dt specification
 #import DiffEqBase.AbstractODEProblem
 #export SDEProblem, ODEProblem, solve, SOSRI
 export EnsembleProblem, EnsembleThreads
@@ -20,7 +22,7 @@ using CUDA
 export cu, allowscalar
 
 include("models.jl")
-export T_ode, T_sde, T_PDE
+export T_ODE, T_SDE, T_PDE
 export noise
 
 #===========================================Loading the Parameters=============================================#
