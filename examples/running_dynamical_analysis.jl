@@ -22,44 +22,30 @@ prob_sde = SDEProblem(T_sde, noise, u0, tspan, p);
 eq_analysis = find_equilibria(prob_eq)
 print(eq_analysis)
 
-
-
-prob_sde = SDEProblem(T_sde, noise, u0 |> extract_dict, tspan, p |> extract_dict);
-#Inject a current
-#p[:I_app] = 0.42
-prob_basic = ODEProblem(T_ode, u0 |> extract_dict, tspan, p |> extract_dict)
-sol_sde = solve(prob_sde, progress=true)
-sol_basic = solve(prob_basic, progress=true)
-plot(sol_sde, vars=[1])
-plot!(sol_basic, vars=[1])
-threshold = calculate_threshold(sol_basic)
-hline!([threshold])
-
-#%%
-sol_sde = solve(prob_sde, progress=true)
-sol_plain = solve(prob_eq, progress=true)
-
-#%% Codim 1 analysis
+#%% Step 5: Running a Codimensional-1 analysis
 codim1 = (:I_app)
+print("Codimensional analysis over parameter $codim1")
 c1_lims = (-60.0, 50.0)
-print("Codimensional analysis time to complete:")
+print("On parameter range: $c1_lims beginning:")
 @time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
+println("Complete")
 
-#%%
+#%% Step 6: Plot out all of the solutions contained in the codimensional analysis
+prob_eq = ODEProblem(T_ode, u0, tspan, p) #First we need to reset the function
+test_rng = map(x -> x[1], c1_map.points) #Determine the range of the parameters (specified above)
+par_idx = p_find(codim1; list_p=RetinalChaos.tar_pars) #Point to the index of the parameter
+prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng) #Set up the problem function to indicate that the voltage will be altered
+ensemble_prob = EnsembleProblem(prob_eq, prob_func=prob_func); #Set up the problem
+print("Running a ensemble simulation for :")
+@time sim = solve(ensemble_prob, trajectories=length(test_rng), EnsembleThreads());
+
+#%% If plotting is loaded then plot the current vs voltage
 eq_plot = plot(c1_map, xlabel="Injected Current", ylabel="Membrane Voltage")
 bif_val, bif_eq = find_bifurcation(c1_map)
 println(bif_val)
 saddle_vs = map(x -> x.saddle[1][1], bif_eq)
-plot!(eq_plot, bif_val, saddle_vs, marker=:square, seriestype=:scatter, label="Saddle node bif")
+plot!(eq_plot, bif_val, saddle_vs, marker=:square, c = :blue, seriestype=:scatter, label="Saddle node bif")
 
-#%% Run a ensemble function (after resetting the function)
-prob_eq = ODEProblem(T_ode, u0 |> extract_dict, tspan, p |> extract_dict)
-test_rng = map(x -> x[1], c1_map.points) #this ranges from halving the parameter to doubling it
-par_idx = findall(x -> x == codim1, Symbol.(T_sde.ps))
-prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng)
-ensemble_prob = EnsembleProblem(prob_eq, prob_func=prob_func);
-print("Running a ensemble simulation for :")
-@time sim = solve(ensemble_prob, trajectories=length(test_rng), EnsembleThreads());
 for (sol_idx, sol) in enumerate(sim)
     dt = 100.0
     vt = map(t -> sol(t)[1], collect(5e3:dt:tspan[2]))
@@ -69,7 +55,7 @@ end
 
 eq_plot
 
-#%% Codim 2 analysis
+#%% Step 6 Codim 2 analysis
 codim2 = (:I_app, :g_Ca)
 c1_lims = (-60.0, 50.0);
 c2_lims = (0.0, 20.0);

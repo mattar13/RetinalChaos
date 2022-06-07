@@ -13,7 +13,7 @@ p = pars_dict |> extract_dict
 tspan = (0.0, 300e3)
 
 #Step 4: set up the problem
-prob = ODEProblem(T_ode, u0, tspan, p)
+prob = ODEProblem(T_ODE, u0, tspan, p)
 
 #Step 5: Solve the problem
 @time sol = solve(prob);

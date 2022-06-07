@@ -13,7 +13,7 @@ p = pars_dict |> extract_dict
 tspan = (0.0, 300e3)
 
 #Step 4: set up the problem
-prob = SDEProblem(T_sde, noise, u0, tspan, p)
+prob = SDEProblem(T_SDE, noise, u0, tspan, p)
 
 #Step 5: Solve the problem
 @time sol = solve(prob, SOSRI());
