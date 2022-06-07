@@ -14,7 +14,7 @@ export ODEProblem, SDEProblem, solve
 export SOSRI #Export any algorithims
 #import DiffEqBase.AbstractODEProblem
 #export SDEProblem, ODEProblem, solve, SOSRI
-#export EnsembleProblem, EnsembleThreads
+export EnsembleProblem, EnsembleThreads
 
 using CUDA
 export cu, allowscalar
@@ -26,7 +26,7 @@ export noise
 #===========================================Loading the Parameters=============================================#
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
-export read_JSON, extract_dict
+export read_JSON, extract_dict, p_find, u_find
 
 using Distributions
 
@@ -44,6 +44,8 @@ export ensemble_func
 export find_equilibria, find_bifurcation
 export codim_map
 
+using RecipesBase
+include("plotting.jl")
 #=
 using Plots: text_box_width
 const verbose = false #Adjust the to print out statments relevant to the module import
