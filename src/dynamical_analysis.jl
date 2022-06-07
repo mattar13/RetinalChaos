@@ -3,6 +3,7 @@ ensemble_func()  sets up a ensemble problem
 """
 
 function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars, verbose = false)
+    println("Running this version")
     if run_func_on == :pars
         if verbose
             println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
@@ -19,6 +20,7 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars
 end
 
 function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose = false)
+    
     idx_cond = sym |> u_find
     idx_par = sym |> p_find
 
