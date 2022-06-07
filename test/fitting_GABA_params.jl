@@ -1,7 +1,7 @@
 using Revise
 using RetinalChaos #Load the package
-using BSON, JLD2
 using LinearAlgebra
+using StaticArrays
 #%%Lets figure out how to extract the waves
 import RetinalChaos: param_path, GABA_conds, GABA_pars, GABA_ODE, GABA_SDE
 
@@ -11,11 +11,13 @@ conds_file = joinpath(param_path, "GABA_conds.json")
 p_dict = read_JSON(params_file)
 u_dict = read_JSON(conds_file)
 #p_dict[:g_GABA] = 2.0
-p = extract_dict(p_dict, GABA_pars)
+p = extract_dict(p_dict, GABA_pars) 
 u0 = extract_dict(u_dict, GABA_conds)
 tspan = (0.0, 300e3)
 probODE = ODEProblem(GABA_ODE, u0, tspan, p);
 probSDE = SDEProblem(GABA_SDE, noise, u0, tspan, p);
+
+
 @time solODE = solve(probODE, progress = true);
 @time solSDE = solve(probSDE, progress = true);
 #%% Plotting results
