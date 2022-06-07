@@ -1,4 +1,4 @@
-function T_ode(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T}, t::T) where {T <: Real, T2}
+function T_ODE(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T}, t::T) where {T <: Real, T2}
 	#Extract all of the parameters first
 	v = view(U, 1)
 	n = view(U, 2)
@@ -37,7 +37,7 @@ function T_ode(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T},
 	dU
 end
 
-function T_sde(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T}, t::T) where {T <: Real, T2}
+function T_SDE(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{T}, t::T) where {T <: Real, T2}
 	#Extract all of the parameters first
 	(g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
 	v = view(U, 1)
