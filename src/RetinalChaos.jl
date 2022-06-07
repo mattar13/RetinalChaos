@@ -23,6 +23,7 @@ export cu, allowscalar
 
 include("models.jl")
 export T_ODE, T_SDE, T_PDE
+export GABA_ODE, GABA_SDE, GABA_PDE
 export noise
 
 #===========================================Loading the Parameters=============================================#
@@ -32,8 +33,13 @@ export read_JSON, extract_dict, p_find, u_find
 
 using Distributions
 
-#==========================================Extracting wave and events==========================================#
+#===========================================Import logging materials===========================================#
 using ProgressMeter
+using Logging: global_logger
+using TerminalLoggers: TerminalLogger
+global_logger(TerminalLogger())
+
+#==========================================Extracting wave and events==========================================#
 include("wave_extraction.jl") #Export functions for wave extraction
 export calculate_threshold
 export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
@@ -48,6 +54,8 @@ export codim_map
 
 using RecipesBase
 include("plotting.jl")
+
+
 #=
 using Plots: text_box_width
 const verbose = false #Adjust the to print out statments relevant to the module import
