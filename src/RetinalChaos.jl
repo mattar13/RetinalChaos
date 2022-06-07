@@ -3,18 +3,46 @@ module RetinalChaos
 const version = :master
 param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
 version_info() = println(version)
-
+import Base.length
+import Base.print
+import Dates.now
+export now
 #======================================Import all the pre-loaded packages======================================#
+
 using DifferentialEquations #Differential Equations packages
+export ODEProblem, SDEProblem, solve
+export SOSRI #Export any algorithims
 #import DiffEqBase.AbstractODEProblem
 #export SDEProblem, ODEProblem, solve, SOSRI
 #export EnsembleProblem, EnsembleThreads
 
+using CUDA
+export cu, allowscalar
+
+include("models.jl")
+export T_ode, T_sde, T_PDE
+export noise
 
 #===========================================Loading the Parameters=============================================#
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
-export read_JSON
+export read_JSON, extract_dict
+
+using Distributions
+
+#==========================================Extracting wave and events==========================================#
+using ProgressMeter
+include("wave_extraction.jl") #Export functions for wave extraction
+export calculate_threshold
+export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
+export extract_waves
+
+
+using ForwardDiff, NLsolve #Imported for dynamical analysis
+include("dynamical_analysis.jl") # Export functions for dynamical analysis
+export ensemble_func
+export find_equilibria, find_bifurcation
+export codim_map
 
 #=
 using Plots: text_box_width
@@ -27,16 +55,6 @@ export now
 #This is for showing the progress of the wave finding function. Which also should be looked at
 
 using Telegram, Telegram.API, ConfigEnv
-using ProgressMeter
-if verbose 
-     println("[$(now())]: Small functions imported")
-end
-
-#Imports if using GPU
-using CUDA
-export cu, allowscalar
-
-#Include all the plotting utilities
 
 if verbose 
      print("[$(now())]: Plotting utilities imported in: ")
@@ -46,9 +64,6 @@ else
 end
 
 using ResettableStacks, RandomNumbers, LinearAlgebra #These packages are needed to load the problems
-
-#Imported for dynamical analysis
-using ForwardDiff, NLsolve
 
 if verbose
      println("[$(now())]: Extra utilities imported")
@@ -76,22 +91,9 @@ export data_bytesize #we can use this to predict the approximate bytesize saved 
 export extract_dict, read_JSON, write_JSON #Load the parameter loading functions 
 export run_model, save_solution, load_solution, convert_to_cpu, animate_solution
 
-# Export functions for dynamical analysis
-include("dynamical_analysis.jl")
-export ensemble_func
-export find_equilibria, find_bifurcation
-export codim_map
+
 
 #include("fitting.jl") 
-
-include("wave_extraction.jl")
-export calculate_threshold
-export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
-export extract_waves
-#println("Fininshed Importing")
-
-
-
 
 include("plotting.jl")
 export Plots
