@@ -38,7 +38,7 @@ export get_timestamps, max_interval_algorithim, extract_interval, timeseries_ana
 export extract_waves
 
 
-using ForwardDiff, NLsolve #Imported for dynamical analysis
+using ForwardDiff, NLsolve, LinearAlgebra #Imported for dynamical analysis
 include("dynamical_analysis.jl") # Export functions for dynamical analysis
 export ensemble_func
 export find_equilibria, find_bifurcation
