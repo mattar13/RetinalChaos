@@ -27,12 +27,18 @@ p = extract_dict(pars_dict, GABA_pars)
 
 #Step 4: Determine the timespan
 tspan = (0.0, 60e3)
-
 #Step 5: Set up the problem
 prob = SDEProblem(net, noise, u0, tspan, p)
 
 
-#Step 6: Run the model
+#Step 6: Running the model
+@time warmup = solve(prob, SOSRI(),
+    abstol=2e-2, reltol=2e-2, maxiters=1e7,
+    save_everystep=false, progress=true, progress_steps=1
+)
+prob = SDEProblem(net, noise, warmup[end], tspan, p)
+
+#Step 7: Run the model
 @time NetSol = solve(prob, SOSRI(),
     abstol=2e-2, reltol=0.2, maxiters=1e7,
     progress=true, progress_steps=1,
