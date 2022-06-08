@@ -30,6 +30,8 @@ export cu, allowscalar
 include("models.jl")
 export T_ODE, T_SDE, T_PDE
 export GABA_ODE, GABA_SDE, GABA_PDE
+export tar_pars, tar_conds
+export GABA_pars, GABA_conds
 export noise
 
 #===========================================Loading the Parameters=============================================#
@@ -38,7 +40,7 @@ include("utilities.jl")
 export read_JSON, extract_dict, p_find, u_find
 
 using Distributions
-
+export Binomial
 
 
 #==========================================Extracting wave and events==========================================#
