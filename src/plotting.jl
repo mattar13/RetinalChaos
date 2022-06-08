@@ -3,7 +3,7 @@
 #font_axis = Plots.font("Arial", 12)
 #font_legend = Plots.font("Arial", 8)
 #plotlyjs(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
-
+import Plots.@animate
 
 export equilibria_object
 const v_color = :deepskyblue
@@ -33,6 +33,7 @@ export v_color, n_color, c_color, a_color, b_color, e_color, w_color
     gif(anim, "$(save_path)\\animation.gif", fps=1000.0 / animate_dt)
 end
 =#
+
 @recipe function f(eq::equilibria_object; vars = [:v, :n])
     seriestype := :scatter
     markersize := 8.0
