@@ -89,10 +89,10 @@ In order to conduct one of these experiments we can set up an epoch table.
 """
 function IC_callback(step_begin, duration, level; duration_delta = 0, level_delta = 0, give_warning = false)
     if duration_delta == 0 && level_delta == 0 #We are only doing one duration vs a tar_conds
-        condition_fn(u, t, integrator) = step_begin < t < step_begin + duration
-        affect_fn!(integrator) = integrator.p[:I_app |> p_find] = level
-        cb = DiscreteCallback(condition_fn, affect_fn!)
-        return cb
+        condition_fn1(u, t, integrator) = step_begin < t < step_begin + duration
+        affect_fn1!(integrator) = integrator.p[:I_app |> p_find] = level
+        cb_fn1 = DiscreteCallback(condition_fn1, affect_fn1!)
+        return cb_fn1
     elseif duration_delta != 0 && level_delta == 0
         #These callbacks will be called in an ensemble solution
         if give_warning
@@ -100,33 +100,33 @@ function IC_callback(step_begin, duration, level; duration_delta = 0, level_delt
                 "These solutions will instead return an ensemble solution"
             end
         end
-        condition_fn(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
-        affect_fn!(integrator) = integrator.p[:I_app |> p_find] = level
-        cb_fn(i) = DiscreteCallback((u, t, integrator) -> condition_fn(u, t, integrator,  i), affect_fn!)
-        return cb_fn
+        condition_fn2(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
+        affect_fn2!(integrator) = integrator.p[:I_app |> p_find] = level
+        cb_fn2(i) = DiscreteCallback((u, t, integrator) -> condition_fn2(u, t, integrator,  i), affect_fn2!)
+        return cb_fn2
     elseif duration_delta != 0 && level_delta != 0
         if give_warning
             @warn begin
                 "These solutions will only work with an ensemble solution"
             end
         end
-        condition_fn(u, t, integrator) = step_begin < t < step_begin + duration
-        affect_fn!(integrator, i) = integrator.p[:I_app |> p_find] = level + level_delta*i
-        cb_fn(i) = DiscreteCallback(condition_fn, integrator -> affect_fn!(integrator, i))
-        return cb_fn
+        condition_fn3(u, t, integrator) = step_begin < t < step_begin + duration
+        affect_fn3!(integrator, i) = integrator.p[:I_app |> p_find] = level + level_delta*i
+        cb_fn3(i) = DiscreteCallback(condition_fn3, integrator -> affect_fn3!(integrator, i))
+        return cb_fn3
     else
         if give_warning
             @warn begin
                 "These solutions will only work with an ensemble solution"
             end
         end
-        condition_fn(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
-        affect_fn!(integrator, i) = integrator.p[:I_app |> p_find] = level + (level_delta*i)
-        cb_fn(i) = DiscreteCallback(
-            (u, t, integrator) -> condition_fn(u, t, integrator,  i), 
-            integrator -> affect_fn!(integrator, i)
+        condition_fn4(u, t, integrator, i) = step_begin < t < step_begin + (duration + duration_delta*i)
+        affect_fn4!(integrator, i) = integrator.p[:I_app |> p_find] = level + (level_delta*i)
+        cb_fn4(i) = DiscreteCallback(
+            (u, t, integrator) -> condition_fn4(u, t, integrator,  i), 
+            integrator -> affect_fn4!(integrator, i)
             )
-        return cb_fn
+        return cb_fn4
     end    
 end
 
