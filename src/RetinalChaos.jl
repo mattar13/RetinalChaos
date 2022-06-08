@@ -1,5 +1,11 @@
 module RetinalChaos
 
+#===========================================Import logging materials===========================================#
+using Logging: global_logger
+using TerminalLoggers: TerminalLogger
+global_logger(TerminalLogger())
+using ProgressMeter
+
 const version = :master
 param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
 version_info() = println(version)
@@ -33,11 +39,7 @@ export read_JSON, extract_dict, p_find, u_find
 
 using Distributions
 
-#===========================================Import logging materials===========================================#
-using ProgressMeter
-using Logging: global_logger
-using TerminalLoggers: TerminalLogger
-global_logger(TerminalLogger())
+
 
 #==========================================Extracting wave and events==========================================#
 include("wave_extraction.jl") #Export functions for wave extraction
