@@ -2,11 +2,40 @@
 using Revise
 using RetinalChaos
 
-#Step 1: Import the initial conditions
+#%% Part 1: Running an ensemble problems
+#Setp 1: Import all parameters and make the model
+conds_dict = read_JSON("params\\conds.json")
+u0 = conds_dict |> extract_dict #Initial conditions
+pars_dict = read_JSON("params\\params.json")
+p = pars_dict |> extract_dict #Parameters
+tspan = (0.0, 300e3) #Timespan
+prob = ODEProblem(T_ODE, u0, tspan, p) #ODE problem
+
+#Step 2: Determine the number of trajectories and the parameter to adjust
+n_trajectories = 10
+par_idx = p_find(:g_GABA; list_p=GABA_pars) #Point to the index of the parameter
+test_rng = LinRange(5.0, 20.0, n_trajectories) #Determine the range of the parameters (specified above)
+
+#Step 3: Set up the ensemble problem
+prob_func(prob, i, repeat) = ensemble_func(probGABA, i, repeat, par_idx, test_rng) #Set up the problem function to indicate that the voltage will be altered
+ensemble_prob = EnsembleProblem(probGABA, prob_func=prob_func); #Set up the problem
+
+#Step 4: Run the simulation
+@time sim = solve(ensemble_prob, trajectories=n_trajectories, EnsembleThreads());
+
+#[OPTIONAL]: Plot the solutions 
+plt_a = plot(sim[1], vars=[1], c=:jet, line_z=1, clims=(test_rng[1], test_rng[end]))
+plt_b = plot(sim[1], vars=(1, 2), c=:jet, line_z=1, clims=(test_rng[1], test_rng[end]))
+for (sol_idx, sol_i) in enumerate(sim)
+    println(test_rng[sol_idx])
+    plot!(plt_a, sol_i, vars=[1], c=:jet, line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
+    plot!(plt_b, sol_i, vars=(1, 2), c=:jet, line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
+end
+plot(plt_a, plt_b, layout=2)
+
+#%% Part 2: Running a equilibria analysis
 conds_dict = read_JSON("params\\conds.json")
 u0 = conds_dict |> extract_dict
-
-#Step 2: Import the parameters (and set some parameters to 0.0)
 pars_dict = read_JSON("params\\params.json")
 pars_dict[:I_app] = 0.0 #Set initial applied current to 0
 pars_dict[:g_ACh] = 0.0 #Remove g_ACh influence
@@ -44,7 +73,7 @@ eq_plot = plot(c1_map, xlabel="Injected Current", ylabel="Membrane Voltage")
 bif_val, bif_eq = find_bifurcation(c1_map)
 println(bif_val)
 saddle_vs = map(x -> x.saddle[1][1], bif_eq)
-plot!(eq_plot, bif_val, saddle_vs, marker=:square, c = :blue, seriestype=:scatter, label="Saddle node bif")
+plot!(eq_plot, bif_val, saddle_vs, marker=:square, c=:blue, seriestype=:scatter, label="Saddle node bif")
 
 for (sol_idx, sol) in enumerate(sim)
     dt = 100.0
@@ -53,7 +82,6 @@ for (sol_idx, sol) in enumerate(sim)
     plot!(eq_plot, zt, vt, legend=false, marker=:circle, c=:blue)
 end
 
-eq_plot
 
 #%% Step 6 Codim 2 analysis
 codim2 = (:I_app, :g_Ca)
