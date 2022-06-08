@@ -195,10 +195,12 @@ function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t
     @. db = (β * a^4 * (1 - b) - b) / τb
 
     @. de = (ρe * Φ(v, ke, V0e) - e) / τACh
-    ∇(de, e, De; dX = (1.5, 0.5), dY = (1.1, 0.9)) #This is the diffusion step
+    #∇(de, e, De; dX = (1.5, 0.5), dY = (1.1, 0.9)) #This is the diffusion step
+    ∇(de, e, De) #This is the diffusion step
 
     @. di = (ρi * Φ(v, ki, V0i) - i) / τGABA
-    ∇(di, i, Di; dX = (0.9, 1.1), dY = (0.9, 1.1)) #This is the diffusion step
+    #∇(di, i, Di; dX = (0.9, 1.1), dY = (0.9, 1.1)) #This is the diffusion step
+    ∇(di, i, Di) #This is the diffusion step
 
     @. dW = -W / τw
     nothing
