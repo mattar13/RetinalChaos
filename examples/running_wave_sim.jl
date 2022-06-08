@@ -1,13 +1,11 @@
-using RetinalChaos
-using Dates, Plots
-using JLD2
-param_root = "params\\"
-params_file = joinpath(param_root, "params.json")
-conds_file = joinpath(param_root, "conds.json")
 #Load the logger
 using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
+
+using RetinalChaos
+using Dates, Plots
+using JLD2
 
 
 #Step 1: Set up the network properties
@@ -16,14 +14,14 @@ nx = ny = 50
 #Step 1b: If using binomial nullification set that up now
 b = Binomial(1, 0.1)
 null = rand(b, nx, ny)
-net = (dU, U, p, t) -> gACh_PDE(dU, U, p, t, null)
-
+#net = (dU, U, p, t) -> gACh_PDE(dU, U, p, t, null)
+net = GABA_PDE
 #Step 2: Import the initial conditions
-conds_dict = read_JSON("params\\conds.json")
+conds_dict = read_JSON("params/GABA_conds.json")
 u0 = extract_dict(conds_dict, nx, ny)
 
 #Step 3: Import the parameters
-pars_dict = read_JSON(params_file)
+pars_dict = read_JSON("params/GABA_params.json")
 p = conds_dict |> extract_dict
 
 #Step 4: Determine the timespan
