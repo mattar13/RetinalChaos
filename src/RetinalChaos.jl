@@ -5,6 +5,7 @@ using Logging: global_logger
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 using ProgressMeter
+export @showprogress
 
 const version = :master
 param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
@@ -30,6 +31,7 @@ export cu, allowscalar
 include("models.jl")
 export T_ODE, T_SDE, T_PDE
 export GABA_ODE, GABA_SDE, GABA_PDE
+export GABA_PDE_gNULL
 export tar_pars, tar_conds
 export GABA_pars, GABA_conds
 export noise
@@ -56,20 +58,11 @@ export ensemble_func
 export find_equilibria, find_bifurcation
 export codim_map
 
-using RecipesBase
+using RecipesBase #I want to avoid using thisPlots
 include("plotting.jl")
-
+#export animate_solution
 
 #=
-using Plots: text_box_width
-const verbose = false #Adjust the to print out statments relevant to the module import
-#Import small functions
-import Base.length
-import Base.print
-import Dates.now
-export now
-#This is for showing the progress of the wave finding function. Which also should be looked at
-
 using Telegram, Telegram.API, ConfigEnv
 
 if verbose 
@@ -81,35 +74,11 @@ end
 
 using ResettableStacks, RandomNumbers, LinearAlgebra #These packages are needed to load the problems
 
-if verbose
-     println("[$(now())]: Extra utilities imported")
-end
-#For Binomial Nullification of parameters
-using Distributions
-
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
 using Statistics, StatsBase
 using Images, ImageSegmentation
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
-
-if verbose 
-     println("[$(now())]: Importing Models")
-end
-include("models.jl")
-export T_ode, T_sde, SOSRI, SOSRA #Load all the DiffEq Interface
-#Export functions related to creating the 2D network
-export Network, noise
-export tar_conds, tar_pars, p_find, u_find
-
-include("utilities.jl")
-export data_bytesize #we can use this to predict the approximate bytesize saved by BSON
-export extract_dict, read_JSON, write_JSON #Load the parameter loading functions 
-export run_model, save_solution, load_solution, convert_to_cpu, animate_solution
-
-
-
-#include("fitting.jl") 
 
 include("plotting.jl")
 export Plots
