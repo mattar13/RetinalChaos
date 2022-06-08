@@ -10,7 +10,7 @@ u0 = extract_dict(conds_dict_GABA, GABA_conds)
 
 #Step 2: Import the parameters
 pars_dict = read_JSON("params/GABA_params.json")
-pars_dict[:g_GABA] = 5.0
+pars_dict[:g_GABA] = 10.5
 p_GABA = extract_dict(pars_dict, GABA_pars)
 
 pars_dict[:g_GABA] = 0.0 #Basically removes the influence of the GABA receptors
@@ -56,10 +56,11 @@ end
 plot(plt_a, plt_b, layout=2)
 
 #%% Now lets run through several parameters using the wave model
-b = Binomial(1, 0.65) #We take these two things out so the NUllification is constant
+nx = ny = 50
+b = Binomial(1, 0.75) #This means 75% of cells are sensitive to GABA
 null = Array{Float64}(rand(b, nx, ny))
 param = :g_GABA
-for val in LinRange(5.0, 20.0, 10) #This is the range of values
+for val in LinRange(8.0, 12.0, 10) #This is the range of values
      print("[$(now())]: Setting up binomal nullification... ")
      println(" [$(now())]: Completed")
      net = (dU, U, p, t) -> GABA_PDE_gNULL(dU, U, p, t, null)
@@ -70,10 +71,16 @@ for val in LinRange(5.0, 20.0, 10) #This is the range of values
      #CHANGE ANY PARAMETER HERE
      pars_dict[param] = val
      p = extract_dict(pars_dict, GABA_pars)
-     tspan = (0.0, 60e3)
+     tspan_warmup = (0.0, 200e3)
      println(" [$(now())]: Completed")
-     print("[$(now())]: Running Model... ")
+
+     print("[$(now())]: Warming up model... ")
      prob = SDEProblem(net, noise, u0, tspan, p)
+     @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1)
+     println(" [$(now())]: Completed")
+     
+     print("[$(now())]: Running model... ")
+     prob = SDEProblem(net, noise, warmup[end], tspan, p)
      @time NetSol = solve(prob, SOSRI(), abstol=2e-2, reltol=0.2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...])
      println(" [$(now())]: Completed")
 
@@ -86,6 +93,13 @@ for val in LinRange(5.0, 20.0, 10) #This is the range of values
           frame_i = reshape(NetSol(t) |> Array, (nx, ny))
           heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-70.0, 0.0))
      end
-     gif(anim, "$(loc)\\g_GABA_$(round(val, digits = 1))animation.gif", fps=1000.0 / animate_dt)
+     gif(anim, "$(loc)\\$(param)_$(round(val, digits = 1))animation.gif", fps=1000.0 / animate_dt)
      println(" [$(now())]: Completed")
 end
+
+
+#parameter spaces: 
+#1) gGABA = [8.0->12.0]
+#2) gCa = [10.0->20.0]
+#3) gK = []
+#4) μ = [0.7-0.8]
