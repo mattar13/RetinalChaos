@@ -34,3 +34,10 @@ vline!(plt_b, burst_tstamps[1][:, 1], c=:green, label="burst begin")
 vline!(plt_b, burst_tstamps[1][:, 2], c=:red, label="burst end")
 
 plt_b
+
+#%% Plot each parameter in a histogram
+hfit = fit(Histogram, spike_durs, LinRange(1, 10, 50))
+weights = hfit.weights / maximum(hfit.weights)
+edges = collect(hfit.edges[1])[1:length(hfit.weights)]
+
+plot(edges, weights)
