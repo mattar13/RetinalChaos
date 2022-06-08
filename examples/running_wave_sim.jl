@@ -4,25 +4,26 @@ using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 
 using RetinalChaos
-using Dates, Plots
-using JLD2
+using Plots
+#using JLD2
 
-
+#%% Run the simulations
 #Step 1: Set up the network properties
 nx = ny = 50
 
 #Step 1b: If using binomial nullification set that up now
-b = Binomial(1, 0.1)
-null = rand(b, nx, ny)
-#net = (dU, U, p, t) -> gACh_PDE(dU, U, p, t, null)
-net = GABA_PDE
+b = Binomial(1, 0.65)
+null = Array{Float64}(rand(b, nx, ny))
+heatmap(null; ratio=:equal)
+net = (dU, U, p, t) -> GABA_PDE_gNULL(dU, U, p, t, null)
+
 #Step 2: Import the initial conditions
 conds_dict = read_JSON("params/GABA_conds.json")
-u0 = extract_dict(conds_dict, nx, ny)
+u0 = extract_dict(conds_dict, GABA_conds, dims=(nx, ny))
 
 #Step 3: Import the parameters
 pars_dict = read_JSON("params/GABA_params.json")
-p = conds_dict |> extract_dict
+p = extract_dict(pars_dict, GABA_pars)
 
 #Step 4: Determine the timespan
 tspan = (0.0, 60e3)
@@ -32,12 +33,23 @@ prob = SDEProblem(net, noise, u0, tspan, p)
 
 
 #Step 6: Run the model
-@time NetSol = solve(NetProb, SOSRI(),
+@time NetSol = solve(prob, SOSRI(),
     abstol=2e-2, reltol=0.2, maxiters=1e7,
     progress=true, progress_steps=1,
-    save_everystep=false
+    save_idxs=[1:(nx*ny)...],
 )
 
+# Step 7: Animate the solution
+animate_dt = 60.0
+anim = @animate for t = 1.0:animate_dt:NetSol.t[end]
+    println("[$(now())]: Animating simulation...")
+    frame_i = reshape(NetSol(t) |> Array, (nx, ny))
+    heatmap(frame_i, ratio=:equal, grid=false,
+        xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
+        c=:curl, clims=(-70.0, 0.0),
+    )
+end
+gif(anim, "animation.gif", fps=1000.0 / animate_dt)
 
 #%% Save or load the warmed up solution
 print("[$(Dates.now())]: Loading or saving solution...")
