@@ -81,27 +81,45 @@ function p_find(par::Symbol; list_p::Array{Symbol, 1}  = tar_pars, safe_skip::Bo
     end
 end
 
-function extract_dict(dict_item::Dict{Symbol, T}) where T <: Real
-    #To extract the dictionary first we want to take a look at the first param to see if it is a parameter or a condition
-    if dict_item.keys[1] ∈ tar_pars
-        #This is a parameter and we should extract it
-        pars = T[]
-        for par in tar_pars
-            push!(pars, dict_item[par])
-        end
-        return pars
+"""
+This function can do a few things
+
+    1) It can take a dictionary and extract it in the order of the dict_names
+    2) It can read through a dictionary and search for certain keys
+"""
+function extract_dict(dict_item::Dict{Symbol,T}, key_names; dims = (1)) where {T<:Real}
+    #This is a parameter and we should extract it
+    items = T[]
+    for key in key_names
+        push!(items, dict_item[key])
+    end
+    if dims == 1
+        return items
     else
-        conds = T[]
-        for cond in tar_conds
-            push!(conds, dict_item[cond])
+        val_map = zeros(dims..., length(items))
+        for i in 1:length(items)
+            val_map[:, :, i] .= items[i]
         end
-        return conds
+        return val_map
     end
 end
 
-function extract_dict(dict_item::Dict{Symbol, T}, dims...) where T <: Real
+function extract_dict(dict_item::Dict{Symbol, T}; key_library = [tar_pars, tar_conds]) where T <: Real
+    #To extract the dictionary first we want to take a look at the first param to see if it is a parameter or a condition
+    for key_names in key_library
+        println("Here")
+        if dict_item.keys[1] ∈ key_names
+            items = extract_dict(dict_item, key_names)
+            return items
+        end
+    end
+    println("if you made it here there was an error")
+    throw("NoKeyLibraries")
+end
+
+function extract_dict(dict_item::Dict{Symbol, T}, dims...; dict_names = [tar_pars, tar_conds]) where T <: Real
     #Extract the dict_item
-    vals = extract_dict(dict_item)
+    vals = extract_dict(dict_item; dict_names = dict_names)
     dims = Int64.(dims) #Put this in to convert the dimensions  
     val_map = zeros(dims..., length(vals))
     for i in 1:length(vals)
