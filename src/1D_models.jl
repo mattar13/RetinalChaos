@@ -150,6 +150,8 @@ function GABA_SDE(dU::AbstractArray{T2}, U::AbstractArray{T2}, p::AbstractArray{
      @. db = (β * a^4 * (1 - b) - b) / τb
      #@. de = (ρe * Φ(v, ke, V0e) - e) / τACh
      #@. di = (ρi * Φ(v, ki, V0i) - i) / τGABA
+     #@. de = ρe*abs(sin(t/20000)) - e#(ρe-e) #Sine wave
+     #@. di = ρi*abs(sin(t/20000)) - i #(ρi-i) #Sine wave
      @. de = (ρe-e) #Keep release constant
      @. di = (ρi-i) #Keep release constant
      @. dW = -W / τw
