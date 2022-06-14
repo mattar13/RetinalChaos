@@ -12,10 +12,10 @@ using Plots
 nx = ny = 50
 
 #Step 1b: If using binomial nullification set that up now
-b = Binomial(1, 0.65)
+b = Binomial(1, 0.90)
 null = Array{Float64}(rand(b, nx, ny))
 heatmap(null; ratio=:equal)
-net = (dU, U, p, t) -> GABA_PDE_gNULL(dU, U, p, t, null)
+net = (dU, U, p, t) -> GABA_PDE(dU, U, p, t)
 
 #Step 2: Import the initial conditions
 conds_dict = read_JSON("params/GABA_conds.json")
@@ -23,10 +23,12 @@ u0 = extract_dict(conds_dict, GABA_conds, dims=(nx, ny))
 
 #Step 3: Import the parameters
 pars_dict = read_JSON("params/GABA_params.json")
+pars_dict[:g_ACh] = 0.215
+pars_dict[:g_GABA] = 1.1
 p = extract_dict(pars_dict, GABA_pars)
 
 #Step 4: Determine the timespan
-tspan = (0.0, 60e3)
+tspan = (0.0, 120e3)
 #Step 5: Set up the problem
 prob = SDEProblem(net, noise, u0, tspan, p)
 
@@ -39,7 +41,7 @@ prob = SDEProblem(net, noise, u0, tspan, p)
 prob = SDEProblem(net, noise, warmup[end], tspan, p)
 
 #Step 7: Run the model
-@time NetSol = solve(prob, SOSRI(),
+@time NetSol = solve(prob, SROCK1(), dt=1.0,
     abstol=2e-2, reltol=0.2, maxiters=1e7,
     progress=true, progress_steps=1,
     save_idxs=[1:(nx*ny)...],
@@ -56,7 +58,9 @@ anim = @animate for t = 1.0:animate_dt:NetSol.t[end]
     )
 end
 gif(anim, "animation.gif", fps=1000.0 / animate_dt)
-
+#%% Can we plot a solution
+size(NetSol)
+plot(NetSol.t, t -> NetSol(t, idxs=[1, 2, 3])')
 #%% Save or load the warmed up solution
 print("[$(Dates.now())]: Loading or saving solution...")
 JLD2.@save "$(save_file)\\warmup_ics.jld2" warmup_ics
