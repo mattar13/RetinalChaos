@@ -17,17 +17,17 @@ prob = SDEProblem(T_SDE, noise, u0, tspan, p)
 
 #Step 5: Solve the problem
 @time sol = solve(prob, SOSRI()); #So far the best method is SOSRI
-plot(sol, vars=[1, 7], layout=(2, 1))
+plot(sol, vars=[1, 6, 7], layout=(2, 1))
 
 #%% Figure: Comparisons of different SDE algorithims
 @time sol = solve(prob, SOSRI());
-fig = plot(sol, vars=[1, 7], layout=(2, 1), label = "SOSRI")
+fig = plot(sol, vars=[1, 7], layout=(2, 1), label="SOSRI")
 
 @time sol = solve(prob, SKenCarp());
-plot!(fig, sol, vars=[1, 7], layout=(2, 1), label = "SKenCarp")
+plot!(fig, sol, vars=[1, 7], layout=(2, 1), label="SKenCarp")
 
 @time sol = solve(prob, SRIW1());
-plot!(fig, sol, vars=[1, 7], layout=(2, 1), label = "SRIW1")
+plot!(fig, sol, vars=[1, 7], layout=(2, 1), label="SRIW1")
 
 @time sol = solve(prob, SROCK1(), dt=0.5);
 plot!(fig, sol, vars=[1, 7], layout=(2, 1), label="SROCK1 dt = 0.5ms")
