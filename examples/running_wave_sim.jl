@@ -23,8 +23,6 @@ u0 = extract_dict(conds_dict, GABA_conds, dims=(nx, ny))
 
 #Step 3: Import the parameters
 pars_dict = read_JSON("params/GABA_params.json")
-pars_dict[:g_ACh] = 0.215
-pars_dict[:g_GABA] = 1.1
 p = extract_dict(pars_dict, GABA_pars)
 
 #Step 4: Determine the timespan
@@ -54,7 +52,7 @@ anim = @animate for t = 1.0:animate_dt:NetSol.t[end]
     frame_i = reshape(NetSol(t) |> Array, (nx, ny))
     heatmap(frame_i, ratio=:equal, grid=false,
         xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-        c=:curl, clims=(-70.0, 0.0),
+        c=:curl, clims=(-90.0, 0.0),
     )
 end
 gif(anim, "animation.gif", fps=1000.0 / animate_dt)
