@@ -211,10 +211,10 @@ function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t
     @. db = (β * a^4 * (1 - b) - b) / τb
 
     @. de = (ρe * Φ(v, Vse, V0e) - e) / τACh
-    ∇(de, e, De; dX=dYe, dY = dXe) #This is the diffusion step NOTE there is an error with the naming of x and y i need to fix
+    ∇(de, e, De; dX = dXe, dY = dYe) #This is the diffusion step NOTE there is an error with the naming of x and y i need to fix
 
     @. di = (ρi * Φ(v, Vsi, V0i) - i) / τGABA
-    ∇(di, i, Di; dX=dYi, dY = dXi) #This is the diffusion step
+    ∇(di, i, Di; dX = dXi, dY = dYi) #This is the diffusion step
 
     @. dW = -W / τw
     nothing
