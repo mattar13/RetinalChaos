@@ -10,13 +10,7 @@ using Plots
 #%% Run the simulations
 #Step 1: Set up the network properties
 nx = ny = 50
-
-#Step 1b: If using binomial nullification set that up now
-b = Binomial(1, 0.90)
-null = Array{Float64}(rand(b, nx, ny))
-heatmap(null; ratio=:equal)
-net = (dU, U, p, t) -> GABA_PDE(dU, U, p, t)
-
+net = GABA_PDE
 #Step 2: Import the initial conditions
 conds_dict = read_JSON("params/GABA_conds.json")
 u0 = extract_dict(conds_dict, GABA_conds, dims=(nx, ny))
@@ -27,15 +21,16 @@ p = extract_dict(pars_dict, GABA_pars)
 
 #Step 4: Determine the timespan
 tspan = (0.0, 120e3)
+
 #Step 5: Set up the problem
 prob = SDEProblem(net, noise, u0, tspan, p)
-
 
 #Step 6: Running the model
 @time warmup = solve(prob, SOSRI(),
     abstol=2e-2, reltol=2e-2, maxiters=1e7,
     save_everystep=false, progress=true, progress_steps=1
 )
+tspan = (0.0, 120e3)
 prob = SDEProblem(net, noise, warmup[end], tspan, p)
 
 #Step 7: Run the model
