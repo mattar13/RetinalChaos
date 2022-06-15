@@ -76,10 +76,10 @@ NEED DOC
 #CuArrays.@cufunc ħ(e, K_d) = (e^2)/(e^2 + K_d)
 ħ(e::CuArray, K_d) = ħ.(e, K_d)
 
-const tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :k, :V0, :D, :τw, :σ]
+const tar_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :Vs, :V0, :D, :τw, :σ]
 const tar_conds = [:v, :n, :c, :a, :b, :e, :W]
 
-const GABA_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_ACh, :E_ACh, :g_GABA, :k_GABA, :E_GABA, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρe, :ρi, :τACh, :τGABA, :ke, :ki, :V0e, :V0i, :De, :Di, :τw, :σ]
+const GABA_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_ACh, :E_ACh, :g_GABA, :k_GABA, :E_GABA, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρe, :ρi, :τACh, :τGABA, :Vse, :Vsi, :V0e, :V0i, :De, :Di, :τw, :σ]
 const GABA_conds = [:v, :n, :c, :a, :b, :e, :i, :W]
 
 const lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]

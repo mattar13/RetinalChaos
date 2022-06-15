@@ -16,7 +16,7 @@ function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T
     de = view(dU, :, :, 6)
     dW = view(dU, :, :, 7)
 
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, k, V0, D, τw, σ) = p
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_d, E_ACh, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρ, τACh, Vs, V0, D, τw, σ) = p
 
     @. dv = (
         -g_leak * (v - E_leak)
@@ -175,8 +175,8 @@ function Rho_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t:
 end
 
 #Version 4: GABA sensitive model.
-function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi = (1.9, 0.1), dYi = (1.0, 1.0)) where {T}
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, De, Di, τw, σ) = p
+function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi = (1.0, 1.0), dYi = (0.1, 1.9)) where {T}
+    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, Vse, Vsi, V0e, V0i, De, Di, τw, σ) = p
 
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
@@ -210,116 +210,11 @@ function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t
     @. da = (α * c^4 * (1 - a) - a) / τa
     @. db = (β * a^4 * (1 - b) - b) / τb
 
-    @. de = (ρe * Φ(v, ke, V0e) - e) / τACh
-    ∇(de, e, De; dX=dXe, dY=dYe) #This is the diffusion step
+    @. de = (ρe * Φ(v, Vse, V0e) - e) / τACh
+    ∇(de, e, De; dX=dYe, dY = dXe) #This is the diffusion step NOTE there is an error with the naming of x and y i need to fix
 
-    @. di = (ρi * Φ(v, ki, V0i) - i) / τGABA
-    ∇(di, i, Di; dX=dXi, dY=dYi) #This is the diffusion step
-
-    @. dW = -W / τw
-    nothing
-end
-
-#Version 4: GABA sensitive model. However some cells are insensitive to GABA
-#dXe = (1.5, 0.5), dYe = (1.1, 0.9), dXi = (0.9, 1.1), dYi = (0.9, 1.1)
-function GABA_PDE_gNULL(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T, null; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi=(1.0, 1.0), dYi=(1.0, 1.0)) where {T}
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, De, Di, τw, σ) = p
-
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    i = view(U, :, :, 7)
-    W = view(U, :, :, 8)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    di = view(dU, :, :, 7)
-    dW = view(dU, :, :, 8)
-
-    @. dv = (-g_leak * (v - E_leak)
-             -
-             g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
-             -
-             g_K * n * (v - E_K)
-             -
-             g_TREK * b * (v - E_K)
-             -
-             g_ACh * ħ(e, k_ACh) * (v - E_ACh)
-             -
-             g_GABA * ħ(i, k_GABA) * (v - E_GABA) .* null #This makes only a subset of cells sensitive to GABA
-             + I_app
-             + W
-    ) / C_m
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
-    @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
-    @. da = (α * c^4 * (1 - a) - a) / τa
-    @. db = (β * a^4 * (1 - b) - b) / τb
-
-    @. de = (ρe * Φ(v, ke, V0e) - e) / τACh
-    ∇(de, e, De; dX=dXe, dY=dYe) #This is the diffusion step
-
-    @. di = (ρi * Φ(v, ki, V0i) - i) / τGABA
-    ∇(di, i, Di; dX=dXi, dY=dYi) #This is the diffusion step
-
-    @. dW = -W / τw
-    nothing
-end
-
-#Version 4: GABA sensitive model. However some cells don't release GABA
-function GABA_PDE_gNULL(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T, null::AbstractArray{T}) where {T}
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, ke, ki, V0e, V0i, De, Di, τw, σ) = p
-
-    v = view(U, :, :, 1)
-    n = view(U, :, :, 2)
-    c = view(U, :, :, 3)
-    a = view(U, :, :, 4)
-    b = view(U, :, :, 5)
-    e = view(U, :, :, 6)
-    i = view(U, :, :, 7)
-    W = view(U, :, :, 8)
-
-    dv = view(dU, :, :, 1)
-    dn = view(dU, :, :, 2)
-    dc = view(dU, :, :, 3)
-    da = view(dU, :, :, 4)
-    db = view(dU, :, :, 5)
-    de = view(dU, :, :, 6)
-    di = view(dU, :, :, 7)
-    dW = view(dU, :, :, 8)
-
-    @. dv = (-g_leak * (v - E_leak)
-             -
-             g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
-             -
-             g_K * n * (v - E_K)
-             -
-             g_TREK * b * (v - E_K)
-             -
-             g_ACh * ħ(e, k_ACh) * (v - E_ACh)
-             -
-             g_GABA * ħ(i, k_GABA) * (v - E_GABA) .* null #This makes only a subset of cells sensitive to GABA
-             + I_app
-             + W
-    ) / C_m
-    @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
-    @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
-    @. da = (α * c^4 * (1 - a) - a) / τa
-    @. db = (β * a^4 * (1 - b) - b) / τb
-
-    @. de = (ρe * Φ(v, ke, V0e) - e) / τACh
-    #∇(de, e, De; dX = (1.5, 0.5), dY = (1.1, 0.9)) #This is the diffusion step
-    ∇(de, e, De) #This is the diffusion step
-
-    @. di = (ρi * Φ(v, ki, V0i) - i) / τGABA
-    #∇(di, i, Di; dX = (0.9, 1.1), dY = (0.9, 1.1)) #This is the diffusion step
-    ∇(di, i, Di) #This is the diffusion step
+    @. di = (ρi * Φ(v, Vsi, V0i) - i) / τGABA
+    ∇(di, i, Di; dX=dYi, dY = dXi) #This is the diffusion step
 
     @. dW = -W / τw
     nothing
