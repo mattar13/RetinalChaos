@@ -41,8 +41,8 @@ using JSON2, JLD2, BSON #Imports for reading and writing parameters and solution
 include("utilities.jl")
 export read_JSON, extract_dict, p_find, u_find
 
-using Distributions
-export Binomial
+using Distributions, StatsBase
+export Binomial, Histogram, fit
 
 
 #==========================================Extracting wave and events==========================================#
