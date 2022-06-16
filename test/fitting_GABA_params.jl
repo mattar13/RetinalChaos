@@ -100,8 +100,8 @@ plot(plt_a, plt_b, layout=(1, 2))
 nx = ny = 50
 #b = Binomial(1, 0.75) #This means 75% of cells are sensitive to GABA
 #null = Array{Float64}(rand(b, nx, ny))
-param = :g_Ca
-for val in LinRange(5.0, 10.0, 10) #This is the range of values
+param = :g_ACh
+for val in LinRange(0.0, 1.0, 10) #This is the range of values
      print("[$(now())]: Setting up binomal nullification... ")
      println(" [$(now())]: Completed")
      net = GABA_PDE#(dU, U, p, t) -> GABA_PDE(dU, U, p, t, null)
@@ -140,7 +140,7 @@ end
 
 
 #parameter spaces: 
-#1) gGABA = [0.1 -> 1.0]
+#1) gGABA = [0.7 -> 1.0]
 #2) gACh = [0.1 -> 0.215]
 #2) gCa = [7.5 -> 8.0]
 #3) gK = [1.0 -> 3.0]
