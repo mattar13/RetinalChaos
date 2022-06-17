@@ -58,7 +58,7 @@ extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}) = map(x -> F
 extract_dict(dict_item::Dict{Symbol, Float64}, pars::Array{Symbol}, dims::Tuple) = cat(map(x -> fill(Float64(dict_item[x]), dims), pars)..., dims = length(dims)+1)
 
 #get the index of the conditions in the list
-function u_find(cond::Symbol; list_u::Array{Symbol, 1} = tar_conds, safe_skip::Bool = false) 
+function u_find(cond::Symbol; list_u::Array{Symbol, 1} = t_conds, safe_skip::Bool = false) 
     try
         return findall(c -> c == cond, list_u)[1]
     catch
@@ -70,7 +70,7 @@ function u_find(cond::Symbol; list_u::Array{Symbol, 1} = tar_conds, safe_skip::B
 end
 
 #get the index of the parameter in the list
-function p_find(par::Symbol; list_p::Array{Symbol, 1}  = tar_pars, safe_skip::Bool = false) 
+function p_find(par::Symbol; list_p::Array{Symbol, 1}  = t_pars, safe_skip::Bool = false) 
     try
         findall(p -> p == par, list_p)[1]
     catch
