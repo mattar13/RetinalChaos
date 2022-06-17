@@ -1,77 +1,39 @@
 using Revise
 using RetinalChaos
-using Plots
 
-font_title = font("Arial", 24) #title font and size
-font_axis = font("Arial", 12) #axis font and size
-font_legend = font("Arial", 8) #legend font and size
-gr(titlefont=font_title, guidefont=font_axis)
+include("figure_setup.jl")
 
+#%% Run a bare ODE model
 #Step 1: Import the initial conditions
 conds_dict = read_JSON("params\\conds.json")
 u0 = conds_dict |> extract_dict
-
 #Step 2: Import the parameters
 pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = 10.0
-pars_dict[:g_ACh] = 0.0
+pars_dict[:I_app] = 0.0
+pars_dict[:ρi] = 0.0
+pars_dict[:ρe] = 5.0
 p = pars_dict |> extract_dict
-
 #Step 3: determine the timespan
-tspan = (0.0, 300e3)
-
+tspan = (0.0, 5e3)
 #Step 4: set up the problem
-prob = ODEProblem(T_ode, u0, tspan, p)
-
+prob = ODEProblem(GABA_ODE, u0, tspan, p)
 #Step 5: Solve the problem
-@time sol = solve(prob, progress=true);
+@time sol = solve(prob, progress=true, progress_steps = 1);
+Plots.plot(sol, vars = [1])
+#%%
+# Run the analysis 
+dt = 0.01
+#v_thresh = calculate_threshold(sol; dt = dt)
+#timestamps, data = timeseries_analysis(sol; dt = dt)
+#timestamps["Bursts"]
 
-#%% Plot the solutions
-plot(sol)
-
-
-#%% Run analysis 
-dt = 0.1 #set the time differential
-v_thresh = calculate_threshold(sol, dt=dt)
-timestamps, data = timeseries_analysis(sol; dt=0.1)
-timestamps["Bursts"]
-
-
-
-
+t_series = tspan[1]:dt:tspan[end]
+Vt = sol(t_series, idxs = [1])'
 
 
 nothing #Really annoying how this keeps jumping to the bottom of the page
 
-#%%
-#== Old Figure Materials
-# ╔═╡ e908115c-8389-49a1-8d0a-530d292f70c0
-begin
-	#Set up the parameter files and save files
-	params_file = joinpath(param_path, "params.json")
-	conds_file = joinpath(param_path, "conds.json")
-
-	#save everything in the figures folder
-	save_figs = "figures\\"
-	if isdir(save_figs) == false
-		#The directory does not exist, we have to make it 
-		mkdir(save_figs)
-	end	
-end
-
-
-# ╔═╡ 578be207-80cb-4738-aa39-3db181b7c058
-begin 
-	#Run analysis 
-	dt = 0.1 #set the time differential
-	v_thresh = calculate_threshold(sol, dt = dt)
-	timestamps, data = timeseries_analysis(sol; dt = 0.1)
-	#burst_idxs, dur_list, spb_list, ibi_list = max_interval_algorithim(sol, dt = dt)
-end
-
-# ╔═╡ e275d737-a497-493f-867b-e93721f8da65
-timestamps["Bursts"]
-
+#=
 # ╔═╡ 4e11ec08-cbb3-462d-8c5f-6eb37c5c79f9
 begin 	
 	burst_lims = timestamps["Bursts"][1][2,:]#lets set the limits for area of interest
@@ -247,3 +209,4 @@ end
 
 # ╔═╡ 327ff679-53b5-4b48-a579-327ea49312e1
 savefig(fig1, "E:\\Projects\\2021_Modelling_Paper\\Figures\\Fig1_Model_Dynamics.png")
+=#

@@ -32,7 +32,7 @@ include("models.jl")
 export T_ODE, T_SDE, T_PDE
 #export GABA_ODE, GABA_SDE, GABA_PDE
 export GABA_PDE_gNULL
-export tar_pars, tar_conds
+export t_pars, t_conds
 export GABA_pars, GABA_conds
 export noise
 

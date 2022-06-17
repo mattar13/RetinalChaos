@@ -6,7 +6,7 @@ import RetinalChaos: GABA_conds, GABA_pars, T_ODE, GABA_ODE, GABA_SDE, ħ
 
 #%% Lets replicate some GABA and ACh IV curves
 v_rng = -120:20:100
-pars_dict = read_JSON("params/GABA_params.json")
+pars_dict = read_JSON("params/params.json")
 g_GABA = pars_dict[:g_GABA] = 0.5
 g_ACh = pars_dict[:g_ACh] = 0.2
 k_GABA = pars_dict[:k_GABA]
@@ -36,29 +36,29 @@ plot(plt_I, plt_E, plt_b, layout=(3, 1))
 
 
 #%% Testing different Acetylcholine conditions
-conds_dict_GABA = read_JSON("params/GABA_conds.json")
-u0 = extract_dict(conds_dict_GABA, GABA_conds)
+conds_dict = read_JSON("params/conds.json")
+u0 = conds_dict |> extract_dict
 tspan = (0.0, 120e3)
 #Step 2: Import the parameters
-pars_dict = read_JSON("params/GABA_params.json")
+pars_dict = read_JSON("params/params.json")
 
 pars_dict[:ρe] = 0.0
 pars_dict[:ρi] = 5.0 #IN the presence of 5uM
-p = extract_dict(pars_dict, GABA_pars)
-prob_loE_hiI = SDEProblem(GABA_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
+p = pars_dict |> extract_dict
+prob_loE_hiI = SDEProblem(T_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
 
 pars_dict[:ρi] = 0.0 #Low GABA
-p = extract_dict(pars_dict, GABA_pars)
-prob_loE_loI = SDEProblem(GABA_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
+p = pars_dict |> extract_dict
+prob_loE_loI = SDEProblem(T_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
 
 pars_dict[:ρe] = 6.0
 pars_dict[:ρi] = 5.0 #IN the presence of 5uM
-p = extract_dict(pars_dict, GABA_pars)
-prob_hiE_hiI = SDEProblem(GABA_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
+p = pars_dict |> extract_dict
+prob_hiE_hiI = SDEProblem(T_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
 
 pars_dict[:ρi] = 0.0 #Low GABA
-p = extract_dict(pars_dict, GABA_pars)
-prob_hiE_loI = SDEProblem(GABA_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
+p = pars_dict |> extract_dict
+prob_hiE_loI = SDEProblem(T_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
 
 @time sol_loE_hiI = solve(prob_loE_hiI, SOSRI(), progress=true);
 @time sol_loE_loI = solve(prob_loE_loI, SOSRI(), progress=true);
@@ -74,16 +74,16 @@ plot!(plt_b, sol_hiE_loI, vars=[1], layout=(1, 1))
 fig2_AChGABA = plot(plt_a, plt_b)
 
 #%% Lets run a range of different g_GABA params
-pars_dict = read_JSON("params/GABA_params.json")
+pars_dict = read_JSON("params/params.json")
 #pars_dict[:ρe] = 0.0 #Eliminate ACh activity
-p = extract_dict(pars_dict, GABA_pars)
+p = pars_dict |>  extract_dict
 
 n = 10
-probGABA = SDEProblem(GABA_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
-par_idx = p_find(:ρi; list_p=GABA_pars) #Point to the index of the parameter
+probMONTE = SDEProblem(GABA_SDE, noise, u0, tspan, p); #1 is the Plain ODE problem
+par_idx = p_find(:ρi; list_p=t_pars) #Point to the index of the parameter
 test_rng = LinRange(0.0, 5.0, n) #Determine the range of the parameters (specified above)
-prob_func(prob, i, repeat) = ensemble_func(probGABA, i, repeat, par_idx, test_rng) #Set up the problem function to indicate that the voltage will be altered
-ensemble_prob = EnsembleProblem(probGABA, prob_func=prob_func); #Set up the problem
+prob_func(prob, i, repeat) = ensemble_func(probMONTE, i, repeat, par_idx, test_rng) #Set up the problem function to indicate that the voltage will be altered
+ensemble_prob = EnsembleProblem(probMONTE, prob_func=prob_func); #Set up the problem
 print("Running a ensemble simulation for :")
 @time sim = solve(ensemble_prob, SOSRI(), trajectories=n, EnsembleThreads(), progress=true, progress_steps=1);
 
@@ -104,14 +104,14 @@ param = :g_ACh
 for val in LinRange(0.0, 1.0, 10) #This is the range of values
      print("[$(now())]: Setting up binomal nullification... ")
      println(" [$(now())]: Completed")
-     net = GABA_PDE#(dU, U, p, t) -> GABA_PDE(dU, U, p, t, null)
+     net = T_PDE#(dU, U, p, t) -> GABA_PDE(dU, U, p, t, null)
      print("[$(now())]: Loading Parameters... ")
-     conds_dict = read_JSON("params/GABA_conds.json")
-     u0 = extract_dict(conds_dict, GABA_conds, dims=(nx, ny))
-     pars_dict = read_JSON("params/GABA_params.json")
+     conds_dict = read_JSON("params/conds.json")
+     u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
+     pars_dict = read_JSON("params/params.json")
      #CHANGE ANY PARAMETER HERE
      pars_dict[param] = val
-     p = extract_dict(pars_dict, GABA_pars)
+     p = pars_dict |> extract_dict
      tspan = (0.0, 120e3)
      println(" [$(now())]: Completed")
 
