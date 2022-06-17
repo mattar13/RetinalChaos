@@ -2,7 +2,7 @@ using Revise
 using RetinalChaos #Load the package
 using LinearAlgebra
 using Plots
-import RetinalChaos: GABA_conds, GABA_pars, T_ODE, GABA_ODE, GABA_SDE, ħ
+import RetinalChaos: ħ
 
 #%% Lets replicate some GABA and ACh IV curves
 v_rng = -120:20:100
