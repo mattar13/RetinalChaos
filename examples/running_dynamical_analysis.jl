@@ -1,8 +1,8 @@
 #%% This shows you how to run a Codimensional analysis
 using Revise
 using RetinalChaos
-#include("../figures/figure_setup.jl")
-using Plots
+include("../figures/figure_setup.jl")
+
 #%% Part 1: Running an ensemble problems
 #Setp 1: Import all parameters and make the model
 conds_dict = read_JSON("params\\conds.json")
@@ -42,10 +42,9 @@ conds_dict = read_JSON("params\\conds.json")
 u0 = conds_dict |> extract_dict
 pars_dict = read_JSON("params\\params.json")
 pars_dict[:I_app] = 10.0 #Set initial applied current to 0
-pars_dict[:ρi] = 0.0
-pars_dict[:ρe] = 0.0
-#pars_dict[:g_ACh] = 0.0 #Remove g_ACh influence
-#pars_dict[:g_TREK] = 0.0 #Remove the sAHP
+pars_dict[:ρi] = 0.0 #remove GABA influence
+pars_dict[:ρe] = 0.0 #remove ACh influence
+pars_dict[:g_TREK] = 0.0 #Remove the sAHP
 p = pars_dict |> extract_dict
 
 #Step 3: determine the timespan
@@ -64,8 +63,6 @@ c1_lims = (-4.0, 10.0)
 print("On parameter range: $c1_lims beginning:")
 @time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
 println("Complete")
-
-c1_map.equilibria
 
 #%% Step 6: Run out all of the solutions contained in the codimensional analysis
 prob_eq = ODEProblem(T_ODE, u0, tspan, p) #First we need to reset the function

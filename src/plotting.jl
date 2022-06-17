@@ -386,19 +386,23 @@ function extract_equilibria(c2::codim_object{2, T}, eq_type::Symbol; eq_var::Int
     end
 end
 
-@recipe function f(c1::codim_object{1, Float64}; vars = :v, scatter = false)
+@recipe function f(c1::codim_object{1,T}; vars=:v, scatter=false) where {T<:Real}
     #var_idx = findall(x -> x==vars, tar_conds)[1]
     var_idx = vars |> u_find
-    points = map(x -> x[1], c1.points);
-    
-    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria);
-    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria);
-    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria);
-    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria);
-    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria);
-    
-    plotted_stable = false; plotted_unstable = false; plotted_saddle = false
-    plotted_unstable_focus = false; plotted_stable_focus = false
+    points = map(x -> x[1], c1.points)
+    sorted_dims = sortperm(points)
+    points = points[sorted_dims]
+    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+
+    plotted_stable = false
+    plotted_unstable = false
+    plotted_saddle = false
+    plotted_unstable_focus = false
+    plotted_stable_focus = false
 
     if !all(isnan.(stable_p))
         @series begin
@@ -407,7 +411,7 @@ end
                 plotted_stable = true
             else
                 label := ""
-            end     
+            end
             seriescolor := :green
             if scatter
                 marker := :star
@@ -415,7 +419,7 @@ end
             points, stable_p
         end
     end
-    
+
     if !all(isnan.(unstable_p))
         @series begin
             if plotted_unstable == false
@@ -423,7 +427,7 @@ end
                 plotted_unstable = true
             else
                 label := ""
-            end     
+            end
             seriescolor := :red
             if scatter
                 marker := :star
@@ -431,7 +435,7 @@ end
             points, unstable_p
         end
     end
-    
+
     if !all(isnan.(saddle_p))
         @series begin
             if plotted_saddle == false
@@ -439,7 +443,7 @@ end
                 plotted_saddle = true
             else
                 label := ""
-            end   
+            end
             seriescolor := :blue
             if scatter
                 marker := :star
@@ -447,15 +451,15 @@ end
             points, saddle_p
         end
     end
-    
+
     if !all(isnan.(stable_focus_p))
         @series begin
-            if plotted_stable_focus == false 
+            if plotted_stable_focus == false
                 label := "Stable Focus"
                 plotted_stable_focus = true
             else
                 label := ""
-            end      
+            end
             linestyle := :dash
             seriescolor := :green
             if scatter
@@ -464,15 +468,15 @@ end
             points, stable_focus_p
         end
     end
-    
+
     if !all(isnan.(unstable_focus_p))
         @series begin
-            if plotted_unstable_focus == false 
+            if plotted_unstable_focus == false
                 label := "Unstable Focus"
                 plotted_unstable_focus = true
             else
                 label := ""
-            end     
+            end
             linestyle := :dash
             seriescolor := :red
             if scatter
