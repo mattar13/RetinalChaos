@@ -1,5 +1,11 @@
 #Run this to set up the default parameters for plotting the figures
-using Plots, PyPlot, PyCall
+using Plots, PyCall
+import Plots.plot
+import PyPlot as plt
+
+#Pyplot plot will be plt.plot
+#normal plots will be plot
+
 Plots.pyplot() #Switch the backend to pyplot
 pygui(true) #Make the GUI external to vscode
 @pyimport matplotlib.gridspec as GSPEC #add the gridspec interface
