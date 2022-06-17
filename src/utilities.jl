@@ -107,7 +107,7 @@ end
 function extract_dict(dict_item::Dict{Symbol, T}; key_library = [t_pars, t_conds]) where T <: Real
     #To extract the dictionary first we want to take a look at the first param to see if it is a parameter or a condition
     for key_names in key_library
-        println("Here")
+        #println("Here")
         if dict_item.keys[1] ∈ key_names
             items = extract_dict(dict_item, key_names)
             return items
