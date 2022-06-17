@@ -1,5 +1,5 @@
 #Version 0: Model without nullout
-function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
+function OLD_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T) where {T}
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -175,7 +175,7 @@ function Rho_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t:
 end
 
 #Version 4: GABA sensitive model.
-function GABA_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi = (1.0, 1.0), dYi = (0.1, 1.9)) where {T}
+function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi = (1.0, 1.0), dYi = (0.1, 1.9)) where {T}
     (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, Vse, Vsi, V0e, V0i, De, Di, τw, σ) = p
 
     v = view(U, :, :, 1)

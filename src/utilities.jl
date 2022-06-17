@@ -104,7 +104,7 @@ function extract_dict(dict_item::Dict{Symbol,T}, key_names; dims = (1)) where {T
     end
 end
 
-function extract_dict(dict_item::Dict{Symbol, T}; key_library = [tar_pars, tar_conds]) where T <: Real
+function extract_dict(dict_item::Dict{Symbol, T}; key_library = [t_pars, t_conds]) where T <: Real
     #To extract the dictionary first we want to take a look at the first param to see if it is a parameter or a condition
     for key_names in key_library
         println("Here")
@@ -117,7 +117,7 @@ function extract_dict(dict_item::Dict{Symbol, T}; key_library = [tar_pars, tar_c
     throw("NoKeyLibraries")
 end
 
-function extract_dict(dict_item::Dict{Symbol, T}, dims...; dict_names = [tar_pars, tar_conds]) where T <: Real
+function extract_dict(dict_item::Dict{Symbol, T}, dims...; dict_names = [t_pars, t_conds]) where T <: Real
     #Extract the dict_item
     vals = extract_dict(dict_item; dict_names = dict_names)
     dims = Int64.(dims) #Put this in to convert the dimensions  
