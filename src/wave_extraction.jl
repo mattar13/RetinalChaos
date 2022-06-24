@@ -17,12 +17,16 @@ function calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4, dims = -1)
 end
 
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64}; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 100.0,
+        idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 100.0, vars = -1
     ) where {T, N, S}
     # We need to convert the dt into the correct form
     dt = convert(T, dt)
     #We want to check how many dimensions the simulation is 
-    data_section = sol(rng[1]:dt:rng[2]) 
+    if vars == -1
+        data_section = sol(rng[1]:dt:rng[2]) 
+    else
+        data_section = sol(rng[1]:dt:rng[2], idxs = vars)
+    end
     if size(data_section, 2) == 7 #The array is just a single solution (Var, Time)
         return calculate_threshold(data_section; Z = Z)
     else #This means the array has a n of (X, Time). We want to summarize by X
@@ -76,7 +80,7 @@ If dt is set to Inf, the algorithim acts adaptive
 """
 function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}; 
         threshold = :calculate, rng = :calculate, 
-        idx::Int64 = 1, dt::Float64 = -Inf, 
+        idx::Int64 = 1,  dt::Float64 = -Inf, 
         flatten = false, verbose = false
     ) where {T <: Real, N, S <: Vector} #When editing we need to focus on this section
     # Lets do this the integrated way
