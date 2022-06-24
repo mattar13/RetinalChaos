@@ -213,7 +213,7 @@ export print, length
 #Conduct a stability analysis of the current
 function find_equilibria(prob::ODEProblem;
         vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), equilibrium_resolution = 10,
-        precision = 2, check_min = 1e-5
+        precision = 2, check_min = 1e-5, verbose = false
     )
     stable = Array{Array{Float64}}([])
     unstable = Array{Array{Float64}}([])
@@ -228,14 +228,33 @@ function find_equilibria(prob::ODEProblem;
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], equilibrium_resolution))
             #Iterate through the y range looking for stable points
+            if verbose 
+                println("Checking parameter")
+                println("$(vars[1]) = $x")
+                println("$(vars[2]) = $y")
+            end
             uI = copy(prob.u0)
             uI[var_idx] .= (x, y)
 
+            if verbose
+                println("Condition to check = $uI")
+            end
+
             df(ux) = prob.f(similar(ux), ux, prob.p, 0.0) #dU, U, p, t            
             res = nlsolve(df, uI)
+            if verbose
+                print("Results of the nlsolve for uI: ")
+                println(res)
+                print("f = 0: ")
+                println(res.zero)
+            end
+
             equilibria = map(x -> round(x, digits = precision), res.zero)
             check = df(res.zero)
-            
+            if verbose 
+                print("Checking the solution and it's proximity to zero: dUᵢ = ")
+                println(check)
+            end
             if equilibria in storage
                 nothing
             elseif any(isnan, res.zero)
@@ -303,7 +322,7 @@ end
 getindex(c1::codim_object{1, T}, syms...) where T <: Real = map(sym -> c1[sym], syms)
 
 function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
-        forward = true, max_iters = 100, min_step = 1.0e-15, 
+        forward = true, max_iters = 100, min_step = 1.0e-5, 
         kwargs...
     ) where T <: Real
 
@@ -325,20 +344,23 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-    
+            println(equilibria)
             #println(points |> typeof)
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
                 #This is a flaw of the find equilibria algorithim, move away from this point
+                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
+                println("$par has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
     
             else #None of these contiditons were met alter the bifurcation eq
+                println("$par has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
@@ -361,15 +383,18 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             #we will add each point and new equilibria to the solution
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
+                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
                 #This is a flaw of the find equilibria algorithim, move away from this point
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
+                println("$par reverse has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             else #None of these contiditons were met alter the bifurcation eq
+                println("$par reverse has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
