@@ -1,28 +1,36 @@
 #Run this to set up the default parameters for plotting the figures
-using Plots, PyCall
-import Plots.plot
+using Plots
+import PyCall as py
+import PyCall.@py_str
+import PyCall: @pyimport
 import PyPlot as plt
-
+import PyPlot: matplotlib, xlim, ylim, xlabel, ylabel
 #Pyplot plot will be plt.plot
 #normal plots will be plot
 
 Plots.pyplot() #Switch the backend to pyplot
-pygui(true) #Make the GUI external to vscode
-@pyimport matplotlib.gridspec as GSPEC #add the gridspec interface
+plt.pygui(true) #Make the GUI external to vscode
+@pyimport matplotlib.gridspec as gspec #add the gridspec interface
 @pyimport matplotlib.ticker as TICK #add the ticker interface
 MultipleLocator = TICK.MultipleLocator #This is for formatting normal axis
 LogLocator = TICK.LogLocator #This is for formatting the log axis]
 
+#This functions allows us to get ranges of pyobjects in a Pythonic way
+#In order to get slices we can wrap "getindex" 
+import Base.getindex
+
+
+slice(i, j) = py.pycall(py.pybuiltin("slice"), py.PyObject, i, j)
 #==============================These are the default parameters for plotting==============================#
 
 print("Default plotting parameters loading... ")
-rcParams = PyDict(matplotlib["rcParams"])
+rcParams = py.PyDict(matplotlib["rcParams"])
 
 #Settings related the the DPI of the current plot interface
 rcParams["figure.dpi"] = 60 #This is used to display the plot
 rcParams["savefig.dpi"] = 600 #This is used to save the plot
 
-rcParams["font.size"] = 20.0 #This controls the default font size
+rcParams["font.size"] = 18.0 #This controls the default font size
 rcParams["font.family"] = "arial" #This controls the font family
 rcParams["axes.spines.right"] = false #Make spines to the right invisible
 rcParams["axes.spines.top"] = false #Make spines at the top invisible
