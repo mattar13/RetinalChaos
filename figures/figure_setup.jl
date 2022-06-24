@@ -1,5 +1,6 @@
 #Run this to set up the default parameters for plotting the figures
 using Plots
+using Plots.Measures
 import PyCall as py
 import PyCall.@py_str
 import PyCall: @pyimport
