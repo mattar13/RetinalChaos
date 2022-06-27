@@ -64,6 +64,8 @@ plt.clf() #While drawing you can use this to clear the figure
 width_inches = 16.0
 height_inches = 10.0
 fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
+fig1.text(0.0, 0.0, "A", ha="center", va="center", fontsize=12.0)
+#%%
 #% Make a plot in PyPlot
 gs = fig1.add_gridspec(3, 2,
      width_ratios=(0.80, 0.20),
@@ -167,7 +169,7 @@ xlabel("Vt")
 axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
 
 #Annotations
-fig1.text(1.0, 1.0, "A", clip_on=false, ha="center", va="center",  fontsize=12.0)
+
 
 #%% ================================================Put it all together================================================ %%#
 plt.clf() #While drawing you can use this to clear the figure 
