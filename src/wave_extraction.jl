@@ -3,37 +3,62 @@
 """
     calculate_threshold(sol::DiffEqBase.AbstractODESolution, Z::Int64)
 
-Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation 
+Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation
 """
-function calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4, dims = -1)  
+function calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4, dims = -1)
     if dims == -1
-        return sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)
+        return [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
     else
         n = size(vm_arr, dims)
         mean = sum(vm_arr, dims = dims)./n
         dev = Z * std(vm_arr, dims = dims)
-        return mean + dev
+        return mean + dev #We want these all to come out as vectors vs matrices
     end
 end
 
 #This form of the function only calculates the analysis on a single variable
-function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64}; 
+function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64};
         idxs::Union{Int64, AbstractArray{Int64}} = 1, Z::Int64=4, dt::T=100.0
     ) where {T, N, S}
-    #We want to check how many dimensions the simulation is 
-    if idxs == -1 #This computes the analysis on all variables
-        data_section = sol(rng[1]:dt:rng[2]) 
-    else #This only looks at a single variable
-        data_section = sol(rng[1]:dt:rng[2], idxs = idxs)
-    end
-    if length(size(data_section)) == 1 #The array is just a single solution (Var, Time)
-        return calculate_threshold(data_section; Z = Z)
-    else #This means the array has a n of (X, Time). We want to summarize by X
-        return calculate_threshold(data_section; Z = Z, dims = 2)
+    
+    #println(N) #N Represents how many dimensions the data is 
+
+    if N == 2 #This represents a single neuron simulation N = (variable, time)
+        #We want to check how many dimensions the simulation is
+        if idxs == -1 #This computes the analysis on all variables
+            data_section = sol(rng[1]:dt:rng[2])
+        else #This only looks at a single variable
+            data_section = sol(rng[1]:dt:rng[2], idxs = idxs)
+        end
+        if length(size(data_section)) == 1 #The array is just a single solution (Var, Time)
+            return calculate_threshold(data_section; Z = Z)
+        else #This means the array has a n of (X, Time). We want to summarize by X
+            return calculate_threshold(data_section; Z = Z, dims = 2)
+        end
+    elseif N == 4 #This represents a grid simulation N = (x, y, variable, time)
+        trng = rng[1]:dt:rng[2]
+        nx = size(sol, 1)
+        ny = size(sol, 2)
+        nt = length(trng)
+        if isa(idxs, AbstractArray) #If you want to threshold multiple arrays
+            data_section = zeros(nx, ny, length(idxs), nt)
+            for (i, idx) in enumerate(idxs)
+                #We want to pull out each index. Remember these are automatically flattened
+                data_i = sol(trng, idxs=[1+(idx-1)*(nx*ny):(idx)*(nx*ny)...]) |> Array
+                data_section[:, :, i, :] = reshape(data_i, (nx, ny, nt))
+            end
+        elseif idxs == -1
+            data_section = sol(trng)
+        else
+            data_section = sol(trng, idxs = [1+(idxs-1)*(nx*ny):(idxs)*(nx*ny)...]) |> Array
+            data_section = reshape(data_section, (nx, ny, 1, nt))
+        end
+        return calculate_threshold(data_section; Z=Z, dims=4)
     end
 end
 
-function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S} 
+#This form just is a shortcut if you don't provide a time range
+function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}; kwargs...) where {T, N, S}
     t_rng = (sol.t[1]|> Float64, sol.t[end] |> Float64)
     ans = calculate_threshold(sol, t_rng; kwargs...)
     return ans
@@ -77,62 +102,98 @@ get_timestamps(spike_array, time_range::StepRangeLen{T, P, P}) where {T <: Real,
 """
 If dt is set to Inf, the algorithim acts adaptive
 """
-function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}; 
-        threshold = :calculate, rng = :calculate, 
-        idx::Int64 = 1,  dt::Float64 = -Inf, 
-        flatten = false, verbose = false
+function get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}, threshold, rng::Tuple{T, T}; 
+        idxs::Union{Int64, AbstractArray{Int64}} = 1,  
+        dt::Union{T, Symbol} = :adaptive, 
+        flatten::Bool = false,
+        verbose::Bool = true
     ) where {T <: Real, N, S <: Vector} #When editing we need to focus on this section
     # Lets do this the integrated way
     # First we need to extract the spike array
-
-    if rng == :calculate
-        if verbose
-            println("Auto picking the range")
-        end
-        rng = (sol.t[1], sol.t[end])
-    end
-
-    if S == Vector{Vector{T}}
-        if threshold == :calculate
-            if verbose
-                println("Calculating threshold")
-            end
-            threshold = calculate_threshold(sol, rng; idx = idx, Z = Z, dt = dt)
-        end
-
-        if dt == -Inf
-            time_rng = sol.t
-            data_select = sol
+    if N == 2 #This is for a single cell simulation
+        nVar = size(sol, 1)
+        nt = size(sol, 2)
+        if dt == :adaptive #If the time range is adaptive use the dt of the solution
+            time_rng = sol.t[rng[1].<sol.t.<rng[2]]
         else
             time_rng = rng[1]:dt:rng[2]
-            data_select = sol(time_rng)
         end
-
-        #println(size(data_select,1))
-        if flatten
-            timestamps = full = Matrix{Float64}(undef, 0, 2) #This lacks cell structure
-            for i in 1:size(data_select,1)
-                if verbose
-                    println("Analyzing cell $i of $(size(data_select,1))")
-                end
-                spike_array = Vector{Bool}(data_select[i, :] .> threshold[i]) #This always needs to be a Vector of Bools
-                stamps = get_timestamps(spike_array, time_rng)
-                timestamps = vcat(timestamps, stamps)
+    
+        if idxs == -1
+            @assert length(threshold) == nVar #We want to ensure the number of thresholds equals the number of variables
+            timestamps = Vector{Matrix{T}}()
+            for idx in 1:nVar
+                data_select = sol(time_rng, idxs=idx) |> Array
+                spike_array = Vector{Bool}(data_select .> threshold[idx]) #This always needs to be a Vector of Bools
+                push!(timestamps, get_timestamps(spike_array, time_rng))
+            end
+            return timestamps
+        elseif isa(idxs, AbstractArray)
+            @assert length(threshold) == length(idxs) #We want to ensure the number of thresholds equals the number of variables
+            timestamps = Vector{Matrix{T}}()
+            for (i, idx) in enumerate(idxs)
+                data_select = sol(time_rng, idxs=idx) |> Array
+                spike_array = Vector{Bool}(data_select .> threshold[i]) #This always needs to be a Vector of Bools
+                push!(timestamps, get_timestamps(spike_array, time_rng))
             end
             return timestamps
         else
-            timestamps = Vector{Matrix{T}}(undef,size(data_select,1)) #This keeps the cell structure
+            data_select = sol(time_rng, idxs=idxs) |> Array
+            spike_array = Vector{Bool}(data_select .> threshold) #This always needs to be a Vector of Bools
+            return get_timestamps(spike_array, time_rng)
+        end
+    elseif N == 4 #This is for a larger scale simulation
+        if dt == :adaptive #If the time range is adaptive use the dt of the solution
+            time_rng = sol.t[rng[1].<sol.t.<rng[2]]
+        else
+            time_rng = rng[1]:dt:rng[2]
+        end
+        nx = size(sol, 1)
+        ny = size(sol, 2)
+        nVar = size(sol, 3)
+        nt = length(time_rng)
+        @assert nx == size(threshold, 1)
+        @assert ny == size(threshold, 2)
+
+        #We should collapse all thresholds and flatten all variables
+        if idxs == -1 #This extracts all the variables
+            @assert nVar == size(threshold, 3)
+            thresh = reshape(thresholds, nx, ny, nVar)
+            data_select = sol(time_rng) |> Array
+            println(size(data_select))
+            timestamps = Array{Matrix{T}}()
+            #for idx in 1:nVar
+            #    println(idx)
+            #end
+        elseif isa(idxs, AbstractArray)
+            data_select = zeros(nx, ny, length(idxs), nt)
+            for (i, idx) in enumerate(idxs)
+                data_i = sol(time_rng, idxs=[1+(idx-1)*(nx*ny):(idx)*(nx*ny)...]) |> Array
+                data_select[:, :, i, :] = reshape(data_i, nx, ny, nt)
+            end
+            println(size(data_select))
+        else
+            thresh = reshape(threshold, nx*ny)
+            data_select = sol(time_rng, idxs=[1+(idxs-1)*(nx*ny):(idxs)*(nx*ny)...]) |> Array
+            timestamps = Vector{Matrix{T}}(undef, nx*ny)
             for i in 1:size(data_select, 1)
-                if verbose
+                if verbose 
                     println("Analyzing cell $i of $(size(data_select,1))")
                 end
-                spike_array = Vector{Bool}(data_select[i, :] .> threshold[i]) #This always needs to be a Vector of Bools
+                spike_array = Vector{Bool}(data_select[i, :] .> thresh[i]) #This always needs to be a Vector of Bools
                 stamps = get_timestamps(spike_array, time_rng)
                 timestamps[i] = stamps
             end
-            return timestamps
         end
-    end   
+        return timestamps
+    end
+end
+
+get_timestamps(sol::DiffEqBase.AbstractODESolution{T, N, S}, threshold; kwargs...) where {T <: Real, N, S <: Vector} = get_timestamps(sol, threshold, (sol.t[1], sol.t[end]); kwargs...)
+
+function get_timestamps(sol::DiffEqBase.AbstractODESolution{T,N,S}; idxs = 1, Z::Int64 = 4, kwargs...) where {T <: Real, N, S <: Vector} 
+    threshold = calculate_threshold(sol; Z = Z, idxs = idxs)
+    return get_timestamps(sol, threshold, idxs = idxs, kwargs...)
 end
 
 function extract_interval(timestamps::Matrix{T}; 
