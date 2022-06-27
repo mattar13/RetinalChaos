@@ -16,18 +16,17 @@ function calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4, dims = -1)
     end
 end
 
+#This form of the function only calculates the analysis on a single variable
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64}; 
-        idx::Int64 = 1, Z::Int64 = 4, dt::Float64 = 100.0, vars = -1
+        idxs::Union{Int64, AbstractArray{Int64}} = 1, Z::Int64=4, dt::T=100.0
     ) where {T, N, S}
-    # We need to convert the dt into the correct form
-    dt = convert(T, dt)
     #We want to check how many dimensions the simulation is 
-    if vars == -1
+    if idxs == -1 #This computes the analysis on all variables
         data_section = sol(rng[1]:dt:rng[2]) 
-    else
-        data_section = sol(rng[1]:dt:rng[2], idxs = vars)
+    else #This only looks at a single variable
+        data_section = sol(rng[1]:dt:rng[2], idxs = idxs)
     end
-    if size(data_section, 2) == 7 #The array is just a single solution (Var, Time)
+    if length(size(data_section)) == 1 #The array is just a single solution (Var, Time)
         return calculate_threshold(data_section; Z = Z)
     else #This means the array has a n of (X, Time). We want to summarize by X
         return calculate_threshold(data_section; Z = Z, dims = 2)
