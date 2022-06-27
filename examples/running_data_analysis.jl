@@ -1,18 +1,26 @@
-# This file contains supplemental analysis figures
 using Revise
 using RetinalChaos
-#Setup the fonts and stuff
 import RetinalChaos: calculate_threshold, get_timestamps, max_interval_algorithim
-#Step 1: Make and run the model
-conds_dict = read_JSON("params\\conds.json")
-#conds_dict[:I_app] = 1.0
-u0 = conds_dict |> extract_dict #Conditions
-pars_dict = read_JSON("params\\params.json")
-p = pars_dict |> extract_dict #Parameters
-tspan = (0.0, 300e3) #Timespan
-prob = SDEProblem(T_SDE, noise, u0, tspan, p) #Make the problem
-@time sol = solve(prob, save_idxs=[1]); #Solve
-plot(sol)
+
+#We can do the data analysis on a wave sim
+#1) Set up the model
+print("[$(now())]: Loading Parameters... ")
+conds_dict = read_JSON("params/conds.json")
+u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
+pars_dict = read_JSON("params/params.json")
+p = pars_dict |> extract_dict #Extract the parameters
+tspan = (0.0, 120e3) #Set the tspan
+println(" [$(now())]: Completed")
+#2) Warmup the model
+print("[$(now())]: Warming up model... ")
+prob = SDEProblem(T_PDE, noise, u0, 60e3, p) #run the warmup for 60s
+@time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1)
+println("  [$(now())]: Completed")
+#3) Run the model and save the solution
+print("[$(now())]: Running model... ")
+prob = SDEProblem(T_PDE, noise, warmup[end], tspan, p) #Use the last solution from the warmup
+@time sol = solve(prob, SROCK1(), dt=1.0, abstol=2e-2, reltol=0.2, maxiters=1e7, progress=true, progress_steps=1)#, save_idxs=[1:(nx*ny)...])
+println("  [$(now())]: Completed")
 
 #%% Step 2: Conduct the analysis
 thresh = calculate_threshold(sol)[1]
@@ -22,22 +30,33 @@ burst_tstamps, SPB = max_interval_algorithim(spike_tstamps)
 burst_durs, ibi = extract_interval(burst_tstamps)
 
 #%% Lets plot things to see more
-#Zoom in on the first burst
-xlims = (burst_tstamps[1][2, 1] - 50, burst_tstamps[1][2, 1] + 200)
-plt_a = plot(sol)
-vline!(plt_a, spike_tstamps[1][:, 1], c=:green, label="spike begin")
-vline!(plt_a, spike_tstamps[1][:, 2], c=:red, label="spike end", xlims=xlims)
-
-#Zoom in on the Bursts
-plt_b = plot(sol)
-vline!(plt_b, burst_tstamps[1][:, 1], c=:green, label="burst begin")
-vline!(plt_b, burst_tstamps[1][:, 2], c=:red, label="burst end")
-
-plt_b
+plt_a = plot(sol, vars=[1]) #Plot the solution
 
 #%% Plot each parameter in a histogram
+plt_b = plot(layout=(2, 2))
+
+#Plot spike durations
 hfit = fit(Histogram, spike_durs, LinRange(1, 10, 50))
 weights = hfit.weights / maximum(hfit.weights)
 edges = collect(hfit.edges[1])[1:length(hfit.weights)]
+plot!(plt_b[1, 1], edges, weights)
 
-plot(edges, weights)
+#Plot interspike interval
+hfit = fit(Histogram, isi, LinRange(1, 10, 50))
+weights = hfit.weights / maximum(hfit.weights)
+edges = collect(hfit.edges[1])[1:length(hfit.weights)]
+plot!(plt_b[1, 2], edges, weights)
+
+#Plot burst durations
+hfit = fit(Histogram, burst_durs, LinRange(1, 10, 50))
+weights = hfit.weights / maximum(hfit.weights)
+edges = collect(hfit.edges[1])[1:length(hfit.weights)]
+plot!(plt_b[1, 2], edges, weights)
+
+#Plot burst durations
+hfit = fit(Histogram, ibi, LinRange(1, 10, 50))
+weights = hfit.weights / maximum(hfit.weights)
+edges = collect(hfit.edges[1])[1:length(hfit.weights)]
+plot!(plt_b[1, 2], edges, weights)
+
+plot(plt_a, plt_b, layout=(1, 2))
