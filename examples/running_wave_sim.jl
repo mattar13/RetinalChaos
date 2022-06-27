@@ -55,4 +55,4 @@ anim = @animate for t = 1.0:animate_dt:NetSol.t[end]
         c=:curl, clims=(-90.0, 0.0),
     )
 end
-gif(anim, "animation.gif", fps=1000.0 / animate_dt)
+gif(anim, "examples/animation.gif", fps=1000.0 / animate_dt)
