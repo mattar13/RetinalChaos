@@ -322,7 +322,7 @@ end
 getindex(c1::codim_object{1, T}, syms...) where T <: Real = map(sym -> c1[sym], syms)
 
 function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
-        forward = true, max_iters = 100, min_step = 1.0e-5, 
+        forward = true, max_iters = 100, min_step = 1.0e-10, 
         kwargs...
     ) where T <: Real
 
@@ -336,7 +336,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[2] #we start here 
         ϵ = abs(I - In) / 2 #Begin at the halfway point between the two points
         iter = 0
-        println("$par continuation: $(rng[1]) -> $(rng[2])")
+        #println("$par continuation: $(rng[1]) -> $(rng[2])")
         while I < In && ϵ > min_step && iter <= max_iters
             iter += 1
             I += ϵ #Increment I slowly
@@ -344,23 +344,23 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-            println(equilibria)
+            #println(equilibria)
             #println(points |> typeof)
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
                 #This is a flaw of the find equilibria algorithim, move away from this point
-                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                #println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
-                println("$par has found a saddle node at $I")
+                #println("$par has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
     
             else #None of these contiditons were met alter the bifurcation eq
-                println("$par has not yet found a equilibria at $I")
+                #println("$par has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
@@ -371,7 +371,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[1] #we start here 
         ϵ = abs(I - In) / 2 #Begin at the halfway point between the two points
         iter = 0
-        println("$par reverse continuation: $(rng[1]) <- $(rng[2])")
+        #println("$par reverse continuation: $(rng[1]) <- $(rng[2])")
         while I > In && ϵ > min_step && iter < max_iters
             iter += 1
             I -= ϵ #decrement I slowly
@@ -383,18 +383,18 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             #we will add each point and new equilibria to the solution
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
-                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                #println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
                 #This is a flaw of the find equilibria algorithim, move away from this point
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
-                println("$par reverse has found a saddle node at $I")
+                #println("$par reverse has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             else #None of these contiditons were met alter the bifurcation eq
-                println("$par reverse has not yet found a equilibria at $I")
+                #println("$par reverse has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
