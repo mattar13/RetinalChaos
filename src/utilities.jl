@@ -42,6 +42,7 @@ function read_JSON(::Type{T}, name_file::String) where T <: Dict
 end
 
 read_JSON(name_file::String) = read_JSON(Dict{Symbol, Float64}, name_file)
+
 """
 Extract a parameter, condition dictionary
 USAGE:
