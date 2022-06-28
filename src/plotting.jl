@@ -313,6 +313,20 @@ end
     end
 end
 
+function extract_equilibria(c1::codim_object{1,T}; vars=:v) where {T<:Real}
+    var_idx = vars |> u_find
+    points = map(x -> x[1], c1.points) #Extract all the points
+    sorted_dims = sortperm(points)
+    points = points[sorted_dims]
+    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    return points, saddle_p, stable_p, unstable_p, unstable_focus_p, stable_focus_p
+
+end
+
 function extract_equilibria(c2::codim_object{2, T}, eq_type::Symbol; eq_var::Int64 = 1, view = :xyz) where T <: Real
     xs = []; ys = []; zs = [];
     for idx = 1:length(c2.points)
@@ -388,15 +402,13 @@ end
 
 @recipe function f(c1::codim_object{1,T}; vars=:v, scatter=false) where {T<:Real}
     #var_idx = findall(x -> x==vars, tar_conds)[1]
-    var_idx = vars |> u_find
-    points = map(x -> x[1], c1.points)
-    sorted_dims = sortperm(points)
-    points = points[sorted_dims]
-    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
+    res = extract_equilibria(c1, vars = vars) #Pass back all of the equilibria
+    points = res[1] 
+    saddle_p = res[2]
+    stable_p = res[3]
+    unstable_p = res[4]
+    unstable_focus_p = res[5]
+    stable_focus_p = res[6]
 
     plotted_stable = false
     plotted_unstable = false
