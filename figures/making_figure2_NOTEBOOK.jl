@@ -1,9 +1,3 @@
-using Revise
-using RetinalChaos
-
-include("figure_setup.jl")
-
-
 ### A Pluto.jl notebook ###
 # v0.16.0
 
