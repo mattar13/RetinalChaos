@@ -214,7 +214,7 @@ export print, length
 #We have to ensure the points we pick are realistic
 function find_equilibria(prob::ODEProblem;
         vars = [:v, :n], 
-        xlims = (-90.0, 10.0), ylims = (0.0, 1.0), 
+        xlims = (-100.0, 10.0), ylims = (0.0, 1.0), #These need to be in realistic ranges. 
         equilibrium_resolution = 10,
         precision = 2, check_min = 1e-5, verbose = false
     )
@@ -231,67 +231,82 @@ function find_equilibria(prob::ODEProblem;
         #Iterate through the x range
         for (idx_y, y) in enumerate(LinRange(ylims[1], ylims[2], equilibrium_resolution))
             #Iterate through the y range looking for stable points
-            if verbose 
+            if verbose
                 println("Checking parameter")
                 println("$(vars[1]) = $x")
                 println("$(vars[2]) = $y")
             end
             uI = copy(prob.u0)
             uI[var_idx] .= (x, y)
-
+        
             if verbose
                 println("Condition to check = $uI")
             end
-
+        
             df(ux) = prob.f(similar(ux), ux, prob.p, 0.0) #dU, U, p, t            
             res = nlsolve(df, uI)
+            #If any of the results are out of bounds then we have to cut it off
             if verbose
                 print("Results of the nlsolve for uI: ")
                 #println(res)
                 print("f = 0: ")
                 println(res.zero)
             end
+        
+            #We want to remove all cases where the result is out of bounds
+            var1_inbounds = xlims[1] < res.zero[var_idx[1]] <= xlims[2]
+            var2_inbounds = ylims[1] < res.zero[var_idx[2]] <= ylims[2]
 
-            equilibria = map(x -> round(x, digits = precision), res.zero)
-            check = df(res.zero)
-            if verbose 
-                print("Checking the solution and it's proximity to zero: dUᵢ = ")
-                println(check)
-            end
-            if equilibria in storage
-                nothing
-            elseif any(isnan, res.zero)
-                nothing
-            elseif check[1] > check_min || check[2] > check_min
-                nothing
-            else
-                push!(storage, equilibria)
-                #push!(eq_dict[:all], res.zero)
-                #If the equilibria is not in the stable or unstable points
-                #Test it's stability
-                J_mat = ForwardDiff.jacobian(df, res.zero)[[var_idx...], [var_idx...]]
-                ev = eigvals(J_mat)
-
-                if sign(real(ev[1])) != sign(real(ev[2]))
-                    #If the sign of the eigenvalues are opposite, then it is a unstable saddle
-                    #println("Saddle")
-                    push!(saddle, res.zero)
+            if var1_inbounds && var2_inbounds #We want to make sure the equilibria is not out of bounds
+                equilibria = map(x -> round(x, digits=precision), res.zero)
+                check = df(res.zero)
+                if verbose
+                    print("Checking the solution and it's proximity to zero: dUᵢ = ")
+                    println(check)
+                end
+                if equilibria in storage
+                    nothing
+                elseif any(isnan, res.zero)
+                    nothing
+                elseif check[1] > check_min || check[2] > check_min
+                    nothing
                 else
-                    if imag(ev[1]) != 0 #This detects whether or not the equilibria is a focus
-                        if real(ev[1]) >= 0.0
-                            #println("Unstable focus")
-                            push!(unstable_focus, res.zero)
-                        else
-                            #println("Unstable focus")
-                            push!(stable_focus, res.zero)
-                        end
+                    push!(storage, equilibria)
+                    #push!(eq_dict[:all], res.zero)
+                    #If the equilibria is not in the stable or unstable points
+                    #Test it's stability
+                    J_mat = ForwardDiff.jacobian(df, res.zero)[[var_idx...], [var_idx...]]
+                    ev = eigvals(J_mat)
+            
+                    if sign(real(ev[1])) != sign(real(ev[2]))
+                        #If the sign of the eigenvalues are opposite, then it is a unstable saddle
+                        #println("Saddle")
+                        push!(saddle, res.zero)
                     else
-                        if ev[1] > 0.0
-                            push!(unstable, res.zero)
+                        if imag(ev[1]) != 0 #This detects whether or not the equilibria is a focus
+                            if real(ev[1]) >= 0.0
+                                #println("Unstable focus")
+                                push!(unstable_focus, res.zero)
+                            else
+                                #println("Unstable focus")
+                                push!(stable_focus, res.zero)
+                            end
                         else
-                            push!(stable, res.zero)
+                            if ev[1] > 0.0
+                                push!(unstable, res.zero)
+                            else
+                                push!(stable, res.zero)
+                            end
                         end
                     end
+                end
+            else
+                if !var1_inbounds && verbose
+                    println("Variable $(vars[1]) is out of bounds at $(res.zero[var_idx[1]]) will be skipped")
+                end
+
+                if !var2_inbounds && verbose
+                    println("Variable $(vars[2]) is out of bounds at $(res.zero[var_idx[2]]) will be skipped")
                 end
             end
         end
@@ -332,8 +347,6 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
 
     points_list = Array{Tuple{Float64}}([])
     equilibria_list = Array{equilibria_object{Float64}}([])
-    bifurcation_point = 0.0
-    bifurcation_eq = nothing
     #Adaptive continuation
     if forward
         I = rng[1] #Step back
@@ -348,7 +361,9 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-            println(length(equilibria))
+            println("$par = $I results in $(length(equilibria)) equilibria")
+            println("Epsilon at $ϵ")
+            println("Iterations at $(iter)")
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
                 #This is a flaw of the find equilibria algorithim, move away from this point
@@ -360,14 +375,15 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
-                println("$par has found a saddle node at $I")
+                #println("$par has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             
             else #None of these contiditons were met alter the bifurcation eq
-                println("$par has not yet found a equilibria at $I")
+                #println("$par has not yet found a equilibria at $I")
+                #I += ϵ #Adding in another leap forward may speed things up a bit
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
@@ -386,7 +402,9 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-            #println(points |> typeof)
+            println("$par = $I results in $(length(equilibria)) equilibria")
+            println("Epsilon at $ϵ")
+            println("Iterations at $(iter)")
             #we will add each point and new equilibria to the solution
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
@@ -399,13 +417,13 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
-                println("$par reverse has found a saddle node at $I")
+                #println("$par reverse has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             else #None of these contiditons were met alter the bifurcation eq
-                println("$par reverse has not yet found a equilibria at $I")
+                #println("$par reverse has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
@@ -430,13 +448,12 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
     c1_range = LinRange(c1_lims[1], c1_lims[2], codim_resolution)
     n_equilibria = -1
     for (idx1, c1) in enumerate(c1_range)
-        println("Setting variable $codim $c1")
+        #println("Setting variable $codim $c1")
         pv = prob.p
         #pv[findall(x -> x==codim, tar_pars)[1]] = c1
         pv[codim |> p_find] = c1
         prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
         equilibria = find_equilibria(prob_i; kwargs...)
-        #println(equilibria)
         #in order to pass we want to make sure that there has at least been a saddle node first
         
         if n_equilibria == -1 #This is the starting point
@@ -459,7 +476,7 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
         elseif length(equilibria) == n_equilibria
             n_equilibria = length(equilibria)
         end
-        println(n_equilibria)
+        println("$(n_equilibria) found at variable $codim $c1")
         #points = c1
         push!(points_list, (c1,))
         push!(equilibria_list, equilibria)
