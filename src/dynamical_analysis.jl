@@ -211,8 +211,11 @@ end
 export print, length
 
 #Conduct a stability analysis of the current
+#We have to ensure the points we pick are realistic
 function find_equilibria(prob::ODEProblem;
-        vars = [:v, :n], xlims = (-90.0, 10.0), ylims = (-1.0, 5.0), equilibrium_resolution = 10,
+        vars = [:v, :n], 
+        xlims = (-90.0, 10.0), ylims = (0.0, 1.0), 
+        equilibrium_resolution = 10,
         precision = 2, check_min = 1e-5, verbose = false
     )
     stable = Array{Array{Float64}}([])
@@ -244,7 +247,7 @@ function find_equilibria(prob::ODEProblem;
             res = nlsolve(df, uI)
             if verbose
                 print("Results of the nlsolve for uI: ")
-                println(res)
+                #println(res)
                 print("f = 0: ")
                 println(res.zero)
             end
@@ -323,6 +326,7 @@ getindex(c1::codim_object{1, T}, syms...) where T <: Real = map(sym -> c1[sym], 
 
 function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         forward = true, max_iters = 100, min_step = 1.0e-10, 
+        record_noisy_points = true,
         kwargs...
     ) where T <: Real
 
@@ -336,7 +340,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[2] #we start here 
         ϵ = abs(I - In) / 2 #Begin at the halfway point between the two points
         iter = 0
-        #println("$par continuation: $(rng[1]) -> $(rng[2])")
+        println("$par continuation: $(rng[1]) -> $(rng[2])")
         while I < In && ϵ > min_step && iter <= max_iters
             iter += 1
             I += ϵ #Increment I slowly
@@ -344,23 +348,26 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-            #println(equilibria)
-            #println(points |> typeof)
+            println(length(equilibria))
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
                 #This is a flaw of the find equilibria algorithim, move away from this point
-                #println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                if record_noisy_points
+                    push!(points_list, (I,))
+                    push!(equilibria_list, equilibria)
+                end
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
-                #println("$par has found a saddle node at $I")
+                println("$par has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I -= ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
-    
+            
             else #None of these contiditons were met alter the bifurcation eq
-                #println("$par has not yet found a equilibria at $I")
+                println("$par has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
@@ -371,7 +378,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[1] #we start here 
         ϵ = abs(I - In) / 2 #Begin at the halfway point between the two points
         iter = 0
-        #println("$par reverse continuation: $(rng[1]) <- $(rng[2])")
+        println("$par reverse continuation: $(rng[1]) <- $(rng[2])")
         while I > In && ϵ > min_step && iter < max_iters
             iter += 1
             I -= ϵ #decrement I slowly
@@ -383,18 +390,22 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             #we will add each point and new equilibria to the solution
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
-                #println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                if record_noisy_points
+                    push!(points_list, (I,))
+                    push!(equilibria_list, equilibria)
+                end
                 #This is a flaw of the find equilibria algorithim, move away from this point
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             elseif isempty(equilibria.saddle) #The saddle node is terminated past here
-                #println("$par reverse has found a saddle node at $I")
+                println("$par reverse has found a saddle node at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
                 I += ϵ #walk back
                 ϵ /= 2 #Divide epsilon in half
             else #None of these contiditons were met alter the bifurcation eq
-                #println("$par reverse has not yet found a equilibria at $I")
+                println("$par reverse has not yet found a equilibria at $I")
                 push!(points_list, (I,))
                 push!(equilibria_list, equilibria)
             end
@@ -417,7 +428,6 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
     points_list = Array{Tuple{T}}([])
     equilibria_list = Array{equilibria_object{T}}([])
     c1_range = LinRange(c1_lims[1], c1_lims[2], codim_resolution)
-    cont_toggle = false
     n_equilibria = -1
     for (idx1, c1) in enumerate(c1_range)
         println("Setting variable $codim $c1")
@@ -449,8 +459,8 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
         elseif length(equilibria) == n_equilibria
             n_equilibria = length(equilibria)
         end
-        print
-        points = c1
+        println(n_equilibria)
+        #points = c1
         push!(points_list, (c1,))
         push!(equilibria_list, equilibria)
     end
