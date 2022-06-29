@@ -18,11 +18,11 @@ tspan = (0.0, 100.0)
 prob_eq = ODEProblem(T_ODE, u0, tspan, p)
 # Conduct the codim analysis
 codim1 = (:I_app)
-c1_lims = (45.0, 50.0)
+c1_lims = (-68.05, -68.045)
 @time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
 
 #%% Plot Codim Solutions
-res = extract_equilibria(c1_map) #Pass back all of the equilibria
+res = extract_equilibria(c1_map; vars=:v) #Pass back all of the equilibria
 points = res[1]
 saddle_p = res[2]
 stable_p = res[3]
@@ -32,7 +32,7 @@ stable_focus_p = res[6]
 #bif_val, bif_eq = find_bifurcation(c1_map)
 #saddle_vs = map(x -> x.saddle[1][1], bif_eq)
 # Plot 
-plot(points, saddle_p, c=:blue)
+eq_plt = plot(points, saddle_p, c=:blue)
 plot!(points, stable_p, c=:green)
 plot!(points, unstable_p, c=:red)
 plot!(points, stable_focus_p, c=:red, linestyle=:dash)
@@ -40,9 +40,11 @@ plot!(points, unstable_focus_p, c=:green, linestyle=:dash)
 
 
 #%% Lets look deeper into some issues
-eq_val = findall((isnan.(stable_p)) .== 0)[2]
-u0_eq = c1_map.equilibria[eq_val].stable[1] #We will use this as out Initial condition
+eq_val = findall((isnan.(saddle_p)) .== 1)[1]
+u0_eq = c1_map.equilibria[eq_val].saddle[1]#We will use this as out Initial condition
 
+#%%
+c1_map.points[eq_val][1]
 pars_dict = read_JSON("params\\params.json")
 pars_dict[:I_app] = c1_map.points[eq_val][1] #Set initial applied current to 0
 pars_dict[:ρi] = 0.0 #remove GABA influence
@@ -50,8 +52,11 @@ pars_dict[:ρe] = 0.0 #remove ACh influence
 pars_dict[:g_TREK] = 0.0 #Remove the sAHP
 p = pars_dict |> extract_dict
 tspan = (0.0, 1000.0)
-prob_eq = ODEProblem(T_ODE, u0_eq, tspan, p)
+prob_eq = ODEProblem(T_ODE, u0, tspan, p)
 sol_eq = solve(prob_eq)
 eq_obj = find_equilibria(prob_eq)
-print(eq_obj)
-plot(sol_eq, vars = 1)
+print(eq_obj, vars=[:v, :n])
+sol_plt = plot(sol_eq, vars=1)
+
+#%%
+plot(eq_plt, sol_plt)
