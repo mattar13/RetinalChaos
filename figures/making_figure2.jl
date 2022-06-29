@@ -3,10 +3,11 @@ using RetinalChaos
 import RetinalChaos: calculate_threshold, get
 import RetinalChaos: extract_equilibria, find_equilibria
 include("figure_setup.jl");
-
+rcParams["font.size"] = 20.0
 #%% Open data
 #Step 1: Import the initial conditions
 conds_dict = read_JSON("params\\conds.json")
+conds_dict[:v] = -25.0
 u0 = conds_dict |> extract_dict
 #Step 2: Import the parameters
 pars_dict = read_JSON("params\\params.json")
@@ -21,39 +22,25 @@ prob = SDEProblem(T_SDE, noise, u0, tspan, p)
 #Step 5: Solve the problem
 @time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1);
 
-#%% Analyze the data
-thresholds = calculate_threshold(sol)
-spike_timestamps = get_timestamps(sol)
-spike_durs, isi = extract_interval(spike_timestamps, max_duration=100, max_interval=100)
-burst_tstamps, SPB = max_interval_algorithim(spike_timestamps)
-burst_durs, ibi = extract_interval(burst_tstamps)
 
-#%% Pull out example data (from a single burst)
-dt = 1.0
-t = sol.t[1]:dt:sol.t[end]
-vt = sol(t, idxs=1)
-bt = sol(t, idxs=5)
-wt = sol(t, idxs=8)
 
 #%% Run a dynamical analysis to get the equilibrium
 conds_dict = read_JSON("params\\conds.json")
-conds_dict[:v] = vm_noise
-u0 = conds_dict |> extract_dict
 
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = iapp_noise #Set initial applied current to 0
-pars_dict[:ρi] = 0.0 #remove GABA influence
-pars_dict[:ρe] = 0.0 #remove ACh influence
-pars_dict[:g_TREK] = 0.0 #Remove the sAHP
-p = pars_dict |> extract_dict
+u0 = conds_dict |> extract_dict
+pars_dict_eq = read_JSON("params\\params.json")
+pars_dict_eq[:I_app] = 0.0 #Set initial applied current to 0
+pars_dict_eq[:ρi] = 0.0 #remove GABA influence
+pars_dict_eq[:ρe] = 0.0 #remove ACh influence
+pars_dict_eq[:g_TREK] = 0.0 #Remove the sAHP
+p_eq = pars_dict_eq |> extract_dict
 tspan = (0.0, 100.0)
-prob_eq = ODEProblem(T_ODE, u0, tspan, p)
+prob_eq = ODEProblem(T_ODE, u0, tspan, p_eq)
 # Conduct the codim analysis
 codim1 = (:I_app)
-c1_lims = (45.0, 50.0)
+c1_lims = (-70.0, 30.0)
 @time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
 
-#%% Plot Codim Solutions
 res = extract_equilibria(c1_map) #Pass back all of the equilibria
 points = res[1]
 saddle_p = res[2]
@@ -61,33 +48,25 @@ stable_p = res[3]
 unstable_p = res[4]
 unstable_focus_p = res[5]
 stable_focus_p = res[6]
-#bif_val, bif_eq = find_bifurcation(c1_map)
-#saddle_vs = map(x -> x.saddle[1][1], bif_eq)
-# Plot 
-plot(points, saddle_p, c=:blue)
-plot!(points, stable_p, c=:green)
-plot!(points, unstable_p, c=:red)
-plot!(points, stable_focus_p, c=:red, linestyle=:dash)
-plot!(points, unstable_focus_p, c=:green, linestyle=:dash)
 
+last_saddle_idx = findlast(isnan.(saddle_p) .== 0)
+saddle_bifurcation = points[last_saddle_idx]
+saddle_eq = saddle_p[last_saddle_idx]
 
-#%% Lets look deeper into some issues
-eq_val = findall((isnan.(stable_p)) .== 0)[1]
-i_app_eq = c1_map.points[eq_val][1]
-u0_eq = c1_map.equilibria[eq_val].stable[1] #We will use this as out Initial condition
+#%% Extract plotting data
+dt = 1.0
+t = (sol.t[1]:dt:sol.t[end])
+vt = sol(t, idxs=1)
+bt = sol(t, idxs=5)
 
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = i_app_eq #Set initial applied current to 0
-pars_dict[:ρi] = 0.0 #remove GABA influence
-pars_dict[:ρe] = 0.0 #remove ACh influence
-pars_dict[:g_TREK] = 0.0 #Remove the sAHP
-p = pars_dict |> extract_dict
-tspan = (0.0, 100.0)
-prob_eq = ODEProblem(T_ODE, u0_eq, tspan, p)
-sol_eq = solve(prob_eq)
-plot(sol_eq)
+gTREK = -pars_dict[:g_TREK]
+EK = pars_dict[:E_K]
+ITREK = gTREK .* bt[2:end] .* (vt[1:end-1] .- EK) #We want to measure the current from the value before
 
-#%%
+wt = sol(t, idxs=8)
+
+t = t / 1000
+#%% Plot 
 plt.clf()
 #%% Let s set up the figures
 width_inches = 16.0
@@ -99,24 +78,97 @@ gs = fig2.add_gridspec(3, 2,
      height_ratios=(0.30, 0.30, 0.40),
      right=0.99, left=0.1,
      top=0.93, bottom=0.08,
-     wspace=0.15, hspace=0.40
+     wspace=0.2, hspace=0.10
 )
+col1_ylabel = -0.1
+col2_ylabel = -0.15
 
+#% =====================================================Make panel A===================================================== %%#
 axA = fig2.add_subplot(gs[1, 1])
+ylim(-100.0, 0.0)
 axA.plot(t, vt, c=v_color, lw=3.0)
-axB = fig2.add_subplot(gs[2, 1])
-axB.plot(t, bt, c=b_color, lw=3.0)
-axC = fig2.add_subplot(gs[3, 1])
-axC.plot(t, wt, c=:black, lw=3.0)
-
-#%% Plot the second column
+ylabel("Vt (mV)")
+axA.xaxis.set_visible(false) #Turn off the bottom axis
+axA.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA.yaxis.set_major_locator(MultipleLocator(50.0))
+axA.yaxis.set_minor_locator(MultipleLocator(25.0))
+axA.spines["bottom"].set_visible(false)
+# Plot the second column
 axA2 = fig2.add_subplot(gs[1, 2])
+xlim(c1_lims)
+ylim(-100.0, 0.0)
+axA2.plot(points, saddle_p, c=:blue, lw=3.0)
+axA2.plot(points, stable_p, c=:green, lw=3.0)
+axA2.plot(points, unstable_p, c=:red, lw=3.0)
+axA2.plot(points, stable_focus_p, c=:red, ls="--", lw=3.0)
+axA2.plot(points, unstable_focus_p, c=:green, ls="--", lw=3.0)
+ylabel("Applied Current (pA)")
+#Plot the points where the saddle node dissappears
+axA2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=15.0, c=:cyan)
+axA2.xaxis.set_visible(false) #Turn off the bottom axis
+axA2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axA2.yaxis.set_major_locator(MultipleLocator(50.0))
+axA2.yaxis.set_minor_locator(MultipleLocator(25.0))
+axA2.spines["bottom"].set_visible(false)
+#% ===============================================Make panel B=============================================== %%#
+axB = fig2.add_subplot(gs[2, 1])
+ylim(0.0, 1.0)
+axB.plot(t, bt, c=b_color, lw=3.0)
+ylabel("TREK channel activation")
+axB.xaxis.set_visible(false) #Turn off the bottom axis
+axB.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB.yaxis.set_major_locator(MultipleLocator(0.5))
+axB.yaxis.set_minor_locator(MultipleLocator(0.25))
+axB.spines["bottom"].set_visible(false)
 
 axB2 = fig2.add_subplot(gs[2, 2])
+xlim(c1_lims)
+ylim(-100.0, 0.0)
+axB2.plot(ITREK, vt[1:end-1], linewidth=1.0, c=:black)
+
+axB2.plot(points, saddle_p, c=:blue, lw=3.0)
+axB2.plot(points, stable_p, c=:green, lw=3.0)
+axB2.plot(points, unstable_p, c=:red, lw=3.0)
+axB2.plot(points, stable_focus_p, c=:red, ls="--", lw=3.0)
+axB2.plot(points, unstable_focus_p, c=:green, ls="--", lw=3.0)
+#Plot the points where the saddle node dissappears
+axB2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=15.0, c=:cyan)
+ylabel("ITREK (pA)")
+
+axB2.xaxis.set_visible(false) #Turn off the bottom axis
+axB2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axB2.yaxis.set_major_locator(MultipleLocator(50.0))
+axB2.yaxis.set_minor_locator(MultipleLocator(25.0))
+axB2.spines["bottom"].set_visible(false)
+#% ===================================================Figure Panel C=================================================== %%#
+axC = fig2.add_subplot(gs[3, 1])
+ylim(-8.0, 8.0)
+axC.plot(t, wt, c=:black, lw=3.0)
+ylabel("Noise Current (pA)")
+xlabel("Time (s)")
+axC.yaxis.set_label_coords(col1_ylabel, 0.5)
+axC.yaxis.set_major_locator(MultipleLocator(8.0))
+axC.yaxis.set_minor_locator(MultipleLocator(4.0))
+
+axC.xaxis.set_major_locator(MultipleLocator(20.0))
+axC.xaxis.set_minor_locator(MultipleLocator(10.0))
 
 axC2 = fig2.add_subplot(gs[3, 2])
-hfit = fit(Histogram, wt, LinRange(-10, 10, 50))
+xlim(c1_lims)
+ylim(0.0, 1.0)
+hfit = fit(Histogram, wt, LinRange(c1_lims[1], c1_lims[2], 200))
 weights = hfit.weights / maximum(hfit.weights)
 edges = collect(hfit.edges[1])[1:length(hfit.weights)]
-axC2.plot(weights, edges, c=:black, lw=3.0)
-axC2.fill_between(weights, edges, color=:gray)
+axC2.plot(edges, weights, c=:black, lw=1.0)
+ylabel("Probability of Noisy Current")
+xlabel("Current (pA)")
+axC2.fill_between(edges[edges.<=saddle_bifurcation], weights[edges.<=saddle_bifurcation], color=:gray)
+axC2.fill_between(edges[edges.>saddle_bifurcation], weights[edges.>saddle_bifurcation], color=:green)
+axC2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axC2.yaxis.set_major_locator(MultipleLocator(0.5))
+axC2.yaxis.set_minor_locator(MultipleLocator(0.25))
+
+axC2.xaxis.set_major_locator(MultipleLocator(20.0))
+axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
+#%% Save the Plot 
+fig2.savefig("figures/figure3_BiophysicalProperties.png")

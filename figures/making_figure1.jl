@@ -24,12 +24,15 @@ plot(sol) #This is only for example traces.
 #%% Run the analysis 
 dt = 0.01 #Set the time differential
 #Extract the threshold
-v_thresh = calculate_threshold(sol; dt=dt)
-timestamps, data = timeseries_analysis(sol; dt=dt)
-timestamps["Bursts"]
+thresh = calculate_threshold(sol)
+spike_tstamps = get_timestamps(sol)
+spike_durs, isi = extract_interval(spike_tstamps, max_duration=100, max_interval=100)
+burst_tstamps, SPB = max_interval_algorithim(spike_tstamps)
+burst_durs, ibi = extract_interval(burst_tstamps)
+burst_tstamps
 t_series = tspan[1]:dt:tspan[end]
-vt = sol(t_series, idxs=[1])'
-burst_lims = timestamps["Bursts"][1][2, :]#lets set the limits for area of interest
+vt = sol(t_series, idxs=[1])
+burst_lims = burst_tstamps[2, :]#lets set the limits for area of interest
 t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
 
 #%% Load the data into the correct format
@@ -51,7 +54,7 @@ vrng = -80.0:1.0:0.0
 crng = f.(vrng)
 
 C_dt = 10.0
-C_trng = (timestamps["Bursts"][1][1, 2]-10000):C_dt:(timestamps["Bursts"][1][2, 2]+10000)
+C_trng = (burst_tstamps[1, 2]-10000):C_dt:(burst_tstamps[2, 2]+10000)
 
 tIBI = (C_trng .- C_trng[1]) ./ 1000
 vIBI = sol(C_trng, idxs=1)
@@ -149,31 +152,24 @@ ylabel("Vt")
 xlabel("Time (s)")
 axCL4.yaxis.set_label_coords(col1_ylabel, 0.5)
 
-gsCR = gs[3, 2].subgridspec(ncols=1, nrows=5, height_ratios = [0.25, 0.125, 0.25, 0.125, 0.25])
+gsCR = gs[3, 2].subgridspec(ncols=1, nrows=5, height_ratios=[0.25, 0.125, 0.25, 0.125, 0.25])
 axCR1 = fig1.add_subplot(gsCR[1])
-axCR1.plot(aIBI, cIBI, c=a_color, lw = 3.0)
+axCR1.plot(aIBI, cIBI, c=a_color, lw=3.0)
 ylabel("Ct")
 xlabel("At")
 axCR1.yaxis.set_label_coords(col2_ylabel, 0.5)
 
 axCR2 = fig1.add_subplot(gsCR[3])
-axCR2.plot(bIBI, aIBI, c=b_color, lw = 3.0)
+axCR2.plot(bIBI, aIBI, c=b_color, lw=3.0)
 ylabel("At")
 xlabel("Bt")
 axCR2.yaxis.set_label_coords(col2_ylabel, 0.5)
 
 axCR3 = fig1.add_subplot(gsCR[5])
-axCR3.plot(vIBI, bIBI, c=v_color, lw = 3.0)
+axCR3.plot(vIBI, bIBI, c=v_color, lw=3.0)
 ylabel("Bt")
 xlabel("Vt")
 axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
 
-#Annotations
-
-
-#%% ================================================Put it all together================================================ %%#
-plt.clf() #While drawing you can use this to clear the figure 
-
-
-#%% Save5
-savefig(fig1, "E:\\Projects\\2021_Modelling_Paper\\Figures\\Fig1_Model_Dynamics.png")
+#%% Save the figure
+fig1.savefig("figures/figure1_ModelVariables.png")
