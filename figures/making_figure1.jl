@@ -3,8 +3,10 @@ using RetinalChaos
 
 include("figure_setup.jl")
 
+println("Running the plotting script for figure 1")
 #%% Open data
 #Step 1: Import the initial conditions
+print("[$(now())]: Setting up modelling data... ")
 conds_dict = read_JSON("params\\conds.json")
 u0 = conds_dict |> extract_dict
 #Step 2: Import the parameters
@@ -18,13 +20,13 @@ tspan = (0.0, 120e3)
 #Step 4: set up the problem
 prob = ODEProblem(T_ODE, u0, tspan, p)
 #Step 5: Solve the problem
-@time sol = solve(prob, progress=true, progress_steps=1);
-plot(sol) #This is only for example traces. 
+sol = solve(prob, progress=true, progress_steps=1);
+println(" Completed")
 
 #%% Run the analysis 
+print("[$(now())]: Running analysis... ")
 dt = 0.01 #Set the time differential
-#Extract the threshold
-thresh = calculate_threshold(sol)
+thresh = calculate_threshold(sol) #Extract the threshold
 spike_tstamps = get_timestamps(sol)
 spike_durs, isi = extract_interval(spike_tstamps, max_duration=100, max_interval=100)
 burst_tstamps, SPB = max_interval_algorithim(spike_tstamps)
@@ -34,8 +36,10 @@ t_series = tspan[1]:dt:tspan[end]
 vt = sol(t_series, idxs=[1])
 burst_lims = burst_tstamps[2, :]#lets set the limits for area of interest
 t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
+println(" Completed")
 
 #%% Load the data into the correct format
+print("[$(now())]: Extracting data... ")
 A_dx = 20 #the tick interval is 20ms
 A_dt = 0.01
 A_trng = (burst_lims[1]:A_dt:burst_lims[1]+200) #Set the range of points to plot
@@ -61,9 +65,11 @@ vIBI = sol(C_trng, idxs=1)
 cIBI = sol(C_trng, idxs=3)
 aIBI = sol(C_trng, idxs=4)
 bIBI = sol(C_trng, idxs=5)
+println(" Completed")
 
-plt.clf() #While drawing you can use this to clear the figure 
+#plt.clf() #While drawing you can use this to clear the figure 
 #%% Start the plotting of the figure
+print("[$(now())]: Plotting figure 1...")
 width_inches = 16.0
 height_inches = 10.0
 fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
@@ -170,6 +176,10 @@ axCR3.plot(vIBI, bIBI, c=v_color, lw=3.0)
 ylabel("Bt")
 xlabel("Vt")
 axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
+println(" Complete")
 
 #%% Save the figure
+print("[$(now())]: Saving the figure 1...")
 fig1.savefig("figures/figure1_ModelVariables.png")
+plt.close("all")
+println(" Completed")

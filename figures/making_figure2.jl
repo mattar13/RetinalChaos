@@ -4,7 +4,11 @@ import RetinalChaos: calculate_threshold, get
 import RetinalChaos: extract_equilibria, find_equilibria
 include("figure_setup.jl");
 rcParams["font.size"] = 20.0
+
+println("Running the plotting script for figure 2")
+
 #%% Open data
+print("[$(now())]: Setting up modelling data... ")
 #Step 1: Import the initial conditions
 conds_dict = read_JSON("params\\conds.json")
 conds_dict[:v] = -25.0
@@ -20,13 +24,13 @@ tspan = (0.0, 120e3)
 #Step 4: set up the problem
 prob = SDEProblem(T_SDE, noise, u0, tspan, p)
 #Step 5: Solve the problem
-@time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1);
-
+sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1);
+println(" Completed")
 
 
 #%% Run a dynamical analysis to get the equilibrium
+print("[$(now())]: Setting up equilibrium data... ")
 conds_dict = read_JSON("params\\conds.json")
-
 u0 = conds_dict |> extract_dict
 pars_dict_eq = read_JSON("params\\params.json")
 pars_dict_eq[:I_app] = 0.0 #Set initial applied current to 0
@@ -39,8 +43,10 @@ prob_eq = ODEProblem(T_ODE, u0, tspan, p_eq)
 # Conduct the codim analysis
 codim1 = (:I_app)
 c1_lims = (-70.0, 30.0)
-@time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
+c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
+println(" Completed")
 
+println("[$(now())]: Extracting data")
 res = extract_equilibria(c1_map) #Pass back all of the equilibria
 points = res[1]
 saddle_p = res[2]
@@ -58,17 +64,17 @@ dt = 1.0
 t = (sol.t[1]:dt:sol.t[end])
 vt = sol(t, idxs=1)
 bt = sol(t, idxs=5)
+wt = sol(t, idxs=8)
+t = t / 1000
 
 gTREK = -pars_dict[:g_TREK]
 EK = pars_dict[:E_K]
 ITREK = gTREK .* bt[2:end] .* (vt[1:end-1] .- EK) #We want to measure the current from the value before
 
-wt = sol(t, idxs=8)
+println(" Completed")
 
-t = t / 1000
-#%% Plot 
-plt.clf()
 #%% Let s set up the figures
+print("[$(now())]: Plotting... ")
 width_inches = 16.0
 height_inches = 10.0
 fig2 = plt.figure("Biophysical Noise", figsize=(width_inches, height_inches))
@@ -167,8 +173,11 @@ axC2.fill_between(edges[edges.>saddle_bifurcation], weights[edges.>saddle_bifurc
 axC2.yaxis.set_label_coords(col2_ylabel, 0.5)
 axC2.yaxis.set_major_locator(MultipleLocator(0.5))
 axC2.yaxis.set_minor_locator(MultipleLocator(0.25))
-
 axC2.xaxis.set_major_locator(MultipleLocator(20.0))
 axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
+println(" Completed")
+
 #%% Save the Plot 
-fig2.savefig("figures/figure3_BiophysicalProperties.png")
+print("[$(now())]: Saving the figure 2...")
+fig2.savefig("figures/figure2_BiophysicalProperties.png")
+println(" Completed")
