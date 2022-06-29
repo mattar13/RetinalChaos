@@ -353,7 +353,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[2] #we start here 
         ϵ = abs(I - In) / 2 #Begin at the halfway point between the two points
         iter = 0
-        println("$par continuation: $(rng[1]) -> $(rng[2])")
+        #println("$par continuation: $(rng[1]) -> $(rng[2])")
         while I < In && ϵ > min_step && iter <= max_iters
             iter += 1
             I += ϵ #Increment I slowly
@@ -361,13 +361,13 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-            println("$par = $I results in $(length(equilibria)) equilibria")
-            println("Epsilon at $ϵ")
-            println("Iterations at $(iter)")
+            #println("$par = $I results in $(length(equilibria)) equilibria")
+            #println("Epsilon at $ϵ")
+            #println("Iterations at $(iter)")
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
                 #This is a flaw of the find equilibria algorithim, move away from this point
-                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                #println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
                 if record_noisy_points
                     push!(points_list, (I,))
                     push!(equilibria_list, equilibria)
@@ -394,7 +394,7 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
         In = rng[1] #we start here 
         ϵ = abs(I - In) / 2 #Begin at the halfway point between the two points
         iter = 0
-        println("$par reverse continuation: $(rng[1]) <- $(rng[2])")
+        #println("$par reverse continuation: $(rng[1]) <- $(rng[2])")
         while I > In && ϵ > min_step && iter < max_iters
             iter += 1
             I -= ϵ #decrement I slowly
@@ -402,13 +402,13 @@ function eq_continuation(prob, rng::Tuple{T, T}, par::Symbol;
             pv[par|>p_find] = I #plug in the newly incremented equilibria
             prob_i = ODEProblem(prob.f, prob.u0, prob.tspan, pv)
             equilibria = find_equilibria(prob_i; kwargs...)
-            println("$par = $I results in $(length(equilibria)) equilibria")
-            println("Epsilon at $ϵ")
-            println("Iterations at $(iter)")
+            #println("$par = $I results in $(length(equilibria)) equilibria")
+            #println("Epsilon at $ϵ")
+            #println("Iterations at $(iter)")
             #we will add each point and new equilibria to the solution
             #If the number of saddle equilibria drops to 0, then return to the previous
             if length(equilibria) == 2
-                println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
+                #println("$par has found a noisy equilibria pair at $I (usually indicating near annhilation)")
                 if record_noisy_points
                     push!(points_list, (I,))
                     push!(equilibria_list, equilibria)
@@ -476,7 +476,7 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
         elseif length(equilibria) == n_equilibria
             n_equilibria = length(equilibria)
         end
-        println("$(n_equilibria) found at variable $codim $c1")
+        #println("$(n_equilibria) found at variable $codim $c1")
         #points = c1
         push!(points_list, (c1,))
         push!(equilibria_list, equilibria)
