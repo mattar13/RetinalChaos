@@ -1,6 +1,4 @@
-using Revise
 using RetinalChaos
-
 include("figure_setup.jl")
 
 println("Running the plotting script for figure 1")
@@ -179,7 +177,8 @@ axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
 println(" Complete")
 
 #%% Save the figure
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
 print("[$(now())]: Saving the figure 1...")
-fig1.savefig("figures/figure1_ModelVariables.png")
+fig1.savefig("$(loc)/figure1_ModelVariables.png")
 plt.close("all")
 println(" Completed")
