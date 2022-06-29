@@ -1,4 +1,3 @@
-using Revise
 using RetinalChaos
 import RetinalChaos: calculate_threshold, get
 import RetinalChaos: extract_equilibria, find_equilibria
@@ -20,7 +19,7 @@ pars_dict[:ρi] = 0.0
 pars_dict[:ρe] = 0.0
 p = pars_dict |> extract_dict
 #Step 3: determine the timespan
-tspan = (0.0, 120e3)
+tspan = (0.0, 300e3)
 #Step 4: set up the problem
 prob = SDEProblem(T_SDE, noise, u0, tspan, p)
 #Step 5: Solve the problem
@@ -38,15 +37,14 @@ pars_dict_eq[:ρi] = 0.0 #remove GABA influence
 pars_dict_eq[:ρe] = 0.0 #remove ACh influence
 pars_dict_eq[:g_TREK] = 0.0 #Remove the sAHP
 p_eq = pars_dict_eq |> extract_dict
-tspan = (0.0, 100.0)
-prob_eq = ODEProblem(T_ODE, u0, tspan, p_eq)
+prob_eq = ODEProblem(T_ODE, u0, (0.0, 100.0), p_eq)
 # Conduct the codim analysis
 codim1 = (:I_app)
 c1_lims = (-70.0, 30.0)
 c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
 println(" Completed")
 
-println("[$(now())]: Extracting data")
+print("[$(now())]: Extracting data... ")
 res = extract_equilibria(c1_map) #Pass back all of the equilibria
 points = res[1]
 saddle_p = res[2]
@@ -61,7 +59,7 @@ saddle_eq = saddle_p[last_saddle_idx]
 
 #%% Extract plotting data
 dt = 1.0
-t = (sol.t[1]:dt:sol.t[end])
+t = (sol.t[1]:dt:120e3)
 vt = sol(t, idxs=1)
 bt = sol(t, idxs=5)
 wt = sol(t, idxs=8)
@@ -80,14 +78,14 @@ height_inches = 10.0
 fig2 = plt.figure("Biophysical Noise", figsize=(width_inches, height_inches))
 
 gs = fig2.add_gridspec(3, 2,
-     width_ratios=(0.70, 0.30),
+     width_ratios=(0.55, 0.45),
      height_ratios=(0.30, 0.30, 0.40),
      right=0.99, left=0.1,
      top=0.93, bottom=0.08,
      wspace=0.2, hspace=0.10
 )
 col1_ylabel = -0.1
-col2_ylabel = -0.15
+col2_ylabel = -0.17
 
 #% =====================================================Make panel A===================================================== %%#
 axA = fig2.add_subplot(gs[1, 1])
@@ -105,12 +103,14 @@ xlim(c1_lims)
 ylim(-100.0, 0.0)
 axA2.plot(points, saddle_p, c=:blue, lw=3.0)
 axA2.plot(points, stable_p, c=:green, lw=3.0)
-axA2.plot(points, unstable_p, c=:red, lw=3.0)
-axA2.plot(points, stable_focus_p, c=:red, ls="--", lw=3.0)
-axA2.plot(points, unstable_focus_p, c=:green, ls="--", lw=3.0)
-ylabel("Applied Current (pA)")
-#Plot the points where the saddle node dissappears
+axA2.plot(points, stable_focus_p, c=:green, ls="--", lw=3.0)
 axA2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=15.0, c=:cyan)
+axA2.legend(["Saddle Equilibria", "Stable Equilibria", "Stable Limit Cycle", "Bifurcation", "TREK current"],
+     bbox_to_anchor=(0.04, 1.2), fontsize=14.0, markerscale=0.5, handletextpad = 1.0
+)
+ylabel("Equilibria Voltage (mV)")
+xlabel("Injected current")
+#Plot the points where the saddle node dissappears
 axA2.xaxis.set_visible(false) #Turn off the bottom axis
 axA2.yaxis.set_label_coords(col2_ylabel, 0.5)
 axA2.yaxis.set_major_locator(MultipleLocator(50.0))
@@ -130,17 +130,18 @@ axB.spines["bottom"].set_visible(false)
 axB2 = fig2.add_subplot(gs[2, 2])
 xlim(c1_lims)
 ylim(-100.0, 0.0)
-axB2.plot(ITREK, vt[1:end-1], linewidth=1.0, c=:black)
+axB2.plot(ITREK, vt[1:end-1], linewidth=1.0, c=b_color, marker="o", markersize=4.0, markerfacecolor=:black)
+axB2.legend(["TREK current"],
+     bbox_to_anchor=(0.04, 1.1), fontsize=14.0, handletextpad=1.0
+)
 
 axB2.plot(points, saddle_p, c=:blue, lw=3.0)
 axB2.plot(points, stable_p, c=:green, lw=3.0)
-axB2.plot(points, unstable_p, c=:red, lw=3.0)
-axB2.plot(points, stable_focus_p, c=:red, ls="--", lw=3.0)
-axB2.plot(points, unstable_focus_p, c=:green, ls="--", lw=3.0)
-#Plot the points where the saddle node dissappears
+axB2.plot(points, stable_focus_p, c=:green, ls="--", lw=3.0)
 axB2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=15.0, c=:cyan)
-ylabel("ITREK (pA)")
-
+#Plot the points where the saddle node dissappears
+ylabel("Voltage (mV)")
+xlabel("TREK Current (pA)")
 axB2.xaxis.set_visible(false) #Turn off the bottom axis
 axB2.yaxis.set_label_coords(col2_ylabel, 0.5)
 axB2.yaxis.set_major_locator(MultipleLocator(50.0))
@@ -166,10 +167,14 @@ hfit = fit(Histogram, wt, LinRange(c1_lims[1], c1_lims[2], 200))
 weights = hfit.weights / maximum(hfit.weights)
 edges = collect(hfit.edges[1])[1:length(hfit.weights)]
 axC2.plot(edges, weights, c=:black, lw=1.0)
-ylabel("Probability of Noisy Current")
-xlabel("Current (pA)")
 axC2.fill_between(edges[edges.<=saddle_bifurcation], weights[edges.<=saddle_bifurcation], color=:gray)
 axC2.fill_between(edges[edges.>saddle_bifurcation], weights[edges.>saddle_bifurcation], color=:green)
+axC2.legend(["Noise Histogram", "Non-spiking noise", "Spiking Noise"],
+     bbox_to_anchor=(0.04, 0.8), fontsize=14.0, handletextpad=1.0
+)
+
+ylabel("Probability of Noisy Current")
+xlabel("Noise Current (pA)")
 axC2.yaxis.set_label_coords(col2_ylabel, 0.5)
 axC2.yaxis.set_major_locator(MultipleLocator(0.5))
 axC2.yaxis.set_minor_locator(MultipleLocator(0.25))
@@ -178,6 +183,8 @@ axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
 println(" Completed")
 
 #%% Save the Plot 
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
 print("[$(now())]: Saving the figure 2...")
-fig2.savefig("figures/figure2_BiophysicalProperties.png")
+fig2.savefig("$(loc)/figure2_BiophysicalProperties.png")
+plt.close("All")
 println(" Completed")
