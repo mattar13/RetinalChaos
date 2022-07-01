@@ -1,3 +1,6 @@
+#Scientific reports figure sizes is 
+#89mm (single column) to 183mm (double column) 3.5 to 7.5 inches
+
 #Run this to set up the default parameters for plotting the figures
 using Plots
 using Plots.Measures
@@ -21,7 +24,7 @@ LogLocator = TICK.LogLocator #This is for formatting the log axis]
 import Base.getindex
 
 
-slice(i, j) = py.pycall(py.pybuiltin("slice"), py.PyObject, i, j)
+slice(i, j) = py.pycall(py.pybuiltin("slice"), i, j)
 #==============================These are the default parameters for plotting==============================#
 
 print("Default plotting parameters loading... ")
@@ -61,3 +64,4 @@ rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background tran
 
 #These are the savefig params
 rcParams["savefig.pad_inches"] = 0.0
+println(" Completed")
