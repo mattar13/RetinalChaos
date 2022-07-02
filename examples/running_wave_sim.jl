@@ -9,8 +9,8 @@ using Plots
 
 #%% Run the simulations
 #Step 1: Set up the network properties
-print("[$(Dates.now())]: Setting up parameters, conditions, and network settings... ")
-nx = ny = 50
+print("[$(now())]: Setting up parameters, conditions, and network settings... ")
+nx = ny = 125
 net = T_PDE
 #Step 2: Import the initial conditions
 conds_dict = read_JSON("params/conds.json")
@@ -27,12 +27,12 @@ tspan = (0.0, 120e3)
 println("Complete")
 
 #Step 6: Running the model
-print("[$(Dates.now())]: Warming up the model for 60s... ")
+print("[$(now())]: Warming up the model for 60s... ")
 prob = SDEProblem(net, noise, u0, (0.0, 60e3), p)
 @time warmup = solve(prob, SOSRI(),
     abstol=2e-2, reltol=2e-2, maxiters=1e7,
     save_everystep=false, progress=true, progress_steps=1
-)
+);
 println("Completed")
 
 print("[$(Dates.now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
@@ -42,7 +42,7 @@ prob = SDEProblem(net, noise, warmup[end], tspan, p)
     abstol=2e-2, reltol=0.2, maxiters=1e7,
     progress=true, progress_steps=1,
     save_idxs=[1:(nx*ny)...],
-)
+);
 println("Completed")
 
 # Step 7: Animate the solution
