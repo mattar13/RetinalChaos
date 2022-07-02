@@ -7,6 +7,7 @@ Row 4 will be current induced by ACh and GABA
 =#
 
 using Revise
+
 using RetinalChaos
 import RetinalChaos: Φ, ħ, ∇
 import RetinalChaos: T_ODE_NT_Release
@@ -65,10 +66,12 @@ println(" Completed")
 print("[$(now())]: Generating a neurotransmitter release map... ")
 De = pars_dict[:De]
 Di = pars_dict[:Di]
-nx = ny = 24
+nx = ny = 25
 ACH_map = zeros(nx, ny, length(t))
 GABA_map = zeros(nx, ny, length(t))
 
+center_x = round(Int64, nx / 2) #Because the index starts from 0 subtract 1
+center_y = round(Int64, ny / 2) #Because the indexing starts from 0
 # Calculate each frames diffusion
 dXe = (1.0, 1.0)
 dYe = (1.0, 1.0)
@@ -76,8 +79,8 @@ dXi = (1.0, 1.0)
 dYi = (0.1, 1.9)
 for i = 1:length(t)
      if i == 1
-          ACH_map[round(Int64, nx / 2), round(Int64, nx / 2), 1] = et[i] #Set intial map
-          GABA_map[round(Int64, nx / 2), round(Int64, nx / 2), 1] = it[i] #Set initial map
+          ACH_map[center_x+1, center_y+1, 1] = et[i] #Set intial map
+          GABA_map[center_x+1, center_y+1, 1] = it[i] #Set initial map
      else
           #println(i)
           e_i = ACH_map[:, :, i-1]
@@ -89,8 +92,8 @@ for i = 1:length(t)
           println(sum(e_i))
           ACH_map[:, :, i] += de + e_i
           GABA_map[:, :, i] += di + i_i
-          ACH_map[round(Int64, nx / 2), round(Int64, nx / 2), i] = et[i] #Set intial map
-          GABA_map[round(Int64, nx / 2), round(Int64, nx / 2), i] = it[i] #Set initial map
+          ACH_map[center_x+1, center_y+1, i] = et[i] #Set intial map
+          GABA_map[center_x+1, center_y+1, i] = it[i] #Set initial map
      end
 end
 
@@ -115,22 +118,21 @@ I_TOTAL = I_ACh + I_GABA
 avg_I_TOTAL = sum(I_TOTAL, dims=3)[:, :, 1] ./ size(I_TOTAL, 3)
 
 # Finally we need to extract some data from the X or y
-center_x = round(Int64, nx / 2)
-center_y = round(Int64, ny / 2)
-dX_N = round.(Int64, LinRange(1, center_x-1, 8))
-dX_T = round.(Int64, LinRange(center_x, nx, 8))
-dY_V = round.(Int64, LinRange(1, center_y-1, 8))
-dY_D = round.(Int64, LinRange(center_y, ny, 8))
+dY_D = 3:2:center_y
+dY_V = center_y+3:2:nx-1
+dX_N = 3:2:center_x
+dX_T = center_x+3:2:ny-1
 
 #%% Lets plot
+
 print("[$(now())]: Plotting... ")
-width_inches = 16.0
-height_inches = 12.0
+width_inches = 7.5*2
+height_inches = 7.5*2
 fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inches))
 
 gs = fig3.add_gridspec(4, 2,
      width_ratios=(0.77, 0.23),
-     height_ratios=(0.2, 0.26, 0.26, 0.26),
+     height_ratios=(0.1, 0.3, 0.3, 0.30),
      right=0.95, left=0.07,
      top=0.95, bottom=0.08,
      wspace=0.10, hspace=0.4
@@ -166,8 +168,6 @@ axA3.plot(t[frame_stops], it[frame_stops], c=:red, linewidth=0.0, marker="o")
 axAR = fig3.add_subplot(gs[1, 2])
 axAR.plot(v_rng, ACH_r, c=e_color, lw=3.0)
 axAR.plot(v_rng, GABA_r, c=:red, lw=3.0)
-
-
 
 #% ===============================================Make panel B=============================================== %%#
 gsBL = gs[2, 1].subgridspec(ncols=4, nrows=1)
@@ -214,41 +214,67 @@ xlabel("Avg. GABA Release")
 cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.25, 0.5])
 cbarI.ax.set_ylabel("Average It (GABA)")
 #% ===============================================Make panel D=============================================== %%#
-gsDL = gs[4, 1].subgridspec(ncols=2, nrows=2)
-axD1 = fig3.add_subplot(gsDL[1, 1])
+gsDL = gs[4, 1].subgridspec(ncols=3, nrows=3)
+axD1 = fig3.add_subplot(gsDL[1, 2])
 ylim(-10.0, 10.0)
 #Plot the Nasal direction
-for dxn in dX_N
-     axD1.plot(I_TOTAL[dxn, center_y, :])
+cmapYV = plt.get_cmap("Greens")
+for (i,dyv) in enumerate(dY_V)
+     axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=3.0)
 end
+ylabel("Current (pA)")
 axD1.xaxis.set_visible(false) #Turn off the bottom axis
 axD1.spines["bottom"].set_visible(false)
 
-axD2 = fig3.add_subplot(gsDL[2, 1])
+axD2 = fig3.add_subplot(gsDL[3, 2])
 ylim(-10.0, 10.0)
 #Plot the Nasal direction
-for dxt in dX_T
-     axD2.plot(I_TOTAL[dxt, center_y, :])
+cmapYD = plt.get_cmap("Blues")
+for (i, dyd) in enumerate(dY_D)
+     axD2.plot(I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=3.0)
 end
 
-axD3 = fig3.add_subplot(gsDL[1, 2])
-ylim(-10.0, 10.0)
-for dyd in dY_D
-     axD3.plot(I_TOTAL[center_x, dyd, :])
-end
-axD3.xaxis.set_visible(false) #Turn off the bottom axis
-axD3.spines["bottom"].set_visible(false)
 
-axD4 = fig3.add_subplot(gsDL[2, 2])
+axDC = fig3.add_subplot(gsDL[2, 2])
 ylim(-10.0, 10.0)
-for dyv in dY_V
-     axD4.plot(I_TOTAL[center_x, dyv, :])
+axDC.plot(I_TOTAL[center_y, center_x, :], c=:black)
+axDC.xaxis.set_visible(false) #Turn off the bottom axis
+axDC.spines["bottom"].set_visible(false)
+
+axD3 = fig3.add_subplot(gsDL[2, 1])
+ylim(-10.0, 10.0)
+cmapXN = plt.get_cmap("Reds")
+for (i, dxn) in enumerate(dX_N)
+     axD3.plot(I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=3.0)
+end
+#axD3.xaxis.set_visible(false) #Turn off the bottom axis
+#axD3.spines["bottom"].set_visible(false)
+
+axD4 = fig3.add_subplot(gsDL[2, 3])
+ylim(-10.0, 10.0)
+cmapXT = plt.get_cmap("Purples")
+for (i, dxt) in enumerate(dX_T)
+     axD4.plot(t, I_TOTAL[center_y, dxt, :], c=cmapXT(i / length(dX_T)), lw=3.0)
 end
 
 axDR = fig3.add_subplot(gs[4, 2])
 ctr_i = axDR.contourf(avg_I_TOTAL, cmap="RdYlGn", levels=-5.0:0.5:5.0, extend="both")
+axDR.plot([center_x], [center_y], linewidth=0.0, marker="o", ms=4.0)
+#Plot sample points
+valYD = abs.(center_y .- dY_D .- 1)
+valYV = abs.(center_y .- dY_V .- 1)
+axDR.scatter(fill(center_x, length(dY_D)), dY_D .- 1, s=4.0, c=valYD, cmap="Greens", lw=4.0, marker="s") #Dorsal
+axDR.scatter(fill(center_x, length(dY_V)), dY_V .- 1, s=4.0, c=valYV, cmap="Blues", lw=4.0, marker="s") #Dorsal
+valXN = abs.(center_x .- dX_N .- 1)
+valXT = abs.(center_x .- dX_T .- 1)
+axDR.scatter(dX_N .- 1, fill(center_y, length(dX_N)), s=4.0, c=valXN, cmap="Reds", lw=4.0, marker="s") #Dorsal
+axDR.scatter(dX_T .- 1, fill(center_y, length(dX_T)), s=4.0, c=valXT, cmap="Purples", lw=4.0, marker="s") #Dorsal
+axDR.set_facecolor("none")
+
 axDR.set_xticks([])
 axDR.yaxis.set_visible(false) #Turn off the bottom axis
+xlim(0, nx)
+ylim(0, ny)
 axDR.set_aspect("equal", "box")
 axDR.spines["bottom"].set_visible(false)
 axDR.spines["left"].set_visible(false)
@@ -256,21 +282,17 @@ xlabel("Induced Current")
 cbari = fig3.colorbar(ctr_i, ticks=[-10.0, 0.0, 10.0])
 cbari.ax.set_ylabel("Current (pA)")
 #Lets put text labeling nasal temporal 
-axDR.text(0.0, 10.0, "N")
-axDR.text(20.0, 10.0, "T")
-axDR.text(10.0, 0.0, "D")
-axDR.text(10.0, 20.0, "V")
+axDR.text(-1.0, center_y, "N", ha="center", va="center")
+axDR.text(nx, center_y, "T", ha="center", va="center")
+axDR.text(center_x, -1.0, "D", ha="center", va="center")
+axDR.text(center_x, ny, "V", ha="center", va="center")
 println(" Completed")
-
-
-
-
 
 
 #%% Save the plot
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
-print("[$(now())]: Saving the figure 2...")
-fig3.savefig("$(loc)/figure2_BiophysicalProperties.png")
+print("[$(now())]: Saving the figure 3...")
+fig3.savefig("$(loc)/figure3_Neurotransmitters.png")
 plt.close("All")
 println(" Completed")
 

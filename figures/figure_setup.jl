@@ -8,14 +8,16 @@ import PyCall as py
 import PyCall.@py_str
 import PyCall: @pyimport
 import PyPlot as plt
-import PyPlot: matplotlib, xlim, ylim, xlabel, ylabel
+import PyPlot: matplotlib, xlim, ylim, xlabel, ylabel, title
 #Pyplot plot will be plt.plot
 #normal plots will be plot
 
 Plots.pyplot() #Switch the backend to pyplot
 plt.pygui(true) #Make the GUI external to vscode
+@pyimport matplotlib.colors as COLOR
 @pyimport matplotlib.gridspec as gspec #add the gridspec interface
 @pyimport matplotlib.ticker as TICK #add the ticker interface
+
 MultipleLocator = TICK.MultipleLocator #This is for formatting normal axis
 LogLocator = TICK.LogLocator #This is for formatting the log axis]
 
@@ -65,3 +67,8 @@ rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background tran
 #These are the savefig params
 rcParams["savefig.pad_inches"] = 0.0
 println(" Completed")
+
+#%% If we want to run each script by itself use this
+#include("making_figure1.jl")
+#include("making_figure2.jl")
+#include("making_figure3.jl")
