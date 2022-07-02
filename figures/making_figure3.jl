@@ -126,8 +126,8 @@ dX_T = center_x+3:2:ny-1
 #%% Lets plot
 
 print("[$(now())]: Plotting... ")
-width_inches = 7.5*2
-height_inches = 7.5*2
+width_inches = 7.5 * 2
+height_inches = 7.5 * 2
 fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inches))
 
 gs = fig3.add_gridspec(4, 2,
@@ -174,17 +174,21 @@ gsBL = gs[2, 1].subgridspec(ncols=4, nrows=1)
 #We should pick 4 locations from 
 for (idx, fr) in enumerate(frame_stops)
      axBi = fig3.add_subplot(gsBL[idx])
-     ctr_B = axBi.contourf(ACH_map[:, :, fr], cmap="inferno", levels=0.0:0.05:0.5, extend="both")
+     ctr_B = axBi.contourf(ACH_map[:, :, fr], cmap="Greens", levels=0.0:0.05:0.5, extend="both")
      axBi.xaxis.set_visible(false) #Turn off the bottom axis
      axBi.yaxis.set_visible(false) #Turn off the bottom axis
      axBi.set_aspect("equal", "box")
+     axBi.spines["bottom"].set_visible(false)
+     axBi.spines["left"].set_visible(false)
 end
 
 axBR = fig3.add_subplot(gs[2, 2])
 axBR.set_aspect("equal", "box")
-ctr_E = axBR.contourf(avg_ACH, cmap="inferno", levels=0.0:0.05:0.5, extend="both")
+ctr_E = axBR.contourf(avg_ACH, cmap="Greens", levels=0.0:0.05:0.5, extend="both")
 axBR.set_xticks([])
 axBR.yaxis.set_visible(false) #Turn off the bottom axis
+axBR.spines["bottom"].set_visible(false)
+axBR.spines["left"].set_visible(false)
 xlabel("Avg. ACh Release")
 cbarE = fig3.colorbar(ctr_E, ticks=[0.0, 0.25, 0.5])
 cbarE.ax.set_ylabel("Average Et (ACh)")
@@ -195,31 +199,38 @@ gsCL = gs[3, 1].subgridspec(ncols=4, nrows=1)
 
 for (idx, fr) in enumerate(frame_stops)
      axCi = fig3.add_subplot(gsCL[idx])
-     ctr_I = axCi.contourf(GABA_map[:, :, fr], cmap="inferno", levels=0.0:0.05:0.5, extend="both")
+     ctr_I = axCi.contourf(GABA_map[:, :, fr], cmap="Reds", levels=0.0:0.05:0.5, extend="both")
      #axCi.xaxis.set_visible(false) #Turn off the bottom axis
      axCi.set_xticks([])
      axCi.yaxis.set_visible(false) #Turn off the bottom axis
      axCi.set_aspect("equal", "box")
      xlabel("t = $(round(t[fr], digits = 1))")
+     axCi.spines["bottom"].set_visible(false)
+     axCi.spines["left"].set_visible(false)
      #Can we put a text box below each frame 
 
 end
 
 axCR = fig3.add_subplot(gs[3, 2])
-ctr_I = axCR.contourf(avg_GABA, cmap="inferno", levels=0.0:0.05:0.5, extend="both")
+ctr_I = axCR.contourf(avg_GABA, cmap="Reds", levels=0.0:0.05:0.5, extend="both")
 axCR.set_xticks([])
 axCR.yaxis.set_visible(false) #Turn off the bottom axis
 axCR.set_aspect("equal", "box")
+axCR.spines["bottom"].set_visible(false)
+axCR.spines["left"].set_visible(false)
 xlabel("Avg. GABA Release")
 cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.25, 0.5])
 cbarI.ax.set_ylabel("Average It (GABA)")
 #% ===============================================Make panel D=============================================== %%#
 gsDL = gs[4, 1].subgridspec(ncols=3, nrows=3)
 axD1 = fig3.add_subplot(gsDL[1, 2])
+cmapYV = plt.get_cmap("Blues")
+cmapYD = plt.get_cmap("Greens")
+cmapXN = plt.get_cmap("Reds")
+cmapXT = plt.get_cmap("Purples")
 ylim(-10.0, 10.0)
 #Plot the Nasal direction
-cmapYV = plt.get_cmap("Greens")
-for (i,dyv) in enumerate(dY_V)
+for (i, dyv) in enumerate(dY_V)
      axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=3.0)
 end
 ylabel("Current (pA)")
@@ -229,22 +240,20 @@ axD1.spines["bottom"].set_visible(false)
 axD2 = fig3.add_subplot(gsDL[3, 2])
 ylim(-10.0, 10.0)
 #Plot the Nasal direction
-cmapYD = plt.get_cmap("Blues")
-for (i, dyd) in enumerate(dY_D)
+for (i, dyd) in enumerate(reverse(dY_D))
      axD2.plot(I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=3.0)
 end
 
 
 axDC = fig3.add_subplot(gsDL[2, 2])
 ylim(-10.0, 10.0)
-axDC.plot(I_TOTAL[center_y, center_x, :], c=:black)
+axDC.plot(I_TOTAL[center_y, center_x, :], c=:black, lw = 3.0)
 axDC.xaxis.set_visible(false) #Turn off the bottom axis
 axDC.spines["bottom"].set_visible(false)
 
 axD3 = fig3.add_subplot(gsDL[2, 1])
 ylim(-10.0, 10.0)
-cmapXN = plt.get_cmap("Reds")
-for (i, dxn) in enumerate(dX_N)
+for (i, dxn) in enumerate(reverse(dX_N))
      axD3.plot(I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=3.0)
 end
 #axD3.xaxis.set_visible(false) #Turn off the bottom axis
@@ -252,7 +261,6 @@ end
 
 axD4 = fig3.add_subplot(gsDL[2, 3])
 ylim(-10.0, 10.0)
-cmapXT = plt.get_cmap("Purples")
 for (i, dxt) in enumerate(dX_T)
      axD4.plot(t, I_TOTAL[center_y, dxt, :], c=cmapXT(i / length(dX_T)), lw=3.0)
 end
@@ -263,12 +271,12 @@ axDR.plot([center_x], [center_y], linewidth=0.0, marker="o", ms=4.0)
 #Plot sample points
 valYD = abs.(center_y .- dY_D .- 1)
 valYV = abs.(center_y .- dY_V .- 1)
-axDR.scatter(fill(center_x, length(dY_D)), dY_D .- 1, s=4.0, c=valYD, cmap="Greens", lw=4.0, marker="s") #Dorsal
-axDR.scatter(fill(center_x, length(dY_V)), dY_V .- 1, s=4.0, c=valYV, cmap="Blues", lw=4.0, marker="s") #Dorsal
+axDR.scatter(fill(center_x, length(dY_D)), dY_D .- 1, s=4.0, c=valYD, cmap=cmapYD, lw=4.0, marker="s") #Dorsal
+axDR.scatter(fill(center_x, length(dY_V)), dY_V .- 1, s=4.0, c=valYV, cmap=cmapYV, lw=4.0, marker="s") #Dorsal
 valXN = abs.(center_x .- dX_N .- 1)
 valXT = abs.(center_x .- dX_T .- 1)
-axDR.scatter(dX_N .- 1, fill(center_y, length(dX_N)), s=4.0, c=valXN, cmap="Reds", lw=4.0, marker="s") #Dorsal
-axDR.scatter(dX_T .- 1, fill(center_y, length(dX_T)), s=4.0, c=valXT, cmap="Purples", lw=4.0, marker="s") #Dorsal
+axDR.scatter(dX_N .- 1, fill(center_y, length(dX_N)), s=4.0, c=valXN, cmap=cmapXN, lw=4.0, marker="s") #Dorsal
+axDR.scatter(dX_T .- 1, fill(center_y, length(dX_T)), s=4.0, c=valXT, cmap=cmapXT, lw=4.0, marker="s") #Dorsal
 axDR.set_facecolor("none")
 
 axDR.set_xticks([])
@@ -278,9 +286,8 @@ ylim(0, ny)
 axDR.set_aspect("equal", "box")
 axDR.spines["bottom"].set_visible(false)
 axDR.spines["left"].set_visible(false)
-xlabel("Induced Current")
 cbari = fig3.colorbar(ctr_i, ticks=[-10.0, 0.0, 10.0])
-cbari.ax.set_ylabel("Current (pA)")
+cbari.ax.set_ylabel("Induced Current (pA)")
 #Lets put text labeling nasal temporal 
 axDR.text(-1.0, center_y, "N", ha="center", va="center")
 axDR.text(nx, center_y, "T", ha="center", va="center")
@@ -308,16 +315,16 @@ anim = @animate for i = 1:100:length(t)
           ratio=:equal, grid=false,
           ylabel="t = $(t[i])",
           xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-          c=:curl, clims=(0.0, 1.0), levels=0.0:0.1:1.0
+          c=:curl, clims=(0.0, 1.0), levels=0.0:0.05:3.0
      )
      contour_i = contourf(i_frame,
           ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-          c=:curl, clims=(0.0, 1.0), levels=0.0:0.1:1.0
+          c=:jet, clims=(0.0, 1.0), levels=0.0:0.05:3.0
      )
 
      contour_I = contourf(I_frame,
           ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-          c=:RdBu, clims=(-10.0, 10.0), levels=-10.0:0.5:10.0
+          c=:RdYlGn, clims=(-5.0, 5.0), levels=-10.0:0.5:10.0
      )
      plot(contour_e, contour_i, contour_I, layout=3)
 end
