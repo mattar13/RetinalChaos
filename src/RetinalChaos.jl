@@ -40,7 +40,8 @@ export noise
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
 export read_JSON, extract_dict, p_find, u_find
-
+export save, load
+export @save
 using Distributions, StatsBase
 export Binomial, Histogram, fit
 
