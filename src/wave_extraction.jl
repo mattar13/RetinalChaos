@@ -353,13 +353,22 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T, N, S};
         burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration)
     elseif N == 4 #This means the solution size is (x, y, Variable, Time)
         t = sol.t[1]:dt:sol.t[end]
+        print("[$(now())]: Extracting data... ")
         vm_array = sol(t) |> Array
+        println("Complete")
+        print("[$(now())]: Extracting the thresholds... ")
         thresholds = calculate_threshold(vm_array, dims=2)
+        
+        print("[$(now())]: Extracting the spikes... ")
         spike_array = Matrix{Bool}(vm_array .> thresholds)
         spikes = get_timestamps(spike_array, t)
         spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+        println("Complete")
+
+        print("[$(now())]: Extracting the bursts... ")
         bursts, spb = max_interval_algorithim(spikes)
         burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval = max_burst_interval)
+        println("Complete")
     end
     timestamps = Dict(
         "Spikes" => spikes,
@@ -384,12 +393,14 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::Str
         kwargs...
     )
     timestamps, data = timeseries_analysis(sol; kwargs...)
+    print("[$(now())]: Saving data... ")
     #Uncomment to use BSON file format
     #bson("$(save_file)\\timestamps.bson", timestamps)
     #bson("$(save_file)\\data.bson", data)
     #Uncomment to use JLD2 to save the packages
     save("$(save_file)/$(tstamps_name).jld2", timestamps)
     save("$(save_file)/$(data_name).jld2", data)
+    println("Complete")
     return timestamps, data
 end
 
