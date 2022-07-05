@@ -339,26 +339,39 @@ function max_interval_algorithim(timestamp_arr::Vector{Matrix{T}}; kwargs...) wh
 end
 
 
-function timeseries_analysis(sol::DiffEqBase.AbstractODESolution; 
-        Z::Int64 = 4, dt = 10.0, max_spike_duration::Float64 = 50.0, max_burst_duration::Float64 = 10e5, 
-        verbose = false
-    )
-    thresholds = calculate_threshold(sol; Z = Z) #This takes really long
-    spikes = get_timestamps(sol; threshold = thresholds, dt = dt, verbose = verbose)
-    spike_durs, isi = extract_interval(spikes, max_duration = max_spike_duration)
-    bursts, spb = max_interval_algorithim(spikes)
-    burst_durs, ibi = extract_interval(bursts, max_duration = max_burst_duration)
-
+function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T, N, S};
+    Z::Int64=4, dt=1.0, 
+    max_spike_duration::Float64=50.0, max_spike_interval = 100,
+    max_burst_duration::Float64=10e5, max_burst_interval = 10e5,
+    verbose=false
+) where {T, N, S}
+    if N == 0
+        thresholds = calculate_threshold(sol; Z=Z) #This takes really long
+        spikes = get_timestamps(sol; threshold=thresholds, dt=dt, verbose=verbose)
+        spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration)
+        bursts, spb = max_interval_algorithim(spikes)
+        burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration)
+    elseif N == 4 #This means the solution size is (x, y, Variable, Time)
+        t = sol.t[1]:dt:sol.t[end]
+        vm_array = sol(t) |> Array
+        thresholds = calculate_threshold(vm_array, dims=2)
+        spike_array = Matrix{Bool}(vm_array .> thresholds)
+        spikes = get_timestamps(spike_array, t)
+        spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+        bursts, spb = max_interval_algorithim(spikes)
+        burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval = max_burst_interval)
+    end
     timestamps = Dict(
         "Spikes" => spikes,
         "Bursts" => bursts
     )
 
     data = Dict(
+        "DataArray" => vm_array,
         "Thresholds" => thresholds,
-        "SpikeDurs" => spike_durs, 
-        "ISIs" => isi, 
-        "BurstDurs" => burst_durs, 
+        "SpikeDurs" => spike_durs,
+        "ISIs" => isi,
+        "BurstDurs" => burst_durs,
         "IBIs" => ibi,
         "SpikesPerBurst" => spb
     )
@@ -366,47 +379,17 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution;
     return timestamps, data
 end
 
-function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::String,;
-        plot_histograms = true, kwargs...   
+function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::String; 
+        tstamps_name =  "timestamps", data_name = "data", 
+        kwargs...
     )
     timestamps, data = timeseries_analysis(sol; kwargs...)
-    bson("$(save_file)\\timestamps.bson", timestamps)
-    bson("$(save_file)\\data.bson", data)
-
-    println(data["SpikeDurs"] |> size)
-    if plot_histograms && !isempty(data["SpikeDurs"])
-        sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 1000))
-        sdur_weights = sdur_hfit.weights/maximum(sdur_hfit.weights)
-        sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
-        p1 = plot(sdur_edges, sdur_weights, xlabel = "Spike Duration (ms)")
-
-        isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 100.0, 1000))
-        isi_weights = isi_hfit.weights/maximum(isi_hfit.weights)
-        isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
-        p2 = plot(isi_edges, isi_weights,  xlabel = "Spike Interval (s)", xformatter = x -> x/1000)
-
-        bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 1000))
-        bdur_weights = bdur_hfit.weights/maximum(bdur_hfit.weights)
-        bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
-        p3 = plot(bdur_edges, bdur_weights, xlabel = "Burst Duration (s)",xformatter = x -> x/1000)
-
-        ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 60e3, 1000))
-        ibi_weights = ibi_hfit.weights/maximum(ibi_hfit.weights)
-        ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
-        p4 = plot(ibi_edges, ibi_weights, xlabel = "Interburst Interval (s)", xformatter = x -> x/1000)
-        
-        p5 = histogram(data["Thresholds"], yaxis = :log, xlabel = "Voltage threshold")
-        p6 = histogram(data["SpikesPerBurst"], yaxis = :log, xlabel = "Spiked per Burst")
-                
-        hist_plot = plot(
-            p1, p2, p3, p4, p5, p6, 
-            layout = grid(3,2), ylabel = "Counts", 
-            legend = false
-            )
-        savefig(hist_plot, "$(save_file)\\histogram_plot.png")
-    end
-
-    #BotNotify("{Wave} Finished running timeseries analysis")
+    #Uncomment to use BSON file format
+    #bson("$(save_file)\\timestamps.bson", timestamps)
+    #bson("$(save_file)\\data.bson", data)
+    #Uncomment to use JLD2 to save the packages
+    save("$(save_file)/$(tstamps_name).jld2", timestamps)
+    save("$(save_file)/$(data_name).jld2", data)
     return timestamps, data
 end
 
