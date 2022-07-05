@@ -61,12 +61,70 @@ rcParams["legend.borderaxespad"] = 0.1
 rcParams["legend.loc"] = "upper left"
 rcParams["errorbar.capsize"] = 1.0 #Set the length of the errorbar cap
 #set the background color for 
-rcParams["figure.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the figure background transparent white
-rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background transparent white
+#rcParams["figure.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the figure background transparent white
+#rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background transparent white
 
 #These are the savefig params
 rcParams["savefig.pad_inches"] = 0.0
 println(" Completed")
+
+function plot_histograms(data, loc::String; name = "histogram_plot")
+
+    if !isempty(data["SpikeDurs"])
+        sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 100))
+        sdur_weights = sdur_hfit.weights/maximum(sdur_hfit.weights)
+        sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
+    else
+        sdur_edges = sdur_weights = [0]
+    end
+    p1 = plot(sdur_edges, sdur_weights, xlabel = "Spike Duration (ms)")
+
+    if !isempty(data["ISIs"])
+        isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 100.0, 100))
+        isi_weights = isi_hfit.weights/maximum(isi_hfit.weights)
+        isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
+    else
+        isi_edges = isi_weights = [0]
+    end
+    p2 = plot(isi_edges, isi_weights,  xlabel = "Spike Interval (s)", xformatter = x -> x/1000)
+
+    if !isempty(data["BurstDurs"])
+        bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 100))
+        bdur_weights = bdur_hfit.weights/maximum(bdur_hfit.weights)
+        bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
+    else
+        bdur_edges = bdur_weights = [0]
+    end
+    p3 = plot(bdur_edges, bdur_weights, xlabel = "Burst Duration (s)",xformatter = x -> x/1000)
+
+    if !isempty(data["IBIs"])
+        ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 120e3, 100))
+        ibi_weights = ibi_hfit.weights/maximum(ibi_hfit.weights)
+        ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
+    else
+        ibi_edges = ibi_weights = [0]
+    end
+    p4 = plot(ibi_edges, ibi_weights, xlabel = "Interburst Interval (s)", xformatter = x -> x/1000)
+    
+    if !isempty(data["Thresholds"])
+        p5 = histogram(data["Thresholds"], yaxis=:log, xlabel="Voltage threshold")
+    else
+        p5 = plot(xlabel="Voltage threshold")
+    end
+    
+    if !isempty(data["SpikesPerBurst"])
+        p6 = histogram(data["SpikesPerBurst"], yaxis=:log, xlabel="Spikes per Burst")
+    else
+        p6 = plot(xlabel = "Spike Per Burst")
+    end
+    hist_plot = plot(
+        p1, p2, p3, p4, p5, p6,
+        layout=grid(3, 2), ylabel="Counts",
+        legend=false
+    )
+    savefig(hist_plot, "$(loc)/$(name).png")
+    return hist_plot
+end
 
 #%% If we want to run each script by itself use this
 #include("making_figure1.jl")
