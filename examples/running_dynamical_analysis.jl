@@ -17,9 +17,9 @@ tspan = (0.0, 2e3) #Timespan
 prob = ODEProblem(T_ODE, u0, tspan, p) #ODE problem
 
 #Step 2: Determine the number of trajectories and the parameter to adjust
-n_trajectories = 10
-par_idx = p_find(:g_K; list_p=t_pars); #Point to the index of the parameter
-test_rng = LinRange(3.0, 3.5, n_trajectories); #Determine the range of the parameters (specified above)
+n_trajectories = 40
+par_idx = p_find(:g_Ca; list_p=t_pars); #Point to the index of the parameter
+test_rng = LinRange(1.0, 10.0, n_trajectories); #Determine the range of the parameters (specified above)
 
 #Step 3: Set up the ensemble problem
 prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng) #Set up the problem function to indicate that the voltage will be altered
