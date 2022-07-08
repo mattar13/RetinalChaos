@@ -33,7 +33,7 @@ for path in paths
      print("[$(now())]: Extracting the spikes... ")
      spike_array = Matrix{Bool}(vm_array .> thresholds)
      spikes = RetinalChaos.get_timestamps(spike_array, t)
-     spike_durs, isi = RetinalChaos.extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+     spike_durs, isi = RetinalChaos.extract_interval(spikes, min_duration = 1.0, max_duration=max_spike_duration, max_interval=max_spike_interval)
      println("Complete")
 
      print("[$(now())]: Extracting the bursts... ")
@@ -137,3 +137,6 @@ iso_bdur_edges = collect(iso_bdur_hfit.edges[1])[1:length(iso_bdur_weights)]
 iso_ibi_hfit = fit(Histogram, isolated_data["IBIs"], LinRange(0.0, 120000, 100))
 iso_ibi_weights = iso_ibi_hfit.weights / maximum(iso_ibi_hfit.weights)
 iso_ibi_edges = collect(iso_ibi_hfit.edges[1])[1:length(iso_ibi_weights)]
+
+
+#%% Open gradient data
