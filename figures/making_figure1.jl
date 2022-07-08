@@ -1,4 +1,5 @@
 using RetinalChaos
+import RetinalChaos: get_timestamps
 include("figure_setup.jl")
 
 println("Running the plotting script for figure 1")
@@ -6,6 +7,7 @@ println("Running the plotting script for figure 1")
 #Step 1: Import the initial conditions
 print("[$(now())]: Setting up modelling data... ")
 conds_dict = read_JSON("params\\conds.json")
+conds_dict[:v] = -65.0
 u0 = conds_dict |> extract_dict
 #Step 2: Import the parameters
 pars_dict = read_JSON("params\\params.json")
@@ -20,7 +22,7 @@ prob = ODEProblem(T_ODE, u0, tspan, p)
 #Step 5: Solve the problem
 sol = solve(prob, progress=true, progress_steps=1);
 println(" Completed")
-
+plot(sol)
 #%% Run the analysis 
 print("[$(now())]: Running analysis... ")
 dt = 0.01 #Set the time differential
@@ -56,7 +58,7 @@ vrng = -80.0:1.0:0.0
 crng = f.(vrng)
 
 C_dt = 10.0
-C_trng = (burst_tstamps[1, 2]-10000):C_dt:(burst_tstamps[2, 2]+10000)
+C_trng = (burst_tstamps[2, 2]-1000):C_dt:(burst_tstamps[3, 2]+10000)
 
 tIBI = (C_trng .- C_trng[1]) ./ 1000
 vIBI = sol(C_trng, idxs=1)
@@ -72,7 +74,7 @@ width_inches = 16.0
 height_inches = 10.0
 fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
 fig1.text(0.0, 0.0, "A", ha="center", va="center", fontsize=12.0)
-#%%
+
 #% Make a plot in PyPlot
 gs = fig1.add_gridspec(3, 2,
      width_ratios=(0.80, 0.20),

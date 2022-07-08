@@ -89,9 +89,13 @@ gsER = gs[5, 1].subgridspec(ncols=1, nrows=3)
 
 axER1 = fig4.add_subplot(gsER[1, 1])
 axER1.plot(bdur_edges ./ 1000, bdur_weights, c=:green)
+axER1.xaxis.set_visible(false) #Turn off the bottom axis
+axER1.spines["bottom"].set_visible(false)
 
 axER2 = fig4.add_subplot(gsER[2, 1])
 axER2.plot(iso_bdur_edges ./ 1000, iso_bdur_weights, c=:blue)
+axER2.xaxis.set_visible(false) #Turn off the bottom axis
+axER2.spines["bottom"].set_visible(false)
 
 axER3 = fig4.add_subplot(gsER[3, 1])
 axER3.plot(wave_bdur_edges ./ 1000, wave_bdur_weights, c=:red)
@@ -100,9 +104,19 @@ gsEL = gs[5, 2].subgridspec(ncols=1, nrows=3)
 
 axEL1 = fig4.add_subplot(gsEL[1, 1])
 axEL1.plot(ibi_edges, ibi_weights, c=:green)
+axEL1.xaxis.set_visible(false) #Turn off the bottom axis
+axEL1.spines["bottom"].set_visible(false)
 
 axEL2 = fig4.add_subplot(gsEL[2, 1])
 axEL2.plot(iso_ibi_edges, iso_ibi_weights, c=:blue)
+axEL2.xaxis.set_visible(false) #Turn off the bottom axis
+axEL2.spines["bottom"].set_visible(false)
 
 axEL3 = fig4.add_subplot(gsEL[3, 1])
 axEL3.plot(wave_ibi_edges, wave_ibi_weights, c=:red)
+
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
+print("[$(now())]: Saving the figure 4...")
+fig4.savefig("$(loc)/figure4_ModelComparison.png")
+plt.close("All")
+println(" Completed")
