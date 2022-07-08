@@ -5,7 +5,7 @@
 
 Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation
 """
-function calculate_threshold(vm_arr::AbstractArray; Z::Int64 = 4, dims = -1)
+function calculate_threshold(vm_arr::AbstractArray; Z = 4, dims = -1)
     if dims == -1
         return [sum(vm_arr)/length(vm_arr) + Z*std(vm_arr)]
     else
@@ -18,7 +18,7 @@ end
 
 #This form of the function only calculates the analysis on a single variable
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64};
-        idxs::Union{Int64, AbstractArray{Int64}} = 1, Z::Int64=4, dt::T=100.0
+        idxs::Union{Int64, AbstractArray{Int64}} = 1, Z=4.0, dt::T=100.0
     ) where {T, N, S}
     
     #println(N) #N Represents how many dimensions the data is 
@@ -338,44 +338,40 @@ function max_interval_algorithim(timestamp_arr::Vector{Matrix{T}}; kwargs...) wh
     return bursts, spd
 end
 
-
-function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T, N, S};
-    Z::Int64=4, dt=1.0, 
+function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N},
+    Z::Int64=4, 
     max_spike_duration::Float64=50.0, max_spike_interval = 100,
     max_burst_duration::Float64=10e5, max_burst_interval = 10e5,
     verbose=false
-) where {T, N, S}
-    if N == 0
-        thresholds = calculate_threshold(sol; Z=Z) #This takes really long
-        spikes = get_timestamps(sol; threshold=thresholds, dt=dt, verbose=verbose)
-        spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration)
-        bursts, spb = max_interval_algorithim(spikes)
-        burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration)
-    elseif N == 4 #This means the solution size is (x, y, Variable, Time)
-        t = sol.t[1]:dt:sol.t[end]
-        print("[$(now())]: Extracting data... ")
-        vm_array = sol(t) |> Array
-        println("Complete")
-        print("[$(now())]: Extracting the thresholds... ")
-        thresholds = calculate_threshold(vm_array, dims=2)
-        
-        print("[$(now())]: Extracting the spikes... ")
+) where {T, N}
+    println(N)
+    print("[$(now())]: Extracting the thresholds... ")
+    thresholds = calculate_threshold(vm_array, dims=2)
+    
+    print("[$(now())]: Extracting the spikes... ")
+    if N == 1
+        spike_array = Vector{Bool}(vm_array .> thresholds)
+    elseif N == 2
         spike_array = Matrix{Bool}(vm_array .> thresholds)
-        spikes = get_timestamps(spike_array, t)
-        spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
-        println("Complete")
-
-        print("[$(now())]: Extracting the bursts... ")
-        bursts, spb = max_interval_algorithim(spikes)
-        burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval = max_burst_interval)
-        println("Complete")
+    else
+        throw("Wrong array type")
     end
+
+    spikes = get_timestamps(spike_array, t)
+    spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+    println("Complete")
+
+    print("[$(now())]: Extracting the bursts... ")
+    bursts, spb = max_interval_algorithim(spikes)
+    burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval = max_burst_interval)
+    println("Complete")
     timestamps = Dict(
         "Spikes" => spikes,
         "Bursts" => bursts
     )
 
     data = Dict(
+        "Time" => t,
         "DataArray" => vm_array,
         "Thresholds" => thresholds,
         "SpikeDurs" => spike_durs,
@@ -386,6 +382,14 @@ function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T, N, S};
     )
 
     return timestamps, data
+end
+
+function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T,N,S};
+    dt=1.0, kwargs...
+) where{T, N, S}
+    t = sol.t[1]:dt:sol.t[end]
+    vm_array = sol(t) |> Array
+    return timeseries_analysis(t, vm_array; kwargs...)
 end
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution, save_file::String; 
