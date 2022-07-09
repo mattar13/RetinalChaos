@@ -28,17 +28,20 @@ for path in paths
      )
      t = data_i.t * 1000 #Turn seconds into milliseconds
      vm_array = data_i.data_array[:, :, 1]
-     thresholds = RetinalChaos.calculate_threshold(vm_array, Z = 2.0, dims=2)
+     thresholds = RetinalChaos.calculate_threshold(vm_array, Z=2.0, dims=2)
      println("Complete")
      print("[$(now())]: Extracting the spikes... ")
      spike_array = Matrix{Bool}(vm_array .> thresholds)
      spikes = RetinalChaos.get_timestamps(spike_array, t)
-     spike_durs, isi = RetinalChaos.extract_interval(spikes, min_duration = 1.0, max_duration=max_spike_duration, max_interval=max_spike_interval)
+     spike_durs, isi = RetinalChaos.extract_interval(spikes,
+          min_duration=1.0, min_interval=1.0,
+          max_duration=max_spike_duration, max_interval=max_spike_interval
+     )
      println("Complete")
 
      print("[$(now())]: Extracting the bursts... ")
      bursts = RetinalChaos.max_interval_algorithim(spikes)
-     burst_durs, ibi = RetinalChaos.extract_interval(bursts[1], max_duration=max_burst_duration, max_interval=max_burst_interval, min_duration = 1000.0)
+     burst_durs, ibi = RetinalChaos.extract_interval(bursts[1], max_duration=max_burst_duration, max_interval=max_burst_interval, min_duration=1000.0)
      println("Complete")
 
      push!(
@@ -58,19 +61,20 @@ for path in paths
      println("Success")
 end
 
-sdur_hfit = fit(Histogram, phys_spike_durs, LinRange(0.0, 50.0, 100))
+#%% Extract all of the histograms
+sdur_hfit = fit(Histogram, phys_spike_durs, LinRange(0.0, 50.0, 50))
 sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
 sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
 
-isi_hfit = fit(Histogram, phys_isis, LinRange(0.0, 100.0, 100))
+isi_hfit = fit(Histogram, phys_isis, LinRange(0.0, 50.0, 50))
 isi_weights = isi_hfit.weights / maximum(isi_hfit.weights)
 isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
 
-bdur_hfit = fit(Histogram, phys_burst_durs, LinRange(0.0, 2000.0, 100))
+bdur_hfit = fit(Histogram, phys_burst_durs, LinRange(0.0, 2000.0, 50))
 bdur_weights = bdur_hfit.weights / maximum(bdur_hfit.weights)
 bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
 
-ibi_hfit = fit(Histogram, phys_ibis, LinRange(0.0, 120e3, 100))
+ibi_hfit = fit(Histogram, phys_ibis, LinRange(0.0, 120e3, 50))
 ibi_weights = ibi_hfit.weights / maximum(ibi_hfit.weights)
 ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
 
@@ -101,20 +105,21 @@ data_root = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/fi
 wave_path = "$(data_root)/wave_model"
 wave_data = load("$(wave_path)/data.jld2")
 
+
 # Extract the histograms
-wave_sdur_hfit = fit(Histogram, wave_data["SpikeDurs"], LinRange(0.0, 50.0, 100))
+wave_sdur_hfit = fit(Histogram, wave_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
 wave_sdur_edges = collect(wave_sdur_hfit.edges[1])[1:length(wave_sdur_weights)]
 
-wave_isi_hfit = fit(Histogram, wave_data["ISIs"], LinRange(0.0, 100.0, 100))
+wave_isi_hfit = fit(Histogram, wave_data["ISIs"], LinRange(0.0, 50.0, 50))
 wave_isi_weights = wave_isi_hfit.weights / maximum(wave_isi_hfit.weights)
 wave_isi_edges = collect(wave_isi_hfit.edges[1])[1:length(wave_isi_weights)]
 
-wave_bdur_hfit = fit(Histogram, wave_data["BurstDurs"], LinRange(0.0, 2000.0, 100))
+wave_bdur_hfit = fit(Histogram, wave_data["BurstDurs"], LinRange(0.0, 2000.0, 50))
 wave_bdur_weights = wave_bdur_hfit.weights / maximum(wave_bdur_hfit.weights)
 wave_bdur_edges = collect(wave_bdur_hfit.edges[1])[1:length(wave_bdur_weights)]
 
-wave_ibi_hfit = fit(Histogram, wave_data["IBIs"], LinRange(0.0, 120e3, 100))
+wave_ibi_hfit = fit(Histogram, wave_data["IBIs"], LinRange(0.0, 120e3, 50))
 wave_ibi_weights = wave_ibi_hfit.weights / maximum(wave_ibi_hfit.weights)
 wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
 
@@ -122,21 +127,42 @@ wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
 isolated_path = "$(data_root)/isolated_model"
 isolated_data = load("$(isolated_path)/data.jld2")
 
-iso_sdur_hfit = fit(Histogram, isolated_data["SpikeDurs"], LinRange(0.0, 50.0, 100))
+
+iso_sdur_hfit = fit(Histogram, isolated_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 iso_sdur_weights = iso_sdur_hfit.weights / maximum(iso_sdur_hfit.weights)
 iso_sdur_edges = collect(iso_sdur_hfit.edges[1])[1:length(iso_sdur_weights)]
 
-iso_isi_hfit = fit(Histogram, isolated_data["ISIs"], LinRange(0.0, 100.0, 100))
+iso_isi_hfit = fit(Histogram, isolated_data["ISIs"], LinRange(0.0, 50.0, 50))
 iso_isi_weights = iso_isi_hfit.weights / maximum(iso_isi_hfit.weights)
 iso_isi_edges = collect(iso_isi_hfit.edges[1])[1:length(iso_isi_weights)]
 
-iso_bdur_hfit = fit(Histogram, isolated_data["BurstDurs"], LinRange(0.0, 2000.0, 100))
+iso_bdur_hfit = fit(Histogram, isolated_data["BurstDurs"], LinRange(0.0, 2000.0, 50))
 iso_bdur_weights = iso_bdur_hfit.weights / maximum(iso_bdur_hfit.weights)
 iso_bdur_edges = collect(iso_bdur_hfit.edges[1])[1:length(iso_bdur_weights)]
 
-iso_ibi_hfit = fit(Histogram, isolated_data["IBIs"], LinRange(0.0, 120000, 100))
+iso_ibi_hfit = fit(Histogram, isolated_data["IBIs"], LinRange(0.0, 120000, 50))
 iso_ibi_weights = iso_ibi_hfit.weights / maximum(iso_ibi_hfit.weights)
 iso_ibi_edges = collect(iso_ibi_hfit.edges[1])[1:length(iso_ibi_weights)]
 
+#eXTRACT THE NO GABA
+noGABA_path = "$(data_root)/no_GABA_model"
+noGABA_data = load("$(noGABA_path)/data.jld2")
+
+
+noGABA_sdur_hfit = fit(Histogram, noGABA_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
+noGABA_sdur_weights = noGABA_sdur_hfit.weights / maximum(noGABA_sdur_hfit.weights)
+noGABA_sdur_edges = collect(noGABA_sdur_hfit.edges[1])[1:length(noGABA_sdur_weights)]
+
+noGABA_isi_hfit = fit(Histogram, noGABA_data["ISIs"], LinRange(0.0, 50.0, 50))
+noGABA_isi_weights = noGABA_isi_hfit.weights / maximum(noGABA_isi_hfit.weights)
+noGABA_isi_edges = collect(noGABA_isi_hfit.edges[1])[1:length(noGABA_isi_weights)]
+
+noGABA_bdur_hfit = fit(Histogram, noGABA_data["BurstDurs"], LinRange(0.0, 2000.0, 50))
+noGABA_bdur_weights = noGABA_bdur_hfit.weights / maximum(noGABA_bdur_hfit.weights)
+noGABA_bdur_edges = collect(noGABA_bdur_hfit.edges[1])[1:length(noGABA_bdur_weights)]
+
+noGABA_ibi_hfit = fit(Histogram, noGABA_data["IBIs"], LinRange(0.0, 120000, 50))
+noGABA_ibi_weights = noGABA_ibi_hfit.weights / maximum(noGABA_ibi_hfit.weights)
+noGABA_ibi_edges = collect(noGABA_ibi_hfit.edges[1])[1:length(noGABA_ibi_weights)]
 
 #%% Open gradient data

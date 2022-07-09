@@ -27,7 +27,7 @@ sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true
 println(" Completed")
 
 
-#%% Run a dynamical analysis to get the equilibrium
+#% Run a dynamical analysis to get the equilibrium
 print("[$(now())]: Setting up equilibrium data... ")
 conds_dict = read_JSON("params\\conds.json")
 u0 = conds_dict |> extract_dict
@@ -43,7 +43,7 @@ codim1 = (:I_app)
 c1_lims = (-70.0, 30.0)
 c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
 println(" Completed")
-
+#% 
 print("[$(now())]: Extracting data... ")
 res = extract_equilibria(c1_map) #Pass back all of the equilibria
 points = res[1]
@@ -57,7 +57,7 @@ last_saddle_idx = findlast(isnan.(saddle_p) .== 0)
 saddle_bifurcation = points[last_saddle_idx]
 saddle_eq = saddle_p[last_saddle_idx]
 
-#%% Extract plotting data
+#% Extract plotting data
 dt = 1.0
 t = (sol.t[1]:dt:120e3)
 vt = sol(t, idxs=1)
@@ -106,7 +106,7 @@ axA2.plot(points, stable_p, c=:green, lw=3.0)
 axA2.plot(points, stable_focus_p, c=:green, ls="--", lw=3.0)
 axA2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=15.0, c=:cyan)
 axA2.legend(["Saddle Equilibria", "Stable Equilibria", "Stable Limit Cycle", "Bifurcation", "TREK current"],
-     bbox_to_anchor=(0.04, 1.2), fontsize=14.0, markerscale=0.5, handletextpad = 1.0
+     bbox_to_anchor=(0.04, 1.2), fontsize=14.0, markerscale=0.5, handletextpad=1.0
 )
 ylabel("Equilibria Voltage (mV)")
 xlabel("Injected current")
@@ -118,13 +118,13 @@ axA2.yaxis.set_minor_locator(MultipleLocator(25.0))
 axA2.spines["bottom"].set_visible(false)
 #% ===============================================Make panel B=============================================== %%#
 axB = fig2.add_subplot(gs[2, 1])
-ylim(0.0, 1.0)
-axB.plot(t, bt, c=b_color, lw=3.0)
-ylabel("TREK channel activation")
+ylim(-60, 0.0)
+axB.plot(t[1:end-1], ITREK, c=b_color, lw=3.0)
+ylabel("TREK current (pA)")
 axB.xaxis.set_visible(false) #Turn off the bottom axis
 axB.yaxis.set_label_coords(col1_ylabel, 0.5)
-axB.yaxis.set_major_locator(MultipleLocator(0.5))
-axB.yaxis.set_minor_locator(MultipleLocator(0.25))
+axB.yaxis.set_major_locator(MultipleLocator(30.0))
+axB.yaxis.set_minor_locator(MultipleLocator(15.0))
 axB.spines["bottom"].set_visible(false)
 
 axB2 = fig2.add_subplot(gs[2, 2])
@@ -181,6 +181,10 @@ axC2.yaxis.set_minor_locator(MultipleLocator(0.25))
 axC2.xaxis.set_major_locator(MultipleLocator(20.0))
 axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
 println(" Completed")
+
+axC2.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axC2.annotate("B", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axC2.annotate("C", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
 
 #%% Save the Plot 
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"

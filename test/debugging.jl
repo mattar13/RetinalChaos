@@ -4,59 +4,36 @@ import RetinalChaos: calculate_threshold, get
 import RetinalChaos: extract_equilibria, find_equilibria
 include("../figures/figure_setup.jl");
 
-#%% Try to fix the equilibria stuff
-conds_dict = read_JSON("params\\conds.json")
-u0 = conds_dict |> extract_dict
+max_spike_duration = 50.0
+max_spike_interval = 100.0
+max_burst_duration = 10e5
+max_burst_interval = 10e5
 
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = 10.0 #Set initial applied current to 0
-pars_dict[:ρi] = 0.0 #remove GABA influence
-pars_dict[:ρe] = 0.0 #remove ACh influence
-pars_dict[:g_TREK] = 0.0 #Remove the sAHP
-p = pars_dict |> extract_dict
-tspan = (0.0, 100.0)
-prob_eq = ODEProblem(T_ODE, u0, tspan, p)
-# Conduct the codim analysis
-codim1 = (:I_app)
-c1_lims = (-68.05, -68.045)
-@time c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
+#Lets look at each trace and figure out if there are bursts or not
+target_folder = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Patching\Jordans_Patch_Data\UsuableData"
+paths = target_folder |> parseABF;
 
-#%% Plot Codim Solutions
-res = extract_equilibria(c1_map; vars=:v) #Pass back all of the equilibria
-points = res[1]
-saddle_p = res[2]
-stable_p = res[3]
-unstable_p = res[4]
-unstable_focus_p = res[5]
-stable_focus_p = res[6]
-#bif_val, bif_eq = find_bifurcation(c1_map)
-#saddle_vs = map(x -> x.saddle[1][1], bif_eq)
-# Plot 
-eq_plt = plot(points, saddle_p, c=:blue)
-plot!(points, stable_p, c=:green)
-plot!(points, unstable_p, c=:red)
-plot!(points, stable_focus_p, c=:red, linestyle=:dash)
-plot!(points, unstable_focus_p, c=:green, linestyle=:dash)
+path = paths[1]
+print("[$(now())] Opening $path... ")
+data_i = readABF(path,
+     channels=["Im_scaled"],
+     stimulus_name=nothing, flatten_episodic=true
+)
+t = data_i.t*1000 #Turn seconds into milliseconds
+vm_array = data_i.data_array[:, :, 1]
+thresholds = RetinalChaos.calculate_threshold(vm_array, Z=2, dims=2)
 
+println("Complete")
+print("[$(now())]: Extracting the spikes... ")
+spike_array = Matrix{Bool}(vm_array .> thresholds)
+spikes = RetinalChaos.get_timestamps(spike_array, t)
+thresholds
 
-#%% Lets look deeper into some issues
-eq_val = findall((isnan.(saddle_p)) .== 1)[1]
-u0_eq = c1_map.equilibria[eq_val].saddle[1]#We will use this as out Initial condition
+spike_durs, isi = RetinalChaos.extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+println("Complete")
 
 #%%
-c1_map.points[eq_val][1]
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = c1_map.points[eq_val][1] #Set initial applied current to 0
-pars_dict[:ρi] = 0.0 #remove GABA influence
-pars_dict[:ρe] = 0.0 #remove ACh influence
-pars_dict[:g_TREK] = 0.0 #Remove the sAHP
-p = pars_dict |> extract_dict
-tspan = (0.0, 1000.0)
-prob_eq = ODEProblem(T_ODE, u0, tspan, p)
-sol_eq = solve(prob_eq)
-eq_obj = find_equilibria(prob_eq)
-print(eq_obj, vars=[:v, :n])
-sol_plt = plot(sol_eq, vars=1)
-
-#%%
-plot(eq_plt, sol_plt)
+print("[$(now())]: Extracting the bursts... ")
+bursts, spb = RetinalChaos.max_interval_algorithim(spikes)
+burst_durs, ibi = RetinalChaos.extract_interval(bursts[1], max_duration=max_burst_duration, max_interval=max_burst_interval, min_duration=1000.0)
+println("Complete")

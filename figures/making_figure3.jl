@@ -10,7 +10,7 @@ using Revise
 
 using RetinalChaos
 import RetinalChaos: Φ, ħ, ∇
-import RetinalChaos: T_ODE_NT_Release
+import RetinalChaos: T_ODE_NT_Release, get_timestamps, max_interval_algorithim
 import Plots: contourf
 include("figure_setup.jl")
 println("Running the plotting script for figure 3")
@@ -124,7 +124,6 @@ dX_N = 3:2:center_x
 dX_T = center_x+3:2:ny-1
 
 #%% Lets plot
-
 print("[$(now())]: Plotting... ")
 width_inches = 7.5 * 2
 height_inches = 7.5 * 2
@@ -132,13 +131,13 @@ fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inc
 
 gs = fig3.add_gridspec(4, 2,
      width_ratios=(0.77, 0.23),
-     height_ratios=(0.1, 0.3, 0.3, 0.30),
-     right=0.95, left=0.07,
+     height_ratios=(0.2, 0.26, 0.26, 0.26),
+     right=0.95, left=0.1,
      top=0.95, bottom=0.08,
      wspace=0.10, hspace=0.4
 )
 col1_ylabel = -0.05
-col2_ylabel = -0.17
+col2_ylabel = -0.25
 #% =====================================================Make panel A===================================================== %%#
 gsA = gs[1, 1].subgridspec(ncols=1, nrows=2)
 
@@ -151,21 +150,18 @@ axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
 axA2 = fig3.add_subplot(gsA[2, 1])
 ylim(0.0, 5.0)
 axA2.plot(t, et, c=e_color, lw=3.0)
-ylabel("Et")
+axA2.plot(t, it, c=:red, lw=3.0)
+ylabel("It and Et")
+xlabel("Time (s)")
 axA2.xaxis.set_visible(false) #Turn off the bottom axis
 axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
-
-axA3 = fig3.add_subplot(gsA[2, 1])
-ylim(0.0, 5.0)
-axA3.plot(t, it, c=:red, lw=3.0)
-xlabel("Time (s)")
-ylabel("It")
-axA3.yaxis.set_label_coords(col1_ylabel, 0.5)
 #Plot all of the frame stops
-axA3.plot(t[frame_stops], et[frame_stops], c=:blue, linewidth=0.0, marker="o")
-axA3.plot(t[frame_stops], it[frame_stops], c=:red, linewidth=0.0, marker="o")
+axA2.plot(t[frame_stops], et[frame_stops], c=:blue, linewidth=0.0, marker="o")
+axA2.plot(t[frame_stops], it[frame_stops], c=:red, linewidth=0.0, marker="o")
 
 axAR = fig3.add_subplot(gs[1, 2])
+xlabel("Voltage (mV)")
+ylabel("Release")
 axAR.plot(v_rng, ACH_r, c=e_color, lw=3.0)
 axAR.plot(v_rng, GABA_r, c=:red, lw=3.0)
 
@@ -174,12 +170,18 @@ gsBL = gs[2, 1].subgridspec(ncols=4, nrows=1)
 #We should pick 4 locations from 
 for (idx, fr) in enumerate(frame_stops)
      axBi = fig3.add_subplot(gsBL[idx])
+     if idx == 1
+          ylabel("ACh Release")
+          axBi.set_yticks([])
+          axBi.yaxis.set_label_coords(col2_ylabel, 0.5)
+     else
+          axBi.yaxis.set_visible(false) #Turn off the bottom axis
+     end
      ctr_B = axBi.contourf(ACH_map[:, :, fr], cmap="Greens", levels=0.0:0.05:0.5, extend="both")
      axBi.xaxis.set_visible(false) #Turn off the bottom axis
-     axBi.yaxis.set_visible(false) #Turn off the bottom axis
      axBi.set_aspect("equal", "box")
-     axBi.spines["bottom"].set_visible(false)
      axBi.spines["left"].set_visible(false)
+     axBi.spines["bottom"].set_visible(false)
 end
 
 axBR = fig3.add_subplot(gs[2, 2])
@@ -201,12 +203,18 @@ for (idx, fr) in enumerate(frame_stops)
      axCi = fig3.add_subplot(gsCL[idx])
      ctr_I = axCi.contourf(GABA_map[:, :, fr], cmap="Reds", levels=0.0:0.05:0.5, extend="both")
      #axCi.xaxis.set_visible(false) #Turn off the bottom axis
+     if idx == 1
+          ylabel("GABA Release")
+          axCi.set_yticks([])
+          axCi.yaxis.set_label_coords(col2_ylabel, 0.5)
+     else
+          axCi.yaxis.set_visible(false) #Turn off the bottom axis
+     end
      axCi.set_xticks([])
-     axCi.yaxis.set_visible(false) #Turn off the bottom axis
      axCi.set_aspect("equal", "box")
      xlabel("t = $(round(t[fr], digits = 1))")
-     axCi.spines["bottom"].set_visible(false)
      axCi.spines["left"].set_visible(false)
+     axCi.spines["bottom"].set_visible(false)
      #Can we put a text box below each frame 
 
 end
@@ -221,6 +229,7 @@ axCR.spines["left"].set_visible(false)
 xlabel("Avg. GABA Release")
 cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.25, 0.5])
 cbarI.ax.set_ylabel("Average It (GABA)")
+
 #% ===============================================Make panel D=============================================== %%#
 gsDL = gs[4, 1].subgridspec(ncols=3, nrows=3)
 axD1 = fig3.add_subplot(gsDL[1, 2])
@@ -233,13 +242,14 @@ ylim(-10.0, 10.0)
 for (i, dyv) in enumerate(dY_V)
      axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=3.0)
 end
-ylabel("Current (pA)")
+
 axD1.xaxis.set_visible(false) #Turn off the bottom axis
 axD1.spines["bottom"].set_visible(false)
 
 axD2 = fig3.add_subplot(gsDL[3, 2])
 ylim(-10.0, 10.0)
 #Plot the Nasal direction
+
 for (i, dyd) in enumerate(reverse(dY_D))
      axD2.plot(I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=3.0)
 end
@@ -247,12 +257,13 @@ end
 
 axDC = fig3.add_subplot(gsDL[2, 2])
 ylim(-10.0, 10.0)
-axDC.plot(I_TOTAL[center_y, center_x, :], c=:black, lw = 3.0)
+axDC.plot(I_TOTAL[center_y, center_x, :], c=:black, lw=3.0)
 axDC.xaxis.set_visible(false) #Turn off the bottom axis
 axDC.spines["bottom"].set_visible(false)
 
 axD3 = fig3.add_subplot(gsDL[2, 1])
 ylim(-10.0, 10.0)
+ylabel("Current (pA)")
 for (i, dxn) in enumerate(reverse(dX_N))
      axD3.plot(I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=3.0)
 end
@@ -289,10 +300,15 @@ axDR.spines["left"].set_visible(false)
 cbari = fig3.colorbar(ctr_i, ticks=[-10.0, 0.0, 10.0])
 cbari.ax.set_ylabel("Induced Current (pA)")
 #Lets put text labeling nasal temporal 
-axDR.text(-1.0, center_y, "N", ha="center", va="center")
-axDR.text(nx, center_y, "T", ha="center", va="center")
-axDR.text(center_x, -1.0, "D", ha="center", va="center")
-axDR.text(center_x, ny, "V", ha="center", va="center")
+#axDR.text(-1.0, center_y, "N", ha="center", va="center")
+#axDR.text(nx, center_y, "T", ha="center", va="center")
+#axDR.text(center_x, -1.0, "D", ha="center", va="center")
+#axDR.text(center_x, ny, "Top", ha="center", va="center")
+
+axDR.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axDR.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axDR.annotate("C", (0.01, 0.50), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axDR.annotate("E", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
 println(" Completed")
 
 

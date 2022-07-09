@@ -476,7 +476,7 @@ function codim_map(prob, codim::Symbol, c1_lims::Tuple{T, T};
         elseif length(equilibria) == n_equilibria
             n_equilibria = length(equilibria)
         end
-        #println("$(n_equilibria) found at variable $codim $c1")
+        println("$(n_equilibria) found at variable $codim $c1")
         #points = c1
         push!(points_list, (c1,))
         push!(equilibria_list, equilibria)

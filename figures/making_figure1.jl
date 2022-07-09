@@ -22,8 +22,9 @@ prob = ODEProblem(T_ODE, u0, tspan, p)
 #Step 5: Solve the problem
 sol = solve(prob, progress=true, progress_steps=1);
 println(" Completed")
-plot(sol)
-#%% Run the analysis 
+#plot(sol)
+
+# Run the analysis 
 print("[$(now())]: Running analysis... ")
 dt = 0.01 #Set the time differential
 thresh = calculate_threshold(sol) #Extract the threshold
@@ -38,7 +39,7 @@ burst_lims = burst_tstamps[2, :]#lets set the limits for area of interest
 t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
 println(" Completed")
 
-#%% Load the data into the correct format
+# Load the data into the correct format
 print("[$(now())]: Extracting data... ")
 A_dx = 20 #the tick interval is 20ms
 A_dt = 0.01
@@ -73,7 +74,7 @@ print("[$(now())]: Plotting figure 1...")
 width_inches = 16.0
 height_inches = 10.0
 fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
-fig1.text(0.0, 0.0, "A", ha="center", va="center", fontsize=12.0)
+
 
 #% Make a plot in PyPlot
 gs = fig1.add_gridspec(3, 2,
@@ -177,6 +178,10 @@ ylabel("Bt")
 xlabel("Vt")
 axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
 println(" Complete")
+
+axA1.annotate("A", (0.01, 0.92), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axA1.annotate("B", (0.01, 0.72), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axA1.annotate("C", (0.01, 0.42), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
 
 #%% Save the figure
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
