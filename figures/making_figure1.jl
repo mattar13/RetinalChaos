@@ -33,8 +33,8 @@ spike_durs, isi = extract_interval(spike_tstamps, max_duration=100, max_interval
 burst_tstamps, SPB = max_interval_algorithim(spike_tstamps)
 burst_durs, ibi = extract_interval(burst_tstamps)
 burst_tstamps
-t_series = tspan[1]:dt:tspan[end]
-vt = sol(t_series, idxs=[1])
+#t_series = tspan[1]:dt:tspan[end]
+#vt = sol(t_series, idxs=[1])
 burst_lims = burst_tstamps[2, :]#lets set the limits for area of interest
 t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
 println(" Completed")
@@ -71,66 +71,94 @@ println(" Completed")
 #plt.clf() #While drawing you can use this to clear the figure 
 #%% Start the plotting of the figure
 print("[$(now())]: Plotting figure 1...")
-width_inches = 16.0
-height_inches = 10.0
+width_inches = 7.5
+height_inches = 7.5
 fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
 
 
 #% Make a plot in PyPlot
 gs = fig1.add_gridspec(3, 2,
-     width_ratios=(0.80, 0.20),
+     width_ratios=(0.75, 0.25),
      height_ratios=(0.20, 0.30, 0.50),
-     right=0.99, left=0.1,
-     top=0.93, bottom=0.08,
-     wspace=0.15, hspace=0.40
+     right=0.99, left=0.12,
+     top=0.95, bottom=0.08,
+     wspace=0.25, hspace=0.40
 )
 
-col1_ylabel = -0.06
-col2_ylabel = -0.22
+col1_ylabel = -0.1
+col2_ylabel = -0.26
 #% =====================================================Make panel A===================================================== %%#
+vlims = (-55.0, 5.0)
 nlims = (-0.1, 1.1)
-vlims = (-55, 5)
+clims = (0.0, 0.6)
+alims = (-0.1, 1.1)
+blims = (-0.1, 1.1)
 
 #Do the plotting
 gsAL = gs[1, 1].subgridspec(ncols=1, nrows=2)
 axA1 = fig1.add_subplot(gsAL[1])
+ylim(vlims)
 axA1.plot(tSpike, vSpike, c=v_color, lw=3.0)
-ylabel("Vt")
+ylabel("Vt (mV)")
 axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
 axA1.xaxis.set_visible(false) #Turn off the bottom axis
+axA1.spines["bottom"].set_visible(false)
+axA1.yaxis.set_major_locator(MultipleLocator(50.0))
+axA1.yaxis.set_minor_locator(MultipleLocator(25.0))
 
 axA2 = fig1.add_subplot(gsAL[2])
+ylim(nlims)
 axA2.plot(tSpike, nSpike, c=n_color, lw=3.0)
 ylabel("Nt")
 xlabel("Time (ms)")
 axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA2.yaxis.set_major_locator(MultipleLocator(1.00))
+axA2.yaxis.set_minor_locator(MultipleLocator(0.50))
 
 axAR = fig1.add_subplot(gs[1, 2])
-xlim(nlims)
-ylim(vlims)
-axAR.plot(nSpike, vSpike, c=:black, lw=3.0)
-ylabel("Vt")
-xlabel("Nt")
+xlim(vlims)
+ylim(nlims)
+axAR.plot(vSpike, nSpike, c=:black, lw=2.0)
+add_direction(axAR, vSpike, nSpike, nArrows = 15)
+xlabel("Vt")
+ylabel("Nt")
+axAR.xaxis.set_major_locator(MultipleLocator(25.0))
+axAR.xaxis.set_minor_locator(MultipleLocator(12.5))
+axAR.yaxis.set_major_locator(MultipleLocator(0.50))
+axAR.yaxis.set_minor_locator(MultipleLocator(0.25))
 axAR.yaxis.set_label_coords(col2_ylabel, 0.5)
-
+#add arrows here?
 #% ===============================================Make panel B=============================================== %%#
+vlims = (-105.0, 5.0)
+
 gsBL = gs[2, 1].subgridspec(ncols=1, nrows=2)
 axB1 = fig1.add_subplot(gsBL[1])
+ylim(vlims)
 axB1.plot(tBurst, vBurst, c=v_color, lw=3.0)
 axB1.xaxis.set_visible(false) #Turn off the bottom axis
 ylabel("Vt (mV)")
 axB1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB1.spines["bottom"].set_visible(false)
+axB1.yaxis.set_major_locator(MultipleLocator(50.0))
+axB1.yaxis.set_minor_locator(MultipleLocator(25.0))
 
 axB2 = fig1.add_subplot(gsBL[2])
+ylim(clims)
 axB2.plot(tBurst, cBurst, c=c_color, lw=3.0)
 xlabel("Time (s)")
 ylabel("Ct")
 axB2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB2.yaxis.set_major_locator(MultipleLocator(0.25))
+axB2.yaxis.set_minor_locator(MultipleLocator(0.50))
 
 axBR = fig1.add_subplot(gs[2, 2])
-axBR.plot(vrng, crng, c=c_color, lw=3.0)
-ylabel("Ct")
+xlim(vlims)
+ylim(clims)
+size(cBurst)
+add_direction(axBR, vBurst, cBurst, nArrows = 15, color = c_color, start_rng = 130_000)
+axBR.plot(vBurst, cBurst, c=c_color, lw=2.0)
 xlabel("Vt")
+ylabel("Ct")
 axBR.yaxis.set_label_coords(col2_ylabel, 0.5)
 
 #% ===================================================Figure Panel C=================================================== %%#
@@ -140,48 +168,56 @@ axCL1.plot(tIBI, cIBI, c=c_color, lw=3.0)
 ylabel("Ct")
 axCL1.xaxis.set_visible(false) #Turn off the bottom axis
 axCL1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL1.spines["bottom"].set_visible(false)
 
 axCL2 = fig1.add_subplot(gsCL[2])
 axCL2.plot(tIBI, aIBI, c=a_color, lw=3.0)
 ylabel("At")
 axCL2.xaxis.set_visible(false) #Turn off the bottom axis
 axCL2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL2.spines["bottom"].set_visible(false)
 
 axCL3 = fig1.add_subplot(gsCL[3])
 axCL3.plot(tIBI, bIBI, c=b_color, lw=3.0)
 ylabel("Bt")
 axCL3.xaxis.set_visible(false) #Turn off the bottom axis
 axCL3.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL3.spines["bottom"].set_visible(false)
 
 axCL4 = fig1.add_subplot(gsCL[4])
 axCL4.plot(tIBI, vIBI, c=v_color, lw=3.0)
-ylabel("Vt")
 xlabel("Time (s)")
+ylabel("Vt")
 axCL4.yaxis.set_label_coords(col1_ylabel, 0.5)
 
 gsCR = gs[3, 2].subgridspec(ncols=1, nrows=5, height_ratios=[0.25, 0.125, 0.25, 0.125, 0.25])
 axCR1 = fig1.add_subplot(gsCR[1])
-axCR1.plot(aIBI, cIBI, c=a_color, lw=3.0)
-ylabel("Ct")
-xlabel("At")
+axCR1.plot(cIBI, aIBI, c=a_color, lw=2.0)
+add_direction(axCR1, cIBI, aIBI, nArrows=15, color=a_color, end_rng = 4000)
+xlabel("Ct")
+ylabel("At")
 axCR1.yaxis.set_label_coords(col2_ylabel, 0.5)
 
 axCR2 = fig1.add_subplot(gsCR[3])
-axCR2.plot(bIBI, aIBI, c=b_color, lw=3.0)
-ylabel("At")
-xlabel("Bt")
+axCR2.plot(aIBI, bIBI, c=b_color, lw=2.0)
+add_direction(axCR2, aIBI, bIBI, nArrows=15, color=b_color, end_rng = 4000)
+
+xlabel("At")
+ylabel("Bt")
 axCR2.yaxis.set_label_coords(col2_ylabel, 0.5)
 
 axCR3 = fig1.add_subplot(gsCR[5])
-axCR3.plot(vIBI, bIBI, c=v_color, lw=3.0)
-ylabel("Bt")
-xlabel("Vt")
+axCR3.plot(bIBI, vIBI, c=v_color, lw=2.0)
+add_direction(axCR3, bIBI, vIBI, nArrows=15, color=v_color, end_rng=4000)
+
+xlabel("Bt")
+ylabel("Vt")
 axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
 println(" Complete")
 
-axA1.annotate("A", (0.01, 0.92), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axA1.annotate("B", (0.01, 0.72), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axA1.annotate("C", (0.01, 0.42), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axA1.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("C", (0.01, 0.45), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
 #%% Save the figure
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
@@ -189,3 +225,13 @@ print("[$(now())]: Saving the figure 1...")
 fig1.savefig("$(loc)/figure1_ModelVariables.png")
 plt.close("all")
 println(" Completed")
+
+#%% Calculate the average Λ
+import RetinalChaos.Λ
+V3 = pars_dict[:V3]
+V4 = pars_dict[:V4]
+lam_trace = Λ.(vt |> Array, V3, V4)
+
+plot(t_series, lam_trace')
+avg_lam = sum(lam_trace) / length(lam_trace)
+sem_lam = std(lam_trace) / sqrt(length(lam_trace))
