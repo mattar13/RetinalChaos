@@ -1,6 +1,14 @@
 #Scientific reports figure sizes is 
-#89mm (single column) to 183mm (double column) 3.5 to 7.5 inches
+#For guidance, Nature's standard figure sizes are 89 mm wide (single column) and 183 mm wide (double column). 
+#The full depth of a Nature page is 247 mm. 
+#Figures can also be a column-and-a-half where necessary (120–136 mm).
+cm = 1 / 2.54
 
+#Authors should check (using a reducing photocopier) that, 
+#at the smallest possible size, lettering remains readable and lines are sufficiently (but not too) heavy to print 
+#clearly. Line weights and strokes should be set between 0.25 and 1 pt at the final size 
+#(lines thinner than 0.25 pt may vanish in print). Do not rasterize or outline these lines if possible.
+lw_standard = 1.0
 #Run this to set up the default parameters for plotting the figures
 using Plots
 using Plots.Measures
@@ -36,7 +44,7 @@ rcParams = py.PyDict(matplotlib["rcParams"])
 rcParams["figure.dpi"] = 60 #This is used to display the plot
 rcParams["savefig.dpi"] = 600 #This is used to save the plot
 
-rcParams["font.size"] = 18.0 #This controls the default font size
+rcParams["font.size"] = 12.0 #This controls the default font size
 rcParams["font.family"] = "arial" #This controls the font family
 rcParams["axes.spines.right"] = false #Make spines to the right invisible
 rcParams["axes.spines.top"] = false #Make spines at the top invisible
@@ -68,54 +76,54 @@ rcParams["errorbar.capsize"] = 1.0 #Set the length of the errorbar cap
 rcParams["savefig.pad_inches"] = 0.0
 println(" Completed")
 
-function plot_histograms(data, loc::String; name = "histogram_plot")
+function plot_histograms(data, loc::String; name="histogram_plot")
 
     if !isempty(data["SpikeDurs"])
         sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 100))
-        sdur_weights = sdur_hfit.weights/maximum(sdur_hfit.weights)
+        sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
         sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
     else
         sdur_edges = sdur_weights = [0]
     end
-    p1 = plot(sdur_edges, sdur_weights, xlabel = "Spike Duration (ms)")
+    p1 = plot(sdur_edges, sdur_weights, xlabel="Spike Duration (ms)")
 
     if !isempty(data["ISIs"])
         isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 100.0, 100))
-        isi_weights = isi_hfit.weights/maximum(isi_hfit.weights)
+        isi_weights = isi_hfit.weights / maximum(isi_hfit.weights)
         isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
     else
         isi_edges = isi_weights = [0]
     end
-    p2 = plot(isi_edges, isi_weights,  xlabel = "Spike Interval (s)", xformatter = x -> x/1000)
+    p2 = plot(isi_edges, isi_weights, xlabel="Spike Interval (s)", xformatter=x -> x / 1000)
 
     if !isempty(data["BurstDurs"])
         bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 100))
-        bdur_weights = bdur_hfit.weights/maximum(bdur_hfit.weights)
+        bdur_weights = bdur_hfit.weights / maximum(bdur_hfit.weights)
         bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
     else
         bdur_edges = bdur_weights = [0]
     end
-    p3 = plot(bdur_edges, bdur_weights, xlabel = "Burst Duration (s)",xformatter = x -> x/1000)
+    p3 = plot(bdur_edges, bdur_weights, xlabel="Burst Duration (s)", xformatter=x -> x / 1000)
 
     if !isempty(data["IBIs"])
         ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 120e3, 100))
-        ibi_weights = ibi_hfit.weights/maximum(ibi_hfit.weights)
+        ibi_weights = ibi_hfit.weights / maximum(ibi_hfit.weights)
         ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
     else
         ibi_edges = ibi_weights = [0]
     end
-    p4 = plot(ibi_edges, ibi_weights, xlabel = "Interburst Interval (s)", xformatter = x -> x/1000)
-    
+    p4 = plot(ibi_edges, ibi_weights, xlabel="Interburst Interval (s)", xformatter=x -> x / 1000)
+
     if !isempty(data["Thresholds"])
         p5 = histogram(data["Thresholds"], yaxis=:log, xlabel="Voltage threshold")
     else
         p5 = plot(xlabel="Voltage threshold")
     end
-    
+
     if !isempty(data["SpikesPerBurst"])
         p6 = histogram(data["SpikesPerBurst"], yaxis=:log, xlabel="Spikes per Burst")
     else
-        p6 = plot(xlabel = "Spike Per Burst")
+        p6 = plot(xlabel="Spike Per Burst")
     end
     hist_plot = plot(
         p1, p2, p3, p4, p5, p6,
@@ -126,6 +134,27 @@ function plot_histograms(data, loc::String; name = "histogram_plot")
     return hist_plot
 end
 
+function add_direction(ax, data_x, data_y;
+    start_rng::Int64=1, end_rng::Union{Int64,Nothing}=nothing,
+    color=:black,
+    delta::Int64=100, nArrows::Int64=50,
+    width=0.02, headwidth=7.0, headaxislength=5.0
+) where {T}
+    if isnothing(end_rng)
+        rng = round.(Int64, LinRange(start_rng, length(data_x) - delta, nArrows))
+    else
+        rng = round.(Int64, LinRange(start_rng, end_rng, nArrows))
+    end
+    for i in rng
+        x = data_x[i]
+        y = data_y[i]
+        dx = data_x[i+delta] - data_x[i]
+        dy = data_y[i+delta] - data_y[i]
+        #axAR.plot([x, x+dx], [y, y+dy], marker = "o", lw = 0.0, c = :blue)
+        ax.quiver(x, y, dx, dy, color=color, angles="xy", pivot="mid",
+            width=width, headwidth=headwidth, headaxislength=headaxislength)
+    end
+end
 #%% If we want to run each script by itself use this
 #include("making_figure1.jl")
 #include("making_figure2.jl")
