@@ -111,11 +111,15 @@ kACh = pars_dict[:k_ACh]
 gGABA = pars_dict[:g_GABA]
 EGABA = pars_dict[:E_GABA]
 kGABA = pars_dict[:k_GABA]
-V_CLAMP = -50.0
+V_CLAMP = -40.0
 I_ACh = -gACh .* ħ.(ACH_map, kACh) .* (V_CLAMP - EACh)
-I_GABA = -gGABA .* ħ.(GABA_map, kACh) .* (V_CLAMP - EGABA)
+I_GABA = -gGABA .* ħ.(GABA_map, kGABA) .* (V_CLAMP - EGABA)
 I_TOTAL = I_ACh + I_GABA
 avg_I_TOTAL = sum(I_TOTAL, dims=3)[:, :, 1] ./ size(I_TOTAL, 3)
+
+#Maximal calculations
+I_ACh_max = -gACh .* 1 .* (V_CLAMP - EACh)
+I_GABA_max = -gGABA .* 1 .* (V_CLAMP - EGABA)
 
 # Finally we need to extract some data from the X or y
 dY_D = 3:2:center_y
@@ -125,8 +129,8 @@ dX_T = center_x+3:2:ny-1
 
 #%% Lets plot
 print("[$(now())]: Plotting... ")
-width_inches = 7.5 * 2
-height_inches = 7.5 * 2
+width_inches = 7.5
+height_inches = 7.5
 fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inches))
 
 gs = fig3.add_gridspec(4, 2,
@@ -142,28 +146,33 @@ col2_ylabel = -0.25
 gsA = gs[1, 1].subgridspec(ncols=1, nrows=2)
 
 axA1 = fig3.add_subplot(gsA[1, 1])
-axA1.plot(t, vt, c=v_color, lw=3.0)
+axA1.plot(t, vt, c=v_color, lw=lw_standard)
 ylabel("Vt (mV)")
 axA1.xaxis.set_visible(false) #Turn off the bottom axis
 axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA1.spines["bottom"].set_visible(false)
 
 axA2 = fig3.add_subplot(gsA[2, 1])
 ylim(0.0, 5.0)
-axA2.plot(t, et, c=e_color, lw=3.0)
-axA2.plot(t, it, c=:red, lw=3.0)
-ylabel("It and Et")
+axA2.plot(t, et, c=:green, lw=lw_standard)
+axA2.plot(t, it, c=:red, lw=lw_standard)
+ylabel("NT. Rel. \n (mM)")
 xlabel("Time (s)")
-axA2.xaxis.set_visible(false) #Turn off the bottom axis
+#axA2.xaxis.set_visible(false) #Turn off the bottom axis
 axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA2.legend(["ACh", "GABA"],
+     ncol=2, columnspacing=0.70,
+     bbox_to_anchor=(0.65, 1.1), fontsize=9.0, markerscale=0.5, handletextpad=0.3
+)
 #Plot all of the frame stops
-axA2.plot(t[frame_stops], et[frame_stops], c=:blue, linewidth=0.0, marker="o")
-axA2.plot(t[frame_stops], it[frame_stops], c=:red, linewidth=0.0, marker="o")
+axA2.plot(t[frame_stops], et[frame_stops], c=:blue, markersize = 2.0, linewidth=0.0, marker="o")
+axA2.plot(t[frame_stops], it[frame_stops], c=:red, markersize = 2.0, linewidth=0.0, marker="o")
 
 axAR = fig3.add_subplot(gs[1, 2])
 xlabel("Voltage (mV)")
 ylabel("Release")
-axAR.plot(v_rng, ACH_r, c=e_color, lw=3.0)
-axAR.plot(v_rng, GABA_r, c=:red, lw=3.0)
+axAR.plot(v_rng, ACH_r, c=:green, lw=lw_standard)
+axAR.plot(v_rng, GABA_r, c=:red, lw=lw_standard)
 
 #% ===============================================Make panel B=============================================== %%#
 gsBL = gs[2, 1].subgridspec(ncols=4, nrows=1)
@@ -191,7 +200,7 @@ axBR.set_xticks([])
 axBR.yaxis.set_visible(false) #Turn off the bottom axis
 axBR.spines["bottom"].set_visible(false)
 axBR.spines["left"].set_visible(false)
-xlabel("Avg. ACh Release")
+xlabel("Avg. ACh \n Release (mM)")
 cbarE = fig3.colorbar(ctr_E, ticks=[0.0, 0.25, 0.5])
 cbarE.ax.set_ylabel("Average Et (ACh)")
 
@@ -237,10 +246,10 @@ cmapYV = plt.get_cmap("Blues")
 cmapYD = plt.get_cmap("Greens")
 cmapXN = plt.get_cmap("Reds")
 cmapXT = plt.get_cmap("Purples")
-ylim(-10.0, 10.0)
+ylim(-25.0, 10.0)
 #Plot the Nasal direction
 for (i, dyv) in enumerate(dY_V)
-     axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=3.0)
+     axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=lw_standard)
 end
 
 axD1.xaxis.set_visible(false) #Turn off the bottom axis
@@ -251,43 +260,45 @@ ylim(-10.0, 10.0)
 #Plot the Nasal direction
 
 for (i, dyd) in enumerate(reverse(dY_D))
-     axD2.plot(I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=3.0)
+     axD2.plot(t, I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=lw_standard)
 end
-
+xlabel("Time (s)")
 
 axDC = fig3.add_subplot(gsDL[2, 2])
-ylim(-10.0, 10.0)
-axDC.plot(I_TOTAL[center_y, center_x, :], c=:black, lw=3.0)
+ylim(-25.0, 10.0)
+axDC.plot(t, I_TOTAL[center_y, center_x, :], c=:black, lw=lw_standard)
 axDC.xaxis.set_visible(false) #Turn off the bottom axis
 axDC.spines["bottom"].set_visible(false)
-
+axDC.spines["left"].set_visible(false)
+axDC.yaxis.set_visible(false) 
 axD3 = fig3.add_subplot(gsDL[2, 1])
-ylim(-10.0, 10.0)
+ylim(-25.0, 10.0)
 ylabel("Current (pA)")
 for (i, dxn) in enumerate(reverse(dX_N))
-     axD3.plot(I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=3.0)
+     axD3.plot(t, I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=lw_standard)
 end
+xlabel("Time (s)")
 #axD3.xaxis.set_visible(false) #Turn off the bottom axis
 #axD3.spines["bottom"].set_visible(false)
 
 axD4 = fig3.add_subplot(gsDL[2, 3])
-ylim(-10.0, 10.0)
+ylim(-25.0, 10.0)
 for (i, dxt) in enumerate(dX_T)
-     axD4.plot(t, I_TOTAL[center_y, dxt, :], c=cmapXT(i / length(dX_T)), lw=3.0)
+     axD4.plot(t, I_TOTAL[center_y, dxt, :], c=cmapXT(i / length(dX_T)), lw=lw_standard)
 end
-
+xlabel("Time (s)")
 axDR = fig3.add_subplot(gs[4, 2])
 ctr_i = axDR.contourf(avg_I_TOTAL, cmap="RdYlGn", levels=-5.0:0.5:5.0, extend="both")
 axDR.plot([center_x], [center_y], linewidth=0.0, marker="o", ms=4.0)
 #Plot sample points
 valYD = abs.(center_y .- dY_D .- 1)
 valYV = abs.(center_y .- dY_V .- 1)
-axDR.scatter(fill(center_x, length(dY_D)), dY_D .- 1, s=4.0, c=valYD, cmap=cmapYD, lw=4.0, marker="s") #Dorsal
-axDR.scatter(fill(center_x, length(dY_V)), dY_V .- 1, s=4.0, c=valYV, cmap=cmapYV, lw=4.0, marker="s") #Dorsal
+axDR.scatter(fill(center_x, length(dY_D)), dY_D .- 1, s=4.0, c=valYD, cmap=cmapYD, lw=lw_standard, marker="s") #Dorsal
+axDR.scatter(fill(center_x, length(dY_V)), dY_V .- 1, s=4.0, c=valYV, cmap=cmapYV, lw=lw_standard, marker="s") #Dorsal
 valXN = abs.(center_x .- dX_N .- 1)
 valXT = abs.(center_x .- dX_T .- 1)
-axDR.scatter(dX_N .- 1, fill(center_y, length(dX_N)), s=4.0, c=valXN, cmap=cmapXN, lw=4.0, marker="s") #Dorsal
-axDR.scatter(dX_T .- 1, fill(center_y, length(dX_T)), s=4.0, c=valXT, cmap=cmapXT, lw=4.0, marker="s") #Dorsal
+axDR.scatter(dX_N .- 1, fill(center_y, length(dX_N)), s=4.0, c=valXN, cmap=cmapXN, lw=lw_standard, marker="s") #Dorsal
+axDR.scatter(dX_T .- 1, fill(center_y, length(dX_T)), s=4.0, c=valXT, cmap=cmapXT, lw=lw_standard, marker="s") #Dorsal
 axDR.set_facecolor("none")
 
 axDR.set_xticks([])
@@ -297,7 +308,7 @@ ylim(0, ny)
 axDR.set_aspect("equal", "box")
 axDR.spines["bottom"].set_visible(false)
 axDR.spines["left"].set_visible(false)
-cbari = fig3.colorbar(ctr_i, ticks=[-10.0, 0.0, 10.0])
+cbari = fig3.colorbar(ctr_i, ticks=[-25.0, 0.0, 10.0])
 cbari.ax.set_ylabel("Induced Current (pA)")
 #Lets put text labeling nasal temporal 
 #axDR.text(-1.0, center_y, "N", ha="center", va="center")
@@ -305,18 +316,18 @@ cbari.ax.set_ylabel("Induced Current (pA)")
 #axDR.text(center_x, -1.0, "D", ha="center", va="center")
 #axDR.text(center_x, ny, "Top", ha="center", va="center")
 
-axDR.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axDR.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axDR.annotate("C", (0.01, 0.50), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axDR.annotate("E", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axDR.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axDR.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axDR.annotate("C", (0.01, 0.50), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axDR.annotate("D", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 println(" Completed")
 
 
 #%% Save the plot
-loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
+loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 print("[$(now())]: Saving the figure 3...")
 fig3.savefig("$(loc)/figure3_Neurotransmitters.png")
-plt.close("All")
+plt.close("all")
 println(" Completed")
 
 #%% Generate a diffusion animation

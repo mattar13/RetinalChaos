@@ -1,6 +1,7 @@
 using RetinalChaos
 import RetinalChaos: calculate_threshold, get
 import RetinalChaos: extract_equilibria, find_equilibria
+using LaTeXStrings, Statistics
 include("figure_setup.jl");
 
 println("Running the plotting script for figure 2")
@@ -67,13 +68,14 @@ t = t / 1000
 gTREK = -pars_dict[:g_TREK]
 EK = pars_dict[:E_K]
 ITREK = gTREK .* bt[2:end] .* (vt[1:end-1] .- EK) #We want to measure the current from the value before
-
+ITREK_avg = sum(ITREK)/length(ITREK)
+ITREK_SEM = std(ITREK)/sqrt(length(ITREK))
 println(" Completed")
 
 #%% Let s set up the figures
 print("[$(now())]: Plotting... ")
 width_inches = 7.5
-height_inches = 4.5
+height_inches = 5.0
 fig2 = plt.figure("Biophysical Noise", figsize=(width_inches, height_inches))
 
 gs = fig2.add_gridspec(3, 2,
@@ -104,7 +106,8 @@ axA2.plot(points, saddle_p, c=:blue, lw=lw_standard)
 axA2.plot(points, stable_p, c=:green, lw=lw_standard)
 axA2.plot(points, stable_focus_p, c=:green, ls="--", lw=lw_standard)
 axA2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=5.0, c=:cyan)
-axA2.legend(["Saddle Eq.", "Stable Eq.", "Stable Oscillation", "Bifurcation"],
+I_sn_text = L"I_{sn}"
+axA2.legend(["Saddle Eq.", "Stable Eq.", "Stable Oscillation", "Bifurcation ($(I_sn_text))"],
      ncol=2, columnspacing=0.70,
      bbox_to_anchor=(0.04, 1.3), fontsize=9.0, markerscale=0.5, handletextpad=0.3
 )
@@ -183,11 +186,11 @@ axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
 println(" Completed")
 
 axC2.annotate("A", (0.01, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("B", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("C", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("B", (0.53, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("C", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("D", (0.53, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("E", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
-axC2.annotate("D", (0.53, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("E", (0.53, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 axC2.annotate("F", (0.53, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
 #%% Save the Plot 

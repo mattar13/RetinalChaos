@@ -47,7 +47,8 @@ A_trng = (burst_lims[1]:A_dt:burst_lims[1]+200) #Set the range of points to plot
 tSpike = (A_trng .- A_trng[1]) #Create the formatted time span
 vSpike = sol(A_trng, idxs=1)
 nSpike = sol(A_trng, idxs=2)
-
+maximum(vSpike)
+minimum(vSpike)
 B_dt = 1.0
 B_trng = (burst_lims[1]-1500):dt:(burst_lims[2]+1500)
 tBurst = (B_trng .- B_trng[1]) ./ 1000 #Offset the time range
@@ -68,13 +69,45 @@ aIBI = sol(C_trng, idxs=4)
 bIBI = sol(C_trng, idxs=5)
 println(" Completed")
 
+#%% Prepare the arrows
+
+#Spikes
+deltaArrow = 1.0
+tSpikeArrow = LinRange(A_trng[1], A_trng[end], 25)
+vSpikeArrow = sol(tSpikeArrow, idxs=[1]) |> Array
+nSpikeArrow = sol(tSpikeArrow, idxs=[2]) |> Array
+dvSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[1]) .- vSpikeArrow
+dnSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[2]) .- nSpikeArrow
+
+
+#Bursts
+#tBurstArrow = LinRange(B_trng[1], B_trng[end], 25)
+tBurstArrow = B_trng[1]:250:B_trng[end]
+
+vBurstArrow = sol(tBurstArrow, idxs=[1]) |> Array
+cBurstArrow = sol(tBurstArrow, idxs=[3]) |> Array
+dvBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[1]) .- vBurstArrow
+dcBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[3]) .- cBurstArrow
+
+#IBIs
+tIBIArrow = LinRange(C_trng[1], C_trng[end], 100)
+vIBIArrow = sol(tIBIArrow, idxs=[1]) |> Array
+cIBIArrow = sol(tIBIArrow, idxs=[3]) |> Array
+aIBIArrow = sol(tIBIArrow, idxs=[4]) |> Array
+bIBIArrow = sol(tIBIArrow, idxs=[5]) |> Array
+
+dvIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[1]) .- vIBIArrow
+dcIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[3]) .- cIBIArrow
+daIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[4]) .- cIBIArrow
+dbIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[5]) .- cIBIArrow
+
 #plt.clf() #While drawing you can use this to clear the figure 
+
 #%% Start the plotting of the figure
 print("[$(now())]: Plotting figure 1...")
 width_inches = 7.5
 height_inches = 7.5
 fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
-
 
 #% Make a plot in PyPlot
 gs = fig1.add_gridspec(3, 2,
@@ -119,7 +152,7 @@ axAR = fig1.add_subplot(gs[1, 2])
 xlim(vlims)
 ylim(nlims)
 axAR.plot(vSpike, nSpike, c=:black, lw=lw_standard)
-add_direction(axAR, vSpike, nSpike, nArrows=15)
+add_direction(axAR, vSpikeArrow, nSpikeArrow, dvSpikeArrow, dnSpikeArrow)
 xlabel("Voltage (mV)")
 ylabel("K-Chan. prob.")
 axAR.xaxis.set_major_locator(MultipleLocator(25.0))
@@ -155,7 +188,7 @@ axBR = fig1.add_subplot(gs[2, 2])
 xlim(vlims)
 ylim(clims)
 size(cBurst)
-add_direction(axBR, vBurst, cBurst, nArrows=15, color=c_color, start_rng=130_000)
+add_direction(axBR, vBurstArrow, cBurstArrow, dvBurstArrow, dcBurstArrow, color=c_color)
 axBR.plot(vBurst, cBurst, c=c_color, lw=2.0)
 xlabel("Voltage (mV)")
 ylabel("[Ca2+] (mM)")
@@ -211,7 +244,7 @@ axCR1 = fig1.add_subplot(gsCR[1])
 xlim(-0.1, 0.61)
 ylim(-0.1, 1.1)
 axCR1.plot(cIBI, aIBI, c=a_color, lw=lw_standard)
-add_direction(axCR1, cIBI, aIBI, nArrows=15, color=a_color, end_rng=4000)
+add_direction(axCR1, cIBIArrow, aIBIArrow, dcIBIArrow, daIBIArrow, color=a_color)
 xlabel("[Ca2+](mM)")
 ylabel("cAMP \n decay (At)")
 axCR1.yaxis.set_label_coords(col2_ylabel, 0.5)
@@ -224,7 +257,7 @@ axCR2 = fig1.add_subplot(gsCR[3])
 xlim(-0.1, 1.1)
 ylim(-0.1, 1.1)
 axCR2.plot(aIBI, bIBI, c=b_color, lw=lw_standard)
-add_direction(axCR2, aIBI, bIBI, nArrows=15, color=b_color, end_rng=4000)
+add_direction(axCR2, aIBIArrow, bIBIArrow, daIBIArrow, dbIBIArrow, color=b_color)
 xlabel("cAMP decay (At)")
 ylabel("TREK \n (Bt)")
 axCR2.yaxis.set_label_coords(col2_ylabel, 0.5)
@@ -237,7 +270,7 @@ axCR3 = fig1.add_subplot(gsCR[5])
 xlim(-0.1, 1.1)
 ylim(-90.0, 5.0)
 axCR3.plot(bIBI, vIBI, c=v_color, lw=lw_standard)
-add_direction(axCR3, bIBI, vIBI, nArrows=15, color=v_color, end_rng=4000)
+add_direction(axCR3, bIBIArrow, vIBIArrow, dbIBIArrow, dvIBIArrow, color=v_color)
 xlabel("TREK (Bt)")
 ylabel("Volt. \n (mV)")
 axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
@@ -247,17 +280,13 @@ axCR3.yaxis.set_major_locator(MultipleLocator(60.0))
 axCR3.yaxis.set_minor_locator(MultipleLocator(30.0))
 
 axA1.annotate("A", (0.01, 0.94), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axA1.annotate("B", (0.01, 0.66), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axA1.annotate("C", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-#axA1.annotate("D", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-#axA1.annotate("E", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-#axA1.annotate("F", (0.01, 0.15), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("B", (0.67, 0.94), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
-axA1.annotate("D", (0.67, 0.94), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axA1.annotate("E", (0.67, 0.66), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("C", (0.01, 0.66), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("D", (0.67, 0.66), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+
+axA1.annotate("E", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 axA1.annotate("F", (0.67, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-#axA1.annotate("J", (0.67, 0.30), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-#axA1.annotate("K", (0.67, 0.15), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
 println(" Complete")
 #%% Save the figure
@@ -266,13 +295,3 @@ print("[$(now())]: Saving the figure 1...")
 fig1.savefig("$(loc)/figure1_ModelVariables.png")
 plt.close("all")
 println(" Completed")
-
-#%% Calculate the average Λ
-import RetinalChaos.Λ
-V3 = pars_dict[:V3]
-V4 = pars_dict[:V4]
-lam_trace = Λ.(vt |> Array, V3, V4)
-
-plot(t_series, lam_trace')
-avg_lam = sum(lam_trace) / length(lam_trace)
-sem_lam = std(lam_trace) / sqrt(length(lam_trace))
