@@ -9,44 +9,7 @@ import ePhys: dwt_filter
 include("figure_setup.jl")
 include("opening_data.jl")
 
-#%%Extract data for the bursts 
-ex_bursts[1, 1]
-t_phys_burst = ex_bursts[1, 1]-100:1.0:ex_bursts[1, 1]+2500
-phys_burst_idxs = round.(Int64, t_phys_burst ./ data.dt)
-
-t_phys_burst = t_phys_burst .- t_phys_burst[1]
-vt_phys_burst = data.data_array[1, phys_burst_idxs, 1]
-
-#2) Open the isolated
-#Eliminate all arrays where there were no bursts
-iso_bursts = isolated_timestamps["Bursts"]
-iso_xIdx = rand(findall(iso_bursts .!= nothing))
-iso_burst = iso_bursts[iso_xIdx]
-iso_burst_idx = round.(Int64, (iso_burst[1, 1]-100):1.0:(iso_burst[1, 1]+2500))
-
-t_iso_burst = isolated_data["Time"][iso_burst_idx]
-t_iso_burst .-= t_iso_burst[1]
-vt_iso_burst = isolated_data["DataArray"][iso_xIdx, iso_burst_idx]
-
-#3) Open the noGABA data
-ng_bursts = noGABA_timestamps["Spikes"]
-ng_xIdx = rand(findall(ng_bursts .!= nothing))
-ng_burst = ng_bursts[ng_xIdx]
-ng_burst_idx = round.(Int64, (ng_burst[1, 1]-100):1.0:(ng_burst[1, 1]+2500))
-
-t_ng_burst = noGABA_data["Time"][ng_burst_idx]
-t_ng_burst .-= t_ng_burst[1]
-vt_ng_burst = noGABA_data["DataArray"][ng_xIdx, ng_burst_idx]
-
-#4) Open the wave model
-wave_bursts = wave_timestamps["Bursts"]
-wave_xIdx = rand(findall(wave_bursts .!= nothing))
-wave_burst = wave_bursts[wave_xIdx]
-wave_burst_idx = round.(Int64, (wave_burst[1,1]-100):1.0:(wave_burst[1,1]+2500))
-
-t_wave_burst = wave_data["Time"][wave_burst_idx]
-t_wave_burst .-= t_wave_burst[1]
-vt_wave_burst = wave_data["DataArray"][wave_xIdx, wave_burst_idx]
+#Since all data is opened previously we only relly need to load opening data
 
 fig, ax = plt.subplots(4)
 ax[1].plot(t_phys_burst, vt_phys_burst)

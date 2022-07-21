@@ -22,7 +22,7 @@ vt = sol(t, idxs=1) |> Array
 timestamps, data = timeseries_analysis(t, vt)
 
 fig, ax = plt.subplots(2)
-ax[1].plot()
+ax[1].plot(t_phys_burst, vt_phys_burst)
 ax[2].plot(t, vt)
 ax[2].hlines(thresholds, xmin=0.0, xmax=t[end])
 

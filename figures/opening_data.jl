@@ -104,34 +104,27 @@ data - 25.0
 example_timestamps, example_data = timeseries_analysis(data.t, data.data_array[:, :, 1])
 ex_bursts = timestamps["Bursts"][1]
 
+t_phys_burst = ex_bursts[1, 1]-100:1.0:ex_bursts[1, 1]+2500
+phys_burst_idxs = round.(Int64, t_phys_burst ./ data.dt)
+
+t_phys_burst = t_phys_burst .- t_phys_burst[1]
+vt_phys_burst = data.data_array[1, phys_burst_idxs, 1]
+
 #%% Open all of the data for the wave models
 data_root = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/figure_data"
-wave_path = "$(data_root)/wave_model"
-wave_data = load("$(wave_path)/data.jld2")
-wave_timestamps = load("$(wave_path)/timestamps.jld2")
-
-#%% Extract the histograms
-# Extract the histograms
-wave_sdur_hfit = fit(Histogram, wave_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
-wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
-wave_sdur_edges = collect(wave_sdur_hfit.edges[1])[1:length(wave_sdur_weights)]
-
-wave_isi_hfit = fit(Histogram, wave_data["ISIs"], LinRange(0.0, 50.0, 50))
-wave_isi_weights = wave_isi_hfit.weights / maximum(wave_isi_hfit.weights)
-wave_isi_edges = collect(wave_isi_hfit.edges[1])[1:length(wave_isi_weights)]
-
-wave_bdur_hfit = fit(Histogram, wave_data["BurstDurs"], LinRange(0.0, 2000.0, 50))
-wave_bdur_weights = wave_bdur_hfit.weights / maximum(wave_bdur_hfit.weights)
-wave_bdur_edges = collect(wave_bdur_hfit.edges[1])[1:length(wave_bdur_weights)]
-
-wave_ibi_hfit = fit(Histogram, wave_data["IBIs"], LinRange(0.0, 120e3, 50))
-wave_ibi_weights = wave_ibi_hfit.weights / maximum(wave_ibi_hfit.weights)
-wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
-
 #eXTRACT THE ISOLATED PATH 
 isolated_path = "$(data_root)/isolated_model"
 isolated_data = load("$(isolated_path)/data.jld2")
 isolated_timestamps = load("$(isolated_path)/timestamps.jld2")
+
+iso_bursts = isolated_timestamps["Bursts"]
+iso_xIdx = rand(findall(iso_bursts .!= nothing))
+iso_burst = iso_bursts[iso_xIdx]
+iso_burst_idx = round.(Int64, (iso_burst[1, 1]-100):1.0:(iso_burst[1, 1]+2500))
+
+t_iso_burst = isolated_data["Time"][iso_burst_idx]
+t_iso_burst .-= t_iso_burst[1]
+vt_iso_burst = isolated_data["DataArray"][iso_xIdx, iso_burst_idx]
 
 iso_sdur_hfit = fit(Histogram, isolated_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 iso_sdur_weights = iso_sdur_hfit.weights / maximum(iso_sdur_hfit.weights)
@@ -154,6 +147,15 @@ noGABA_path = "$(data_root)/no_GABA_model"
 noGABA_data = load("$(noGABA_path)/data.jld2")
 noGABA_timestamps = load("$(noGABA_path)/timestamps.jld2")
 
+ng_bursts = noGABA_timestamps["Spikes"]
+ng_xIdx = rand(findall(ng_bursts .!= nothing))
+ng_burst = ng_bursts[ng_xIdx]
+ng_burst_idx = round.(Int64, (ng_burst[1, 1]-100):1.0:(ng_burst[1, 1]+2500))
+
+t_ng_burst = noGABA_data["Time"][ng_burst_idx]
+t_ng_burst .-= t_ng_burst[1]
+vt_ng_burst = noGABA_data["DataArray"][ng_xIdx, ng_burst_idx]
+
 noGABA_sdur_hfit = fit(Histogram, noGABA_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 noGABA_sdur_weights = noGABA_sdur_hfit.weights / maximum(noGABA_sdur_hfit.weights)
 noGABA_sdur_edges = collect(noGABA_sdur_hfit.edges[1])[1:length(noGABA_sdur_weights)]
@@ -169,6 +171,39 @@ noGABA_bdur_edges = collect(noGABA_bdur_hfit.edges[1])[1:length(noGABA_bdur_weig
 noGABA_ibi_hfit = fit(Histogram, noGABA_data["IBIs"], LinRange(0.0, 120000, 50))
 noGABA_ibi_weights = noGABA_ibi_hfit.weights / maximum(noGABA_ibi_hfit.weights)
 noGABA_ibi_edges = collect(noGABA_ibi_hfit.edges[1])[1:length(noGABA_ibi_weights)]
+
+
+# Extract the wave model
+wave_path = "$(data_root)/wave_model"
+wave_data = load("$(wave_path)/data.jld2")
+wave_timestamps = load("$(wave_path)/timestamps.jld2")
+
+wave_bursts = wave_timestamps["Bursts"]
+wave_xIdx = rand(findall(wave_bursts .!= nothing))
+wave_burst = wave_bursts[wave_xIdx]
+wave_burst_idx = round.(Int64, (wave_burst[1, 1]-100):1.0:(wave_burst[1, 1]+2500))
+
+t_wave_burst = wave_data["Time"][wave_burst_idx]
+t_wave_burst .-= t_wave_burst[1]
+vt_wave_burst = wave_data["DataArray"][wave_xIdx, wave_burst_idx]
+
+wave_sdur_hfit = fit(Histogram, wave_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
+wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
+wave_sdur_edges = collect(wave_sdur_hfit.edges[1])[1:length(wave_sdur_weights)]
+
+wave_isi_hfit = fit(Histogram, wave_data["ISIs"], LinRange(0.0, 50.0, 50))
+wave_isi_weights = wave_isi_hfit.weights / maximum(wave_isi_hfit.weights)
+wave_isi_edges = collect(wave_isi_hfit.edges[1])[1:length(wave_isi_weights)]
+
+wave_bdur_hfit = fit(Histogram, wave_data["BurstDurs"], LinRange(0.0, 2000.0, 50))
+wave_bdur_weights = wave_bdur_hfit.weights / maximum(wave_bdur_hfit.weights)
+wave_bdur_edges = collect(wave_bdur_hfit.edges[1])[1:length(wave_bdur_weights)]
+
+wave_ibi_hfit = fit(Histogram, wave_data["IBIs"], LinRange(0.0, 120e3, 50))
+wave_ibi_weights = wave_ibi_hfit.weights / maximum(wave_ibi_hfit.weights)
+wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
+
+
 
 #%% Data testing 
 #Find out what files are good
