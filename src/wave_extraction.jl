@@ -210,23 +210,36 @@ end
 function extract_interval(timestamp_arr::Vector{Union{Matrix{T}, Nothing}}; 
         flatten = true, kwargs...
     ) where T <: Real
-    if flatten
-        #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
-        durations = T[]
-        intervals = T[]
-        for (idx, tstamps) in enumerate(timestamp_arr)
-            if !isnothing(tstamps)
-                result = extract_interval(tstamps; kwargs...)
-                if !isnothing(result)
-                    push!(durations, result[1]...)
-                    push!(intervals, result[2]...)
-                end
+    #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
+    durations = T[]
+    intervals = T[]
+    for (idx, tstamps) in enumerate(timestamp_arr)
+        if !isnothing(tstamps)
+            result = extract_interval(tstamps; kwargs...)
+            if !isnothing(result)
+                push!(durations, result[1]...)
+                push!(intervals, result[2]...)
             end
         end
-        return durations, intervals
-    else
-        println("Not implemented")
     end
+    return durations, intervals
+end
+
+#This might be an error, but this function doesn't seem to work unless you have two seperate versions
+function extract_interval(timestamp_arr::Vector{Matrix{T}}; 
+        flatten = true, kwargs...
+    ) where T <: Real
+    #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
+    durations = T[]
+    intervals = T[]
+    for (idx, tstamps) in enumerate(timestamp_arr)
+        result = extract_interval(tstamps; kwargs...)
+        if !isnothing(result)
+            push!(durations, result[1]...)
+            push!(intervals, result[2]...)
+        end
+    end
+    return durations, intervals
 end
 
 """
@@ -352,7 +365,8 @@ function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N},
     println(N)
     print("[$(now())]: Extracting the thresholds... ")
     thresholds = calculate_threshold(vm_array, dims=2)
-    
+    println("Completed")
+
     print("[$(now())]: Extracting the spikes... ")
     if N == 1
         spike_array = Vector{Bool}(vm_array .> thresholds)
@@ -388,6 +402,23 @@ function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N},
 
     return timestamps, data
 end
+
+function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N}, save_file::String;
+    tstamps_name="timestamps", data_name="data",
+    kwargs...
+) where {T, N}
+    timestamps, data = timeseries_analysis(t, vm_array; kwargs...)
+    print("[$(now())]: Saving data... ")
+    #Uncomment to use BSON file format
+    #bson("$(save_file)\\timestamps.bson", timestamps)
+    #bson("$(save_file)\\data.bson", data)
+    #Uncomment to use JLD2 to save the packages
+    save("$(save_file)/$(tstamps_name).jld2", timestamps)
+    save("$(save_file)/$(data_name).jld2", data)
+    println("Complete")
+    return timestamps, data
+end
+
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T,N,S};
     dt=1.0, kwargs...
