@@ -40,7 +40,7 @@ edges = collect(hfit.edges[1])[1:length(hfit.weights)]
 plot!(plt_b[1, 2], edges, weights)
 
 #Plot burst durations
-hfit = fit(Histogram, burst_durs, LinRange(100, 2000, 100))
+hfit = fit(Histogram, burst_durs, LinRange(100, 2000, 50))
 weights = hfit.weights / maximum(hfit.weights)
 edges = collect(hfit.edges[1])[1:length(hfit.weights)]
 plot!(plt_b[2, 1], edges, weights)
@@ -109,7 +109,7 @@ edges = collect(hfit.edges[1])[1:length(hfit.weights)]
 plot!(plt_b[1, 2], edges, weights)
 
 #Plot burst durations
-hfit = fit(Histogram, burst_durs, LinRange(100, 2000, 100))
+hfit = fit(Histogram, burst_durs, LinRange(100, 2000, 50))
 weights = hfit.weights / maximum(hfit.weights)
 edges = collect(hfit.edges[1])[1:length(hfit.weights)]
 plot!(plt_b[2, 1], edges, weights)
@@ -121,5 +121,11 @@ edges = collect(hfit.edges[1])[1:length(hfit.weights)]
 plot!(plt_b[2, 2], edges, weights)
 
 plot(plt_a, plt_b, layout=(1, 2))
+
+
+
+#%%Lets run a sequential simulation to see how little time we can get away with before out analysis is accurate
+
+
 
 
