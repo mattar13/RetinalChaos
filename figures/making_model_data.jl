@@ -1,8 +1,8 @@
 using Revise
 using RetinalChaos
 using Plots
-
-# Run 2 models
+include("figure_setup.jl")
+# Run 3 models
 #%% Model 1: Regular Baseline model 
 print("[$(now())]: Setting up parameters, conditions, and network settings... ")
 nx = ny = 64
@@ -102,15 +102,17 @@ gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
 timestamps, data = timeseries_analysis(sol, loc)
 hist_plot = plot_histograms(data, loc)
 
-#%% make a for loop that goes through some parameters (we can plot)
-param = :g_Ca
-for val in LinRange(1.0, 20.0, 20) #This is the range of values
+#%% lets make a loop that will change gCa but also lack GABA
+#gCa Spiking range = [7.0-9.0]
+param = :g_K
+for val in LinRange(4.0, 8.0, 4) #This is the range of values
      print("[$(now())]: Setting up parameters, conditions, and network settings... ")
      nx = ny = 64
      conds_dict = read_JSON("params/conds.json")
      u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
      pars_dict = read_JSON("params/params.json")
      pars_dict[param] = val
+     pars_dict[:g_GABA] = 0.0 #Inhibit GABA
      p = pars_dict |> extract_dict
      tspan = (0.0, 120e3)
      println("Complete")
@@ -122,8 +124,8 @@ for val in LinRange(1.0, 20.0, 20) #This is the range of values
      prob = SDEProblem(T_PDE, noise, warmup[end], tspan, p)
      @time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...])
      println("Completed")
-     name = "range_$(param)_$(round(val, digits = 2))"
-     loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/figure_data/$(name)"
+     name = "GABA_0_$(param)_$(round(val, digits = 2))"
+     loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/experiments/$(name)"
      if !isdir(loc) #If the directory doesn't exist, make it
           println("directory doesn't exist. Making it")
           mkdir(loc)

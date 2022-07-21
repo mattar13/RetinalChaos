@@ -1,17 +1,10 @@
-using Revise
-using PhysAnalysis, ABFReader
-using StatsBase, Statistics
-
-#%% Run the data on the physiological data that Jordan has collected
-println("[$(now())]: Opening Physiological data ...")
-target_folder = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Patching\Jordans_Patch_Data\UsuableData"
-paths = target_folder |> parseABF;
-
-#Walk through each file analyzing using timescale analysis
+#%% Walk through each file analyzing using timescale analysis
 max_spike_duration = 50.0
 max_spike_interval = 100.0
 max_burst_duration = 10e5
 max_burst_interval = 10e5
+target_folder = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Patching\Jordans_Patch_Data\UsuableData"
+paths = target_folder |> parseABF;
 
 phys_baseline = Float64[]
 phys_max = Float64[]
@@ -22,13 +15,16 @@ phys_burst_durs = Float64[]
 phys_ibis = Float64[]
 for path in paths
      print("[$(now())] Opening $path... ")
-     data_i = readABF(path,
+     data_raw = readABF(path,
           channels=["Im_scaled"],
           stimulus_name=nothing, flatten_episodic=true
      )
+     data_i = data_raw
+     #data_i = dwt_filter(data_raw, period_window=(11, 18))
+
      t = data_i.t * 1000 #Turn seconds into milliseconds
      vm_array = data_i.data_array[:, :, 1]
-     thresholds = RetinalChaos.calculate_threshold(vm_array, Z=2.0, dims=2)
+     thresholds = RetinalChaos.calculate_threshold(vm_array, Z=4.0, dims=2)
      println("Complete")
      print("[$(now())]: Extracting the spikes... ")
      spike_array = Matrix{Bool}(vm_array .> thresholds)
@@ -100,12 +96,21 @@ phys_burst_sem = std(phys_burst_durs) / sqrt(length(phys_burst_durs))
 phys_ibis_avg = sum(phys_ibis) / length(phys_ibis)
 phys_ibis_sem = std(phys_ibis) / sqrt(length(phys_ibis))
 
+#%%1) open the physiological data loaded from the single cell recordings I made
+file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
+target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
+data = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
+data - 25.0
+example_timestamps, example_data = timeseries_analysis(data.t, data.data_array[:, :, 1])
+ex_bursts = timestamps["Bursts"][1]
+
 #%% Open all of the data for the wave models
 data_root = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/figure_data"
 wave_path = "$(data_root)/wave_model"
 wave_data = load("$(wave_path)/data.jld2")
+wave_timestamps = load("$(wave_path)/timestamps.jld2")
 
-
+#%% Extract the histograms
 # Extract the histograms
 wave_sdur_hfit = fit(Histogram, wave_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
@@ -126,7 +131,7 @@ wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
 #eXTRACT THE ISOLATED PATH 
 isolated_path = "$(data_root)/isolated_model"
 isolated_data = load("$(isolated_path)/data.jld2")
-
+isolated_timestamps = load("$(isolated_path)/timestamps.jld2")
 
 iso_sdur_hfit = fit(Histogram, isolated_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 iso_sdur_weights = iso_sdur_hfit.weights / maximum(iso_sdur_hfit.weights)
@@ -147,7 +152,7 @@ iso_ibi_edges = collect(iso_ibi_hfit.edges[1])[1:length(iso_ibi_weights)]
 #eXTRACT THE NO GABA
 noGABA_path = "$(data_root)/no_GABA_model"
 noGABA_data = load("$(noGABA_path)/data.jld2")
-
+noGABA_timestamps = load("$(noGABA_path)/timestamps.jld2")
 
 noGABA_sdur_hfit = fit(Histogram, noGABA_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 noGABA_sdur_weights = noGABA_sdur_hfit.weights / maximum(noGABA_sdur_hfit.weights)
@@ -165,4 +170,70 @@ noGABA_ibi_hfit = fit(Histogram, noGABA_data["IBIs"], LinRange(0.0, 120000, 50))
 noGABA_ibi_weights = noGABA_ibi_hfit.weights / maximum(noGABA_ibi_hfit.weights)
 noGABA_ibi_edges = collect(noGABA_ibi_hfit.edges[1])[1:length(noGABA_ibi_weights)]
 
-#%% Open gradient data
+#%% Data testing 
+#Find out what files are good
+
+#Good: 1,2,3
+#=
+data_raw = readABF(paths[3],
+     channels=["Im_scaled"],
+     stimulus_name=nothing, flatten_episodic=true
+)
+
+#A data filtering makes the analysis slightly easier
+
+#Calculate the data for the spikes
+data = dwt_filter(data_raw, period_window=(11, 18)) #This is the ideal setting
+
+
+#data = data_raw
+t = data.t * 1000 #Turn seconds into milliseconds
+vm_array = data.data_array[:, :, 1]
+thresholds = RetinalChaos.calculate_threshold(vm_array, Z=4.0, dims=2)
+println("Complete")
+print("[$(now())]: Extracting the spikes... ")
+spike_array = Matrix{Bool}(vm_array .> thresholds)
+spikes = RetinalChaos.get_timestamps(spike_array, t)
+spike_durs, isi = RetinalChaos.extract_interval(spikes,
+     min_duration=1.0, min_interval=1.0,
+     max_duration=max_spike_duration, max_interval=max_spike_interval
+)
+println("Complete")
+
+print("[$(now())]: Extracting the bursts... ")
+bursts, spb = RetinalChaos.max_interval_algorithim(spikes)
+burst_durs, ibi = RetinalChaos.extract_interval(bursts[1], max_duration=max_burst_duration, max_interval=max_burst_interval, min_duration=500.0, min_interval=10e3)
+println("Complete")
+blims = round.(Int64, bursts[1] / data.dt / 1000)
+
+#
+fig, ax = plt.subplots(3, 2)
+ax[1, 1].plot(t, data_raw.data_array[1, :], c=:black)
+ax[1, 1].vlines(spikes[1][:, 1], ymin=-90.0, ymax=10.0, color=:green)
+ax[1, 1].vlines(spikes[1][:, 2], ymin=-90.0, ymax=10.0, color=:red)
+
+ax[1, 2].plot(t, data.data_array[1, :], c=:blue)
+ax[1, 2].hlines(thresholds, xmin=0.0, xmax=t[end], color=:red)
+
+sdur_hfit = fit(Histogram, spike_durs, LinRange(0.0, 50.0, 50))
+sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
+sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
+
+isi_hfit = fit(Histogram, isi, LinRange(0.0, 50.0, 50))
+isi_weights = isi_hfit.weights / maximum(isi_hfit.weights)
+isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
+
+bdur_hfit = fit(Histogram, burst_durs, LinRange(0.0, 2000.0, 50))
+bdur_weights = bdur_hfit.weights / maximum(bdur_hfit.weights)
+bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
+
+ibi_hfit = fit(Histogram, ibi, LinRange(0.0, 120e3, 50))
+ibi_weights = ibi_hfit.weights / maximum(ibi_hfit.weights)
+ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
+
+
+ax[2, 1].plot(sdur_edges, sdur_weights)
+ax[2, 2].plot(isi_edges, isi_weights)
+ax[3, 1].plot(bdur_edges, bdur_weights)
+ax[3, 2].plot(ibi_edges, ibi_weights)
+=#

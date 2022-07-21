@@ -1,34 +1,59 @@
 #=
 =#
 using Revise
+using Dates
 using RetinalChaos
-using PhysAnalysis, ABFReader
+using StatsBase, Statistics
+using ePhys
+import ePhys: dwt_filter
 include("figure_setup.jl")
 include("opening_data.jl")
-#%%We have to open 3 different datasets
 
-#1) open the physiological data loaded from the single cell recordings I made
-file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
-target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
-data = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
-data - 25.0
-timestamps, _ = timeseries_analysis(data.t, data.data_array[:, :, 1])
-bursts = timestamps["Bursts"][1]
+#%%Extract data for the bursts 
+ex_bursts[1, 1]
+t_phys_burst = ex_bursts[1, 1]-100:1.0:ex_bursts[1, 1]+2500
+phys_burst_idxs = round.(Int64, t_phys_burst ./ data.dt)
 
-t_phys = bursts[2, 1]-1000:1.0:bursts[2, 1]+119e3
-idxs = round.(Int64, t_phys ./ data.dt)
-t_phys = t_phys .- t_phys[1]
+t_phys_burst = t_phys_burst .- t_phys_burst[1]
+vt_phys_burst = data.data_array[1, phys_burst_idxs, 1]
 
 #2) Open the isolated
-iso_arr = isolated_data["DataArray"]
-t_iso = 1:size(iso_arr, 2)
-vt_iso = iso_arr[rand(1:size(iso_arr, 1)), :]
+#Eliminate all arrays where there were no bursts
+iso_bursts = isolated_timestamps["Bursts"]
+iso_xIdx = rand(findall(iso_bursts .!= nothing))
+iso_burst = iso_bursts[iso_xIdx]
+iso_burst_idx = round.(Int64, (iso_burst[1, 1]-100):1.0:(iso_burst[1, 1]+2500))
 
-#3) Open the wave model
-reg_arr = wave_data["DataArray"]
-t_reg = 1:size(reg_arr, 2)
-vt_reg = reg_arr[rand(1:size(reg_arr, 1)), :]
-t_reg = t_reg ./ 1000.0
+t_iso_burst = isolated_data["Time"][iso_burst_idx]
+t_iso_burst .-= t_iso_burst[1]
+vt_iso_burst = isolated_data["DataArray"][iso_xIdx, iso_burst_idx]
+
+#3) Open the noGABA data
+ng_bursts = noGABA_timestamps["Spikes"]
+ng_xIdx = rand(findall(ng_bursts .!= nothing))
+ng_burst = ng_bursts[ng_xIdx]
+ng_burst_idx = round.(Int64, (ng_burst[1, 1]-100):1.0:(ng_burst[1, 1]+2500))
+
+t_ng_burst = noGABA_data["Time"][ng_burst_idx]
+t_ng_burst .-= t_ng_burst[1]
+vt_ng_burst = noGABA_data["DataArray"][ng_xIdx, ng_burst_idx]
+
+#4) Open the wave model
+wave_bursts = wave_timestamps["Bursts"]
+wave_xIdx = rand(findall(wave_bursts .!= nothing))
+wave_burst = wave_bursts[wave_xIdx]
+wave_burst_idx = round.(Int64, (wave_burst[1,1]-100):1.0:(wave_burst[1,1]+2500))
+
+t_wave_burst = wave_data["Time"][wave_burst_idx]
+t_wave_burst .-= t_wave_burst[1]
+vt_wave_burst = wave_data["DataArray"][wave_xIdx, wave_burst_idx]
+
+fig, ax = plt.subplots(4)
+ax[1].plot(t_phys_burst, vt_phys_burst)
+ax[2].plot(t_iso_burst, vt_iso_burst)
+ax[3].plot(t_ng_burst, vt_ng_burst)
+ax[4].plot(t_wave_burst, vt_wave_burst)
+#We should load some simulation data from another place
 
 #%%
 print("[$(now())]: Plotting... ")
@@ -48,7 +73,7 @@ gs = fig4.add_gridspec(5, 2,
 
 axA = fig4.add_subplot(py"""$(gs)[0, :]""")
 ylabel("Vm (mV)")
-axA.plot(t_phys, data.data_array[1, idxs, 1], c=:green, lw=lw_standard)
+axA.plot(t_phys, vt_phys, c=:green, lw=lw_standard)
 axA.xaxis.set_visible(false) #Turn off the bottom axis
 axA.spines["bottom"].set_visible(false)
 axA.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -130,13 +155,13 @@ axEL2.spines["bottom"].set_visible(false)
 axEL3 = fig4.add_subplot(gsEL[3, 1])
 axEL3.plot(wave_ibi_edges / 1000, wave_ibi_weights, c=:red, lw=lw_standard)
 
-axEL3.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axEL3.annotate("B", (0.01, 0.80), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axEL3.annotate("C", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axEL3.annotate("D", (0.01, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axEL3.annotate("E", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axEL3.annotate("F", (0.51, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
-axEL3.annotate("G", (0.51, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=30.0, fontweight="bold")
+axEL3.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axEL3.annotate("B", (0.01, 0.80), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axEL3.annotate("C", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axEL3.annotate("D", (0.01, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axEL3.annotate("E", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axEL3.annotate("F", (0.51, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axEL3.annotate("G", (0.51, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
 
 #%%

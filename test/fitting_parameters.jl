@@ -1,6 +1,6 @@
 using Revise
-using RetinalChaos, NeuroPhys
-
+using RetinalChaos, ePhys
+using Statistics
 #These parameters are the most likely to need to be fitted: 
 #1) gGABA = [0.7 -> 1.0]
 #2) gACh = [0.1 -> 0.215]
@@ -8,8 +8,23 @@ using RetinalChaos, NeuroPhys
 #3) gK = [3.0 -> 5.0]
 #4) μ = [0.7-0.8]
 
-#How does each parameter change the dataspace
+#run an ensemble problem on the example problem
+#Import parameters, conditions, and set the timespan
+conds_dict = read_JSON("params\\conds.json")
+u0 = conds_dict |> extract_dict
+pars_dict = read_JSON("params\\params.json")
+p = pars_dict |> extract_dict
+tspan = (0.0, 300e3)
+prob = SDEProblem(T_SDE, noise, u0, tspan, p)
+@time sol = solve(prob, SOSRI(), saveat = 1.0, progress = true, progress_steps = 1); #So far the best method is SOSRI
+t = sol.t
+vt = sol(t, idxs=1) |> Array
+timestamps, data = timeseries_analysis(t, vt)
 
+fig, ax = plt.subplots(2)
+ax[1].plot()
+ax[2].plot(t, vt)
+ax[2].hlines(thresholds, xmin=0.0, xmax=t[end])
 
 #%% Supplemental figure. Analysis of parameter change
 test_rng = range(0.5, 2.0, length=100) #this ranges from halving the parameter to doubling it
