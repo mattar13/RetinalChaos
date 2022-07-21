@@ -134,27 +134,18 @@ function plot_histograms(data, loc::String; name="histogram_plot")
     return hist_plot
 end
 
-function add_direction(ax, data_x, data_y;
-    start_rng::Int64=1, end_rng::Union{Int64,Nothing}=nothing,
-    color=:black,
-    delta::Int64=100, nArrows::Int64=50,
-    width=0.02, headwidth=7.0, headaxislength=5.0
-) where {T}
-    if isnothing(end_rng)
-        rng = round.(Int64, LinRange(start_rng, length(data_x) - delta, nArrows))
-    else
-        rng = round.(Int64, LinRange(start_rng, end_rng, nArrows))
-    end
-    for i in rng
-        x = data_x[i]
-        y = data_y[i]
-        dx = data_x[i+delta] - data_x[i]
-        dy = data_y[i+delta] - data_y[i]
-        #axAR.plot([x, x+dx], [y, y+dy], marker = "o", lw = 0.0, c = :blue)
-        ax.quiver(x, y, dx, dy, color=color, angles="xy", pivot="mid",
-            width=width, headwidth=headwidth, headaxislength=headaxislength)
-    end
+function add_direction(ax, x, y, dx, dy; color=:black)
+    r = sqrt.(dx .^ 2 .+ dy.^ 2)
+    ax.quiver(x, y, dx./r, dy./r,
+        angles="xy",
+        #scale=2.0, 
+        #scale_units="none", 
+        #units="xy", 
+        color=color, pivot="mid",
+        width=0.05, headwidth=3.0, headlength=5.0, headaxislength=4.5
+    )
 end
+
 #%% If we want to run each script by itself use this
 #include("making_figure1.jl")
 #include("making_figure2.jl")
