@@ -3,7 +3,8 @@
 """
     calculate_threshold(sol::DiffEqBase.AbstractODESolution, Z::Int64)
 
-Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation
+Finds the threshold of a trace by calculating the average and then adding the 4x the standard deviation. 
+If using a differential solution, make sure dt is set, otherwise the standard deviation will be unevenly sampled
 """
 function calculate_threshold(vm_arr::AbstractArray; Z = 4, dims = -1)
     if dims == -1
@@ -362,23 +363,21 @@ function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N},
     max_burst_duration::Float64=10e5, max_burst_interval = 10e5,
     verbose=false
 ) where {T, N}
-    println(N)
+    #println(N)
     print("[$(now())]: Extracting the thresholds... ")
-    thresholds = calculate_threshold(vm_array, dims=2)
-    println("Completed")
-
-    print("[$(now())]: Extracting the spikes... ")
-    if N == 1
+    if N==1
+        thresholds = calculate_threshold(vm_array)
         spike_array = Vector{Bool}(vm_array .> thresholds)
+        #return thresholds
     elseif N == 2
+        thresholds = calculate_threshold(vm_array, dims=2)
         spike_array = Matrix{Bool}(vm_array .> thresholds)
-    else
-        throw("Wrong array type")
     end
+    #println(spike_array |> typeof)
+    println("Completed")
 
     spikes = get_timestamps(spike_array, t)
     spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
-    println("Complete")
 
     print("[$(now())]: Extracting the bursts... ")
     bursts, spb = max_interval_algorithim(spikes)
