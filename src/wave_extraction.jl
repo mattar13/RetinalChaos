@@ -207,18 +207,20 @@ function extract_interval(timestamps::Matrix{T};
     return durations[min_duration .< durations .< max_duration], intervals[min_interval .< intervals .< max_interval]
 end
 
-function extract_interval(timestamp_arr::Vector{Matrix{T}}; 
+function extract_interval(timestamp_arr::Vector{Union{Matrix{T}, Nothing}}; 
         flatten = true, kwargs...
     ) where T <: Real
     if flatten
         #In this case we don't necessarily need to preserve the structure data and can collapse all entries into one
         durations = T[]
         intervals = T[]
-        for idx in 1:length(timestamp_arr)
-            result = extract_interval(timestamp_arr[idx]; kwargs...)
-            if !isnothing(result)
-                push!(durations, result[1]...)
-                push!(intervals, result[2]...)
+        for (idx, tstamps) in enumerate(timestamp_arr)
+            if !isnothing(tstamps)
+                result = extract_interval(tstamps; kwargs...)
+                if !isnothing(result)
+                    push!(durations, result[1]...)
+                    push!(intervals, result[2]...)
+                end
             end
         end
         return durations, intervals
@@ -324,14 +326,17 @@ function max_interval_algorithim(timestamps::Matrix{T};
 end
 
 function max_interval_algorithim(timestamp_arr::Vector{Matrix{T}}; kwargs...) where T <: Real
-    bursts = Matrix{T}[]
-    spd = T[]
+    bursts = Union{Matrix{T}, Nothing}[]
+    spd = Union{T, Nothing}[]
     for idx in 1:length(timestamp_arr)
         if isassigned(timestamp_arr, idx)
             result = max_interval_algorithim(timestamp_arr[idx]; kwargs...)
             if !isnothing(result)
                 push!(bursts, result[1])
                 push!(spd, result[2]...)
+            else
+                push!(bursts, nothing)
+                push!(spd, nothing)
             end
         end
     end
