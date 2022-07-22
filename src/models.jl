@@ -93,8 +93,8 @@ include("1D_models.jl") #Includes all 1D models
 include("2D_models.jl") #Includes all 2D models
 
 #Noise models
-noise(du::Array{T,1}, u::Array{T,1}, p, t::T) where {T<:Real} = du[end] = p[end]
-noise(du::Array{T,3}, u::Array{T,3}, p, t::T) where {T<:Real} = du[:, :, end] .= p[end]
-noise(du::CuArray{T,3}, u::CuArray{T,3}, p, t::T) where {T<:Real} = du[:, :, end] .= p[end]
+noise(du::Array{T2,1}, u::Array{T2,1}, p, t::T) where {T<:Real, T2} = du[end] = p[end]
+noise(du::Array{T2,3}, u::Array{T2,3}, p, t::T) where {T<:Real, T2} = du[:, :, end] .= p[end]
+#noise(du::CuArray{T,3}, u::CuArray{T,3}, p, t::T) where {T<:Real, T2} = du[:, :, end] .= p[end]
 
 lansdell_noise(du, u, p, t) = du[:, :, end] .= p[end]
