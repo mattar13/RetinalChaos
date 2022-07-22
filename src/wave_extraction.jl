@@ -357,12 +357,13 @@ function max_interval_algorithim(timestamp_arr::Vector{Matrix{T}}; kwargs...) wh
     return bursts, spd
 end
 
-function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N},
-    Z::Int64=4, 
+function timeseries_analysis(t, vm_array;
+    timestamps_only = false, Z::Int64=4, 
     max_spike_duration::Float64=50.0, max_spike_interval = 100,
     max_burst_duration::Float64=10e5, max_burst_interval = 10e5,
     verbose=false
-) where {T, N}
+) #where {T, N}
+    N = length(size(vm_array))
     #println(N)
     print("[$(now())]: Extracting the thresholds... ")
     if N==1
@@ -377,29 +378,38 @@ function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N},
     println("Completed")
 
     spikes = get_timestamps(spike_array, t)
-    spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+    res = max_interval_algorithim(spikes)
+    #println(res)
+    #println(isnothing(res))
+    if isnothing(res)
+        bursts = spb = nothing
+    else
+        bursts, spb = res
+    end
 
-    print("[$(now())]: Extracting the bursts... ")
-    bursts, spb = max_interval_algorithim(spikes)
-    burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval = max_burst_interval)
-    println("Complete")
     timestamps = Dict(
         "Spikes" => spikes,
         "Bursts" => bursts
     )
-
-    data = Dict(
-        "Time" => t,
-        "DataArray" => vm_array,
-        "Thresholds" => thresholds,
-        "SpikeDurs" => spike_durs,
-        "ISIs" => isi,
-        "BurstDurs" => burst_durs,
-        "IBIs" => ibi,
-        "SpikesPerBurst" => spb
-    )
-
-    return timestamps, data
+    if timestamps_only
+        return timestamps
+    else
+        print("[$(now())]: Extracting the Data... ")
+        burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval=max_burst_interval)
+        spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
+        data = Dict(
+            "Time" => t,
+            "DataArray" => vm_array,
+            "Thresholds" => thresholds,
+            "SpikeDurs" => spike_durs,
+            "ISIs" => isi,
+            "BurstDurs" => burst_durs,
+            "IBIs" => ibi,
+            "SpikesPerBurst" => spb
+        )
+        println("Complete")
+        return timestamps, data
+    end
 end
 
 function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N}, save_file::String;
