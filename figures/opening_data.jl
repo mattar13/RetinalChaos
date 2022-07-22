@@ -100,9 +100,9 @@ phys_ibis_sem = std(phys_ibis) / sqrt(length(phys_ibis))
 file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
 target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
 data = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
-data - 25.0
+#data - 25.0
 example_timestamps, example_data = timeseries_analysis(data.t, data.data_array[:, :, 1])
-ex_bursts = timestamps["Bursts"][1]
+ex_bursts = example_timestamps["Bursts"][1]
 
 t_phys_burst = ex_bursts[1, 1]-100:1.0:ex_bursts[1, 1]+2500
 phys_burst_idxs = round.(Int64, t_phys_burst ./ data.dt)
