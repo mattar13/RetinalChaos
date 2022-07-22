@@ -1,5 +1,5 @@
 #######################Fitting the models######################
-
+using DiffEqBase
 """
 This function normalizes values to a range between values
 """
@@ -32,7 +32,7 @@ usage:
     \n Y = observed data
     \n loss = MSE(Ŷ, Y)
 """
-function MSE(Ŷ, Y)
+function MeanSquaredError(Ŷ, Y) where {T}
     n = length(Y)
     sum = 0.0
     for i in 1:n
@@ -41,6 +41,47 @@ function MSE(Ŷ, Y)
         sum += squared_diff
     end
     sum/n
+end
+
+
+function MeanSquaredErrorSOL(Ŷ::T, sol; region=(-100, 2500)) where {T}
+    t = sol.t
+    vt = sol(t, idxs=1)
+    timestamps = timeseries_analysis(t, vt, timestamps_only=true) #We can use a special version that only reports timestamps
+    #println(timestamps)
+    if !isnothing(timestamps["Spikes"])
+        test_burst_idx = round.(Int64, timestamps["Spikes"][1, 1]+region[1]:1.0:timestamps["Spikes"][1, 1]+region[2])
+        Y = sol(test_burst_idx, idxs=1) |> Array
+        MSE = MeanSquaredError(Ŷ, Y) #This is a point by point comparison between the traces
+        return MSE
+    else
+        return Inf #We really don't want these results
+    end
+end
+
+"""
+Can we write a function that creates a gradient? 
+"""
+
+function loss_func(Ŷ, p; region=(-100, 2500))
+    conds_dict = read_JSON("params\\conds.json")
+    u0 = conds_dict |> extract_dict
+    tspan = (0.0, 300e3)
+    prob = SDEProblem(T_SDE, noise, u0, tspan, p)
+    @time sol = solve(prob, SOSRI(), saveat=1.0) #So far the best method is SOSRI
+    MSE = MeanSquaredErrorSOL(Ŷ, sol)
+    return MSE
+    #vt = copy(sol(sol.t, idxs=1) |> Array)
+    #timestamps = timeseries_analysis(sol.t, vt, timestamps_only = true) #We can use a special version that only reports timestamps
+    #println(timestamps)
+    #if !isnothing(timestamps["Spikes"])
+    #    test_burst_idx = round.(Int64, timestamps["Spikes"][1, 1]+region[1]:1.0:timestamps["Spikes"][1, 1]+region[2])
+    #    Y = sol(test_burst_idx, idxs = 1) |> Array
+    #    MSE = MeanSquaredError(Ŷ, Y) #This is a point by point comparison between the traces
+    #    return MSE
+    #else
+    #    return Inf #We really don't want these results
+    #end
 end
 
 """
@@ -64,9 +105,6 @@ function lagged_loss(Ŷ, Y; accuracy = 1000, weights = [1, 1])
     lag = t_measure[argmin(loss_list)] == 0.0 ? 1 : t_measure[argmin(loss_list)]  * 1000
     minimum(loss_list), lag
 end
-
-
-
 
 function evolve(prob, d_dict, Y_norm; 
         alg = SOSRI(), abstol = 2e-1, reltol = 2e-1, maxiters = 1e7, saveat = 1.0,
