@@ -45,8 +45,8 @@ end
 
 
 function MeanSquaredErrorSOL(Ŷ::T, sol; region=(-100, 2500)) where {T}
-    timestamps = timeseries_analysis(sol.t, sol(t, idxs=1), timestamps_only=true) #We can use a special version that only reports timestamps
-    println(timestamps)
+    timestamps = timeseries_analysis(sol.t, sol(sol.t, idxs=1), timestamps_only=true) #We can use a special version that only reports timestamps
+    #println(timestamps)
     if !isempty(timestamps["Spikes"])
         test_burst_idx = round.(Int64, timestamps["Spikes"][1, 1]+region[1]:1.0:timestamps["Spikes"][1, 1]+region[2])
         Y = sol(test_burst_idx, idxs=1)
@@ -61,12 +61,16 @@ end
 Can we write a function that creates a gradient? 
 """
 
-function loss_func(Ŷ, p; region=(-100, 2500))
+function loss_func(Ŷ, p; region=(-100, 2500), verbose=false)
     conds_dict = read_JSON("params\\conds.json")
     u0 = conds_dict |> extract_dict
     tspan = (0.0, 300e3)
     prob = SDEProblem(T_SDE, noise, u0, tspan, p)
-    @time sol = solve(prob, SOSRI(), saveat=1.0) #So far the best method is SOSRI
+    if verbose
+        @time sol = solve(prob, SOSRI(), saveat=1.0) #So far the best method is SOSRI
+    else
+        sol = solve(prob, SOSRI(), saveat=1.0) #So far the best method is SOSRI
+    end
     MSE = MeanSquaredErrorSOL(Ŷ, sol)
     return MSE
     #vt = copy(sol(sol.t, idxs=1) |> Array)
