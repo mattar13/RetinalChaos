@@ -365,7 +365,9 @@ function timeseries_analysis(t, vm_array;
 ) #where {T, N}
     N = length(size(vm_array))
     #println(N)
-    print("[$(now())]: Extracting the thresholds... ")
+    if verbose
+        print("[$(now())]: Extracting the thresholds... ")
+    end
     if N==1
         thresholds = calculate_threshold(vm_array)
         spike_array = Vector{Bool}(vm_array .> thresholds)
@@ -375,8 +377,9 @@ function timeseries_analysis(t, vm_array;
         spike_array = Matrix{Bool}(vm_array .> thresholds)
     end
     #println(spike_array |> typeof)
-    println("Completed")
-
+    if verbose
+        println("Completed")
+    end
     spikes = get_timestamps(spike_array, t)
     res = max_interval_algorithim(spikes)
     #println(res)
@@ -394,7 +397,9 @@ function timeseries_analysis(t, vm_array;
     if timestamps_only
         return timestamps
     else
-        print("[$(now())]: Extracting the Data... ")
+        if verbose
+            print("[$(now())]: Extracting the Data... ")
+        end
         burst_durs, ibi = extract_interval(bursts, max_duration=max_burst_duration, max_interval=max_burst_interval)
         spike_durs, isi = extract_interval(spikes, max_duration=max_spike_duration, max_interval=max_spike_interval)
         data = Dict(
@@ -407,24 +412,31 @@ function timeseries_analysis(t, vm_array;
             "IBIs" => ibi,
             "SpikesPerBurst" => spb
         )
-        println("Complete")
+        if verbose
+            println("Complete")
+        end
         return timestamps, data
     end
 end
 
 function timeseries_analysis(t::AbstractArray{T}, vm_array::Array{T, N}, save_file::String;
     tstamps_name="timestamps", data_name="data",
+    verbose = false, 
     kwargs...
 ) where {T, N}
     timestamps, data = timeseries_analysis(t, vm_array; kwargs...)
-    print("[$(now())]: Saving data... ")
+    if verbose
+        print("[$(now())]: Saving data... ")
+    end
     #Uncomment to use BSON file format
     #bson("$(save_file)\\timestamps.bson", timestamps)
     #bson("$(save_file)\\data.bson", data)
     #Uncomment to use JLD2 to save the packages
     save("$(save_file)/$(tstamps_name).jld2", timestamps)
     save("$(save_file)/$(data_name).jld2", data)
-    println("Complete")
+    if verbose
+        println("Complete")
+    end
     return timestamps, data
 end
 
