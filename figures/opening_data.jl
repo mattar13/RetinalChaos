@@ -104,14 +104,21 @@ data = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_
 example_timestamps, example_data = timeseries_analysis(data.t, data.data_array[:, :, 1])
 ex_bursts = example_timestamps["Bursts"][1]
 
-t_phys_burst = ex_bursts[1, 1]-100:1.0:ex_bursts[1, 1]+2500
+t_phys_burst = ex_bursts[3, 1]-100:1.0:ex_bursts[3, 1]+2500
 phys_burst_idxs = round.(Int64, t_phys_burst ./ data.dt)
 
 t_phys_burst = t_phys_burst .- t_phys_burst[1]
 vt_phys_burst = data.data_array[1, phys_burst_idxs, 1]
 
+t_phys_IBI = ex_bursts[2, 1]-1000:1.0:ex_bursts[2, 1]+80e3
+phys_IBI_idxs = round.(Int64, t_phys_IBI ./ data.dt)
+
+t_phys_IBI = t_phys_IBI .- t_phys_IBI[1]
+vt_phys_IBI = data.data_array[1, phys_IBI_idxs, 1]
+
 #%% Open all of the data for the wave models
 data_root = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/figure_data"
+region = (-100, 2500)
 #eXTRACT THE ISOLATED PATH 
 isolated_path = "$(data_root)/isolated_model"
 isolated_data = load("$(isolated_path)/data.jld2")
@@ -125,6 +132,11 @@ iso_burst_idx = round.(Int64, (iso_burst[1, 1]-100):1.0:(iso_burst[1, 1]+2500))
 t_iso_burst = isolated_data["Time"][iso_burst_idx]
 t_iso_burst .-= t_iso_burst[1]
 vt_iso_burst = isolated_data["DataArray"][iso_xIdx, iso_burst_idx]
+
+iso_IBI_idx = round.(Int64, (iso_burst[1, 1]-1000):1.0:(iso_burst[1, 1]+80e3))
+t_iso_IBI = isolated_data["Time"][iso_IBI_idx]
+t_iso_IBI .-= t_iso_IBI[1]
+vt_iso_IBI = isolated_data["DataArray"][iso_xIdx, iso_IBI_idx]
 
 iso_sdur_hfit = fit(Histogram, isolated_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 iso_sdur_weights = iso_sdur_hfit.weights / maximum(iso_sdur_hfit.weights)
@@ -156,6 +168,11 @@ t_ng_burst = noGABA_data["Time"][ng_burst_idx]
 t_ng_burst .-= t_ng_burst[1]
 vt_ng_burst = noGABA_data["DataArray"][ng_xIdx, ng_burst_idx]
 
+ng_IBI_idx = round.(Int64, (ng_burst[1, 1]-1000):1.0:(ng_burst[1, 1]+80e3))
+t_ng_IBI = noGABA_data["Time"][ng_IBI_idx]
+t_ng_IBI .-= t_ng_IBI[1]
+vt_ng_IBI = noGABA_data["DataArray"][ng_xIdx, ng_IBI_idx]
+
 noGABA_sdur_hfit = fit(Histogram, noGABA_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 noGABA_sdur_weights = noGABA_sdur_hfit.weights / maximum(noGABA_sdur_hfit.weights)
 noGABA_sdur_edges = collect(noGABA_sdur_hfit.edges[1])[1:length(noGABA_sdur_weights)]
@@ -186,6 +203,11 @@ wave_burst_idx = round.(Int64, (wave_burst[1, 1]-100):1.0:(wave_burst[1, 1]+2500
 t_wave_burst = wave_data["Time"][wave_burst_idx]
 t_wave_burst .-= t_wave_burst[1]
 vt_wave_burst = wave_data["DataArray"][wave_xIdx, wave_burst_idx]
+
+wave_IBI_idx = round.(Int64, (wave_burst[1, 1]-1000):1.0:(wave_burst[1, 1]+80e3))
+t_wave_IBI = wave_data["Time"][wave_IBI_idx]
+t_wave_IBI .-= t_wave_IBI[1]
+vt_wave_IBI = wave_data["DataArray"][wave_xIdx, wave_IBI_idx]
 
 wave_sdur_hfit = fit(Histogram, wave_data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
