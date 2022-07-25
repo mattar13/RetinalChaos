@@ -2,7 +2,7 @@
 #For guidance, Nature's standard figure sizes are 89 mm wide (single column) and 183 mm wide (double column). 
 #The full depth of a Nature page is 247 mm. 
 #Figures can also be a column-and-a-half where necessary (120–136 mm).
-cm = 1 / 2.54
+cm_conversion = 1 / 2.54
 
 #Authors should check (using a reducing photocopier) that, 
 #at the smallest possible size, lettering remains readable and lines are sufficiently (but not too) heavy to print 
