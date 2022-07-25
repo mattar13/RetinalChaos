@@ -61,6 +61,10 @@ export codim_map
 
 using RecipesBase #I want to avoid using thisPlots
 include("plotting.jl")
+
+
+using ForwardDiff
+include("fitting.jl")
 #export animate_solution
 
 #=
