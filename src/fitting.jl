@@ -1,28 +1,7 @@
 #######################Fitting the models######################
 using DiffEqBase
-"""
-This function normalizes values to a range between values
-"""
-function normalize(a; old_rng = (nothing, nothing), rng = (0, 1))
 
-    if isnothing(old_rng[1])
-        min = minimum(a)
-    else
-        min = old_rng[1]
-    end
 
-    if isnothing(old_rng[2])
-        max = maximum(a)
-    else
-        max = old_rng[2]
-    end
-
-    norm = max - min;
-    normed = (a .- min) ./ norm;
-    x, y = rng
-    scale = y - x;
-    (normed * scale) .+ x;
-end
 
 """
 This calculated the Mean squared error or the L2 Norm
@@ -40,7 +19,7 @@ function MeanSquaredError(Ŷ, Y) where {T}
         squared_diff = diff^2
         sum += squared_diff
     end
-    sum/n
+    sum / n
 end
 
 
@@ -61,7 +40,8 @@ end
 Can we write a function that creates a gradient? 
 """
 
-function loss_func(Ŷ, p; region=(-100, 2500), verbose=false)
+function MSELoss(Ŷ, p; verbose=false, kwargs...)
+    #println(p)
     conds_dict = read_JSON("params\\conds.json")
     u0 = conds_dict |> extract_dict
     tspan = (0.0, 300e3)
@@ -71,17 +51,44 @@ function loss_func(Ŷ, p; region=(-100, 2500), verbose=false)
     else
         sol = solve(prob, SOSRI(), saveat=1.0) #So far the best method is SOSRI
     end
-    MSE = MeanSquaredErrorSOL(Ŷ, sol)
+    MSE = MeanSquaredErrorSOL(Ŷ, sol; kwargs...)
     return MSE
-    #vt = copy(sol(sol.t, idxs=1) |> Array)
-    #timestamps = timeseries_analysis(sol.t, vt, timestamps_only = true) #We can use a special version that only reports timestamps
+end
+
+"""
+Can we write a function that creates a gradient? 
+"""
+
+function IntervalFunc(Ŷ, p; verbose=true, mode = :All, kwargs...)
+
+    conds_dict = read_JSON("params\\conds.json")
+    u0 = conds_dict |> extract_dict
+    tspan = (0.0, 300e3)
+    prob = ODEProblem(T_ODE, u0, tspan, p)
+    if verbose
+        @time sol = solve(prob,  saveat=1.0) #So far the best method is SOSRI
+    else
+        sol = solve(prob, saveat=1.0) #So far the best method is SOSRI
+    end
+    timestamps = timeseries_analysis(sol.t, sol(sol.t, idxs=1), timestamps_only=true) #We can use a special version that only reports timestamps
     #println(timestamps)
-    #if !isnothing(timestamps["Spikes"])
-    #    test_burst_idx = round.(Int64, timestamps["Spikes"][1, 1]+region[1]:1.0:timestamps["Spikes"][1, 1]+region[2])
-    #    Y = sol(test_burst_idx, idxs = 1) |> Array
-    #    MSE = MeanSquaredError(Ŷ, Y) #This is a point by point comparison between the traces
-    #    return MSE
-    #else
-    #    return Inf #We really don't want these results
-    #end
+    spike_durs, ISIs = extract_interval(timestamps["Spikes"])
+    burst_durs, IBIs = extract_interval(timestamps["Bursts"])
+    burst_dur = sum(burst_durs) / length(burst_durs)
+    spike_dur = sum(spike_durs) / length(spike_durs)
+    ISI = sum(ISIs) / length(ISIs)
+    IBI = sum(IBIs) / length(IBIs)
+    if mode == :SpikeDuration
+        return spike_dur
+    elseif mode == :SpikeInterval
+        return ISI
+    elseif mode == :BurstDuration 
+        return burst_dur
+    elseif mode == :BurstInterval
+        return IBI
+    elseif mode == :All
+        return [spike_dur-Ŷ[1], ISI-Ŷ[2], burst_dur-Ŷ[3], IBI-Ŷ[4]]
+    else
+        throw("Incorrect setting")
+    end
 end
