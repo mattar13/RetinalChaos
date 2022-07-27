@@ -47,6 +47,8 @@ export Binomial, Histogram, fit
 
 
 #==========================================Extracting wave and events==========================================#
+using ePhys #Export the wave extraction utilities
+
 include("wave_extraction.jl") #Export functions for wave extraction
 export calculate_threshold
 export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
@@ -61,11 +63,15 @@ export codim_map
 
 using RecipesBase #I want to avoid using thisPlots
 include("plotting.jl")
+#export animate_solution
 
 
 using ForwardDiff
+import ForwardDiff as FD
+export FD
 include("fitting.jl")
-#export animate_solution
+export MeanSquaredErrorSOL, MeanSquaredError 
+export LossFunc, IntervalFunc
 
 #=
 using Telegram, Telegram.API, ConfigEnv
@@ -84,26 +90,5 @@ using Statistics, StatsBase
 using Images, ImageSegmentation
 check_version() = println("Version 1.0")
 ######################UTILITIES######################
-
-include("plotting.jl")
-export Plots
-#Exporting backends
-export gr, font
-#exporting main plot types
-export plot, plot!, heatmap!, heatmap, scatter!, contour, contour!
-#export minor plotting types
-export hline!, vline!
-#Export annotations and additions
-export title!, annotate!, grid, stroke, mm
-#Export some animations
-export @animate, gif, mov
-#Export save figure
-export savefig
-#Import some other plotting utilities
-using Colors, ColorSchemes, LaTeXStrings, StatsPlots
-export colormatch, colormap, colorschemes
-
-include("logging.jl")
-export dotenv, env_location, BotNotify, BotFigure
 =#
 end
