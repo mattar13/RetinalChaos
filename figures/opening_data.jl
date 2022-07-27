@@ -19,26 +19,9 @@ for path in paths
           channels=["Im_scaled"],
           stimulus_name=nothing, flatten_episodic=true
      )
-     data_i = data_raw
      #data_i = dwt_filter(data_raw, period_window=(11, 18))
-
-     t = data_i.t * 1000 #Turn seconds into milliseconds
-     vm_array = data_i.data_array[:, :, 1]
-     thresholds = RetinalChaos.calculate_threshold(vm_array, Z=4.0, dims=2)
-     println("Complete")
-     print("[$(now())]: Extracting the spikes... ")
-     spike_array = Matrix{Bool}(vm_array .> thresholds)
-     spikes = RetinalChaos.get_timestamps(spike_array, t)
-     spike_durs, isi = RetinalChaos.extract_interval(spikes,
-          min_duration=1.0, min_interval=1.0,
-          max_duration=max_spike_duration, max_interval=max_spike_interval
-     )
-     println("Complete")
-
-     print("[$(now())]: Extracting the bursts... ")
-     bursts = RetinalChaos.max_interval_algorithim(spikes)
-     burst_durs, ibi = RetinalChaos.extract_interval(bursts[1], max_duration=max_burst_duration, max_interval=max_burst_interval, min_duration=1000.0)
-     println("Complete")
+     data_i = data_raw
+     timestamps, data = timeseries_analysis(data_i)
 
      push!(
           phys_baseline,
@@ -49,11 +32,11 @@ for path in paths
      push!(phys_max, maximum(data_i))
      #println(min_phys)
 
-     push!(phys_spike_durs, (spike_durs)...)
-     push!(phys_isis, (isi)...)
+     push!(phys_spike_durs, data["SpikeDurs"]...)
+     push!(phys_isis, data["ISIs"]...)
+     push!(phys_burst_durs, data["BurstDurs"]...)
+     push!(phys_ibis, data["IBIs"]...)
 
-     push!(phys_burst_durs, (burst_durs)...)
-     push!(phys_ibis, (ibi)...)
      println("Success")
 end
 
@@ -101,7 +84,7 @@ file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
 target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
 data = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
 #data - 25.0
-example_timestamps, example_data = timeseries_analysis(data.t, data.data_array[:, :, 1])
+example_timestamps, example_data = timeseries_analysis(data)
 ex_bursts = example_timestamps["Bursts"][1]
 
 t_phys_burst = ex_bursts[3, 1]-100:1.0:ex_bursts[3, 1]+2500
@@ -125,7 +108,8 @@ isolated_data = load("$(isolated_path)/data.jld2")
 isolated_timestamps = load("$(isolated_path)/timestamps.jld2")
 
 iso_bursts = isolated_timestamps["Bursts"]
-iso_xIdx = rand(findall(iso_bursts .!= nothing))
+#iso_xIdx = rand(findall(iso_bursts .!= nothing))
+iso_xIdx = 2476
 iso_burst = iso_bursts[iso_xIdx]
 iso_burst_idx = round.(Int64, (iso_burst[1, 1]-100):1.0:(iso_burst[1, 1]+2500))
 
@@ -160,7 +144,8 @@ noGABA_data = load("$(noGABA_path)/data.jld2")
 noGABA_timestamps = load("$(noGABA_path)/timestamps.jld2")
 
 ng_bursts = noGABA_timestamps["Spikes"]
-ng_xIdx = rand(findall(ng_bursts .!= nothing))
+#ng_xIdx = rand(findall(ng_bursts .!= nothing))
+ng_xIdx = 3912
 ng_burst = ng_bursts[ng_xIdx]
 ng_burst_idx = round.(Int64, (ng_burst[1, 1]-100):1.0:(ng_burst[1, 1]+2500))
 
@@ -196,7 +181,8 @@ wave_data = load("$(wave_path)/data.jld2")
 wave_timestamps = load("$(wave_path)/timestamps.jld2")
 
 wave_bursts = wave_timestamps["Bursts"]
-wave_xIdx = rand(findall(wave_bursts .!= nothing))
+#wave_xIdx = rand(findall(wave_bursts .!= nothing))
+wave_xIdx = 1471
 wave_burst = wave_bursts[wave_xIdx]
 wave_burst_idx = round.(Int64, (wave_burst[1, 1]-100):1.0:(wave_burst[1, 1]+2500))
 
