@@ -71,7 +71,7 @@ import ForwardDiff as FD
 export FD
 include("fitting.jl")
 export MeanSquaredErrorSOL, MeanSquaredError 
-export LossFunc, IntervalFunc
+export TimescaleLoss
 
 #=
 using Telegram, Telegram.API, ConfigEnv
