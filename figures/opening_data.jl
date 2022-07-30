@@ -13,14 +13,15 @@ phys_spike_durs = Float64[]
 phys_isis = Float64[]
 phys_burst_durs = Float64[]
 phys_ibis = Float64[]
-for path in paths
+good_paths = [2, 3, 4, 5, 9] #I have further refined the paths 
+for path in paths[good_paths]
      print("[$(now())] Opening $path... ")
      data_raw = readABF(path,
-          channels=["Im_scaled"],
+          channels=["Im_scaled"], time_unit=:ms,
           stimulus_name=nothing, flatten_episodic=true
      )
-     #data_i = dwt_filter(data_raw, period_window=(11, 18))
-     data_i = data_raw
+     data_i = downsample(data_raw, 1/1.0) #downsample the data
+     data_i = highpass_filter(data_i, freq=0.01)
      timestamps, data = timeseries_analysis(data_i)
 
      push!(
@@ -109,7 +110,7 @@ isolated_timestamps = load("$(isolated_path)/timestamps.jld2")
 
 iso_bursts = isolated_timestamps["Bursts"]
 #iso_xIdx = rand(findall(iso_bursts .!= nothing))
-iso_xIdx = 2476
+iso_xIdx = 3213
 iso_burst = iso_bursts[iso_xIdx]
 iso_burst_idx = round.(Int64, (iso_burst[1, 1]-100):1.0:(iso_burst[1, 1]+2500))
 
@@ -144,8 +145,8 @@ noGABA_data = load("$(noGABA_path)/data.jld2")
 noGABA_timestamps = load("$(noGABA_path)/timestamps.jld2")
 
 ng_bursts = noGABA_timestamps["Spikes"]
-#ng_xIdx = rand(findall(ng_bursts .!= nothing))
-ng_xIdx = 3912
+ng_xIdx = rand(findall(ng_bursts .!= nothing))
+ng_xIdx = 412
 ng_burst = ng_bursts[ng_xIdx]
 ng_burst_idx = round.(Int64, (ng_burst[1, 1]-100):1.0:(ng_burst[1, 1]+2500))
 
@@ -181,8 +182,8 @@ wave_data = load("$(wave_path)/data.jld2")
 wave_timestamps = load("$(wave_path)/timestamps.jld2")
 
 wave_bursts = wave_timestamps["Bursts"]
-#wave_xIdx = rand(findall(wave_bursts .!= nothing))
-wave_xIdx = 1471
+wave_xIdx = rand(findall(wave_bursts .!= nothing))
+wave_xIdx = 1838
 wave_burst = wave_bursts[wave_xIdx]
 wave_burst_idx = round.(Int64, (wave_burst[1, 1]-100):1.0:(wave_burst[1, 1]+2500))
 
@@ -215,68 +216,53 @@ wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
 
 #%% Data testing 
 #Find out what files are good
-
-#Good: 1,2,3
 #=
-data_raw = readABF(paths[3],
-     channels=["Im_scaled"],
+#Good: 2,3,4,5, 9
+#OK: 1, 15
+#Bad: 6, 7, 8, 10, 11, 12, 13, 14, 16, 17
+data_raw = readABF(paths[17],
+     channels=["Im_scaled"], time_unit=:ms,
      stimulus_name=nothing, flatten_episodic=true
 )
+data_original = copy(data_raw)
+data_original = downsample(data_raw, 1 / 1.0)
+data_i = downsample(data_raw, 1 / 1.0) #downsample the data
+data_i = highpass_filter(data_i, freq=0.01)
+timestamps, data = timeseries_analysis(data_i)
 
-#A data filtering makes the analysis slightly easier
+t = data["Time"]
+data_arr = data["DataArray"][1, :, 1]
 
-#Calculate the data for the spikes
-data = dwt_filter(data_raw, period_window=(11, 18)) #This is the ideal setting
+fig, ax = plt.subplots(2, 3)
+ax[1, 1].plot(t, data_original.data_array[1, :], c=:blue)
+ax[1, 1].vlines(timestamps["Spikes"][1][:, 1], ymin=-90.0, ymax=10.0, color=:green)
+ax[1, 1].vlines(timestamps["Spikes"][1][:, 2], ymin=-90.0, ymax=10.0, color=:red)
+
+ax[2, 1].plot(t, data_arr, c=:black)
+ax[2, 1].hlines(thresholds, xmin=0.0, xmax=t[end], color=:red)
+ax[2, 1].vlines(timestamps["Spikes"][1][:, 1], ymin=-10.0, ymax=10.0, color=:green)
+ax[2, 1].vlines(timestamps["Spikes"][1][:, 2], ymin=-10.0, ymax=10.0, color=:red)
 
 
-#data = data_raw
-t = data.t * 1000 #Turn seconds into milliseconds
-vm_array = data.data_array[:, :, 1]
-thresholds = RetinalChaos.calculate_threshold(vm_array, Z=4.0, dims=2)
-println("Complete")
-print("[$(now())]: Extracting the spikes... ")
-spike_array = Matrix{Bool}(vm_array .> thresholds)
-spikes = RetinalChaos.get_timestamps(spike_array, t)
-spike_durs, isi = RetinalChaos.extract_interval(spikes,
-     min_duration=1.0, min_interval=1.0,
-     max_duration=max_spike_duration, max_interval=max_spike_interval
-)
-println("Complete")
-
-print("[$(now())]: Extracting the bursts... ")
-bursts, spb = RetinalChaos.max_interval_algorithim(spikes)
-burst_durs, ibi = RetinalChaos.extract_interval(bursts[1], max_duration=max_burst_duration, max_interval=max_burst_interval, min_duration=500.0, min_interval=10e3)
-println("Complete")
-blims = round.(Int64, bursts[1] / data.dt / 1000)
-
-#
-fig, ax = plt.subplots(3, 2)
-ax[1, 1].plot(t, data_raw.data_array[1, :], c=:black)
-ax[1, 1].vlines(spikes[1][:, 1], ymin=-90.0, ymax=10.0, color=:green)
-ax[1, 1].vlines(spikes[1][:, 2], ymin=-90.0, ymax=10.0, color=:red)
-
-ax[1, 2].plot(t, data.data_array[1, :], c=:blue)
-ax[1, 2].hlines(thresholds, xmin=0.0, xmax=t[end], color=:red)
-
-sdur_hfit = fit(Histogram, spike_durs, LinRange(0.0, 50.0, 50))
+sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 50))
 sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
 sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
 
-isi_hfit = fit(Histogram, isi, LinRange(0.0, 50.0, 50))
+isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 50.0, 50))
 isi_weights = isi_hfit.weights / maximum(isi_hfit.weights)
 isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
 
-bdur_hfit = fit(Histogram, burst_durs, LinRange(0.0, 2000.0, 50))
+bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 50))
 bdur_weights = bdur_hfit.weights / maximum(bdur_hfit.weights)
 bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
 
-ibi_hfit = fit(Histogram, ibi, LinRange(0.0, 120e3, 50))
+ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 120e3, 50))
 ibi_weights = ibi_hfit.weights / maximum(ibi_hfit.weights)
 ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
 
 
-ax[2, 1].plot(sdur_edges, sdur_weights)
+ax[1, 2].plot(sdur_edges, sdur_weights)
 ax[2, 2].plot(isi_edges, isi_weights)
-ax[3, 1].plot(bdur_edges, bdur_weights)
-ax[3, 2].plot(ibi_edges, ibi_weights)
+ax[1, 3].plot(bdur_edges, bdur_weights)
+ax[2, 3].plot(ibi_edges, ibi_weights)
 =#
