@@ -77,7 +77,6 @@ rcParams["savefig.pad_inches"] = 0.0
 println(" Completed")
 
 function plot_histograms(data, loc::String; name="histogram_plot")
-
     if !isempty(data["SpikeDurs"])
         sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 100))
         sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
