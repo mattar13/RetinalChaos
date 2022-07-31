@@ -1,71 +1,137 @@
 using Revise
-using RetinalChaos, ePhys
-using Statistics
-#These parameters are the most likely to need to be fitted: 
-#1) gGABA = [0.7 -> 1.0]
-#2) gACh = [0.1 -> 0.215]
-#2) gCa = [7.5 -> 8.0]
-#3) gK = [3.0 -> 5.0]
-#4) μ = [0.7-0.8]
+using RetinalChaos
+using ePhys
+using Statistics, StatsBase
+import RetinalChaos: MeanSquaredError
+using Optim
+include("../figures/figure_setup.jl") #This will load all of the data we want
+include("../figures/opening_data.jl") #This will load all of the data we want
 
-#run an ensemble problem on the example problem
-#Import parameters, conditions, and set the timespan
+#%% Set up the parameters we will use throught the fitting
+dt = 0.5
 conds_dict = read_JSON("params\\conds.json")
 u0 = conds_dict |> extract_dict
 pars_dict = read_JSON("params\\params.json")
+pars_dict[:I_app] = 10.0
+pars_dict[:ρe] = 0.0
+pars_dict[:ρi] = 0.0
 p = pars_dict |> extract_dict
 tspan = (0.0, 300e3)
-prob = SDEProblem(T_SDE, noise, u0, tspan, p)
-@time sol = solve(prob, SOSRI(), saveat = 1.0, progress = true, progress_steps = 1); #So far the best method is SOSRI
-t = sol.t
-vt = sol(t, idxs=1) |> Array
-timestamps, data = timeseries_analysis(t, vt)
 
-fig, ax = plt.subplots(2)
-ax[1].plot(t_phys_burst, vt_phys_burst)
-ax[2].plot(t, vt)
-ax[2].hlines(thresholds, xmin=0.0, xmax=t[end])
+#Questions to answer. 
+#%% 1) How does the noiseless and noisy traces compare
 
-#%% Supplemental figure. Analysis of parameter change
-test_rng = range(0.5, 2.0, length=100) #this ranges from halving the parameter to doubling it
-p = read_JSON(params_file); #Because of my catch, we can keep these as dictionaries 
-u0 = read_JSON(conds_file);
-#We can set the initial voltage sensitivty here 
-p[:σ] = 10.0
-tspan = (0.0, 60e3)
-prob = ODEProblem(T_ode, u0, tspan, p);
-results = zeros(length(T_ode.ps), length(test_rng), 3)
-#Walk through each parameter
-for (par_idx, par) in enumerate(T_ode.ps)
-     println("Simulating test range for parameters: $par")
-     #Setup an ensemble function to test each parameter
-     par_rng = test_rng * p_dict[Symbol(par)]
-     prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, par_rng)
-     ensemble_prob = EnsembleProblem(prob, prob_func=prob_func)
+#Noisy
+probNOISE = SDEProblem(T_SDE, noise, u0, tspan, p)
+@time solNOISE = solve(probNOISE, SOSRI(), saveat=dt, progress=true, progress_steps=1); #So far the best method is SOSRI
+tsNOISE, dataNOISE = timeseries_analysis(solNOISE)
 
-     print("Time it took to simulate $(tspan[2]/1000)s:")
-     @time sim = solve(ensemble_prob, EnsembleThreads(), trajectories=length(test_rng))
-     println("Simulation for parameter $par completed")
-     for (sol_idx, sol) in enumerate(sim)
-          #println(sol |> length)
-          dt = 0.1 #set the time differential according to supp figure 1
-          t_rng = collect(tspan[1]:dt:tspan[2]) #set the time range
-          v_t = map(t -> sol(t)[1], t_rng) #extract according to the interval
-          ts_analysis = timescale_analysis(v_t, dt=dt)
-          for i = 1:length(ts_analysis)
-               results[par_idx, sol_idx, i] = sum(ts_analysis[i]) / length(ts_analysis[i])
-          end
-     end
-     println("Statistics for $par calculated")
-end
+#No noise
+probBASE = ODEProblem(T_ODE, u0, tspan, p)
+@time solBASE = solve(probBASE, saveat=dt, progress=true, progress_steps=1); #So far the best method is SOSRI
+tsBASE, dataBASE = timeseries_analysis(solBASE)
+TimescaleLoss(solBASE, solNOISE, dt=dt)
+
+# Set the indexes for the spikes
+spike_t_BASE, spike_vt_BASE = RetinalChaos.extract_spike_trace(tsBASE, dataBASE, normalize = true)
+spike_t_NOISE, spike_vt_NOISE = RetinalChaos.extract_spike_trace(tsNOISE, dataNOISE, normalize = true)
+spike_MSE = MeanSquaredError(spike_vt_BASE, spike_vt_NOISE)
+
+burst_t_BASE, burst_vt_BASE = RetinalChaos.extract_burst_trace(tsBASE, dataBASE, normalize = true)
+burst_t_NOISE, burst_vt_NOISE = RetinalChaos.extract_burst_trace(tsNOISE, dataNOISE, normalize = true)
+burst_MSE = MeanSquaredError(burst_vt_BASE, burst_vt_NOISE)
+
+IBI_t_BASE, IBI_vt_BASE = RetinalChaos.extract_IBI_trace(tsBASE, dataBASE, normalize = true)
+IBI_t_NOISE, IBI_vt_NOISE = RetinalChaos.extract_IBI_trace(tsNOISE, dataNOISE, normalize = true)
+IBI_MSE = MeanSquaredError(IBI_vt_BASE, IBI_vt_NOISE)
+
+fig1, ax = plt.subplots(3, 3)
+ax[1, 1].plot(spike_t_BASE, spike_vt_BASE)
+ax[2, 1].plot(spike_t_NOISE, spike_vt_NOISE)
+
+ax[1, 2].plot(burst_t_BASE, burst_vt_BASE)
+ax[2, 2].plot(burst_t_NOISE, burst_vt_NOISE)
+
+ax[1, 3].plot(IBI_t_BASE, IBI_vt_BASE)
+ax[2, 3].plot(IBI_t_NOISE, IBI_vt_NOISE)
+
+ax[3, 1].bar(["Spike", "Burst", "IBI"], [spike_MSE, burst_MSE, IBI_MSE])
+
+#%% 2) Compare the simulation with the real data
+file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
+target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
+#Eventually we will open multiple analysis files
+data = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
+downsample!(data, 1 / dt) #It is necessary to downsample to get understandable results
+tsPHYS, dataPHYS = timeseries_analysis(data) #Move timeseries analysis to ePhys
+TimescaleLoss(solNOISE, data)
+#%% 
+spike_t_PHYS, spike_vt_PHYS = RetinalChaos.extract_spike_trace(tsPHYS, dataPHYS, idx=3, dt=0.5)
+burst_t_PHYS, burst_vt_PHYS = RetinalChaos.extract_burst_trace(tsPHYS, dataPHYS, idx=2, dt=0.5)
+IBI_t_PHYS, IBI_vt_PHYS = RetinalChaos.extract_IBI_trace(tsPHYS, dataPHYS, idx=2, dt=0.5)
+
+fig2, ax = plt.subplots(3, 3)
+ax[1, 1].plot(spike_t_PHYS, tf)
+ax[2, 1].plot(spike_t_NOISE, spike_vt_NOISE./maximum(spike_vt_NOISE))
+
+ax[1, 2].plot(burst_t_PHYS, burst_vt_PHYS)
+ax[2, 2].plot(burst_t_NOISE, burst_vt_NOISE)
+
+ax[1, 3].plot(IBI_t_PHYS, IBI_vt_PHYS)
+ax[2, 3].plot(IBI_t_NOISE, IBI_vt_NOISE)
+
+TimescaleLoss(data, p; burst_weight=0.0, IBI_weight=0.0)
+#%% Lets try to compute the gradient
+fMIN(p) = TimescaleLoss(data, p)
+gMIN = x -> FD.gradient(fMIN, x)
+gradMSE = gMIN(p)
+sort_idxs = sortperm(gradMSE)
+fig, ax = plt.subplots(1)
+ax.bar(t_pars[sort_idxs], gradMSE[sort_idxs])
+t_pars
 #%%
-for (idx, p) in enumerate(T_ode.ps)
-     println("Plotting results for $p")
-     sfig3i = plot(layout=grid(3, 1), size=(1000, 800))
-     plot!(sfig3i[1], test_rng, results[idx, :, 1], label="$p", xlabel="Norm Par", ylabel="Spike Duration")
-     plot!(sfig3i[2], test_rng, results[idx, :, 2] ./ 1000, label="$p", xlabel="Norm Par", ylabel="Burst Duration")
-     plot!(sfig3i[3], test_rng, results[idx, :, 3] ./ 1000, label="$p", xlabel="Norm Par", ylabel="IBI")
-     savefig(sfig3i, joinpath(save_figs, "gradient_for_param_$p.png"))
+#Optimize only a few parameters
+idxs = map(x -> p_find(x), [:g_leak, :g_K, :g_Ca, :g_TREK, :C_m])
+function fSPIKE(data, pSECTION; test_parameters=[:g_leak, :g_K, :g_Ca, :g_TREK, :C_m])
+     pars_dict = read_JSON("params\\params.json")
+     p = pars_dict |> extract_dict
+     idxs = map(x -> p_find(x), test_parameters)
+     p[idxs] .= pSECTION
+     TimescaleLoss(data, p; burst_weight=0.0, IBI_weight=0.0)
 end
-#sfig3i
+
+p_test = p[idxs]
+fSPIKE(data, p_test)
+
+results = optimize(fMIN, p)
+pOPT = Optim.minimizer(results)
+
+
+#%%
+fig, ax = plt.subplots(1)
+ax.plot(losses)
+argmin(losses)
+#%% Try plotting the improved function
+conds_dict = read_JSON("params\\conds.json")
+u0 = conds_dict |> extract_dict
+pOPT = param_set[:, argmin(losses)]
+tspan = (0.0, 300e3)
+#Noisy
+probOPT = SDEProblem(T_SDE, noise, u0, tspan, pOPT)
+@time solOPT = solve(probOPT, SOSRI(), saveat=dt, progress=true, progress_steps=1); #So far the best method is SOSRI
+plot(solOPT)
+tsOPT, dataOPT = timeseries_analysis(solOPT)
+spike_t_OPT, spike_vt_OPT = RetinalChaos.extract_spike_trace(tsOPT, dataOPT)
+burst_t_OPT, burst_vt_OPT = RetinalChaos.extract_burst_trace(tsOPT, dataOPT)
+IBI_t_OPT, IBI_vt_OPT = RetinalChaos.extract_IBI_trace(tsOPT, dataOPT)
+
+fig, ax = plt.subplots(3, 3)
+ax[1, 1].plot(spike_t_PHYS, spike_vt_PHYS)
+ax[2, 1].plot(spike_t_OPT, spike_vt_OPT)
+
+ax[1, 2].plot(burst_t_PHYS, burst_vt_PHYS)
+ax[2, 2].plot(burst_t_OPT, burst_vt_OPT)
+
+ax[1, 3].plot(IBI_t_PHYS, IBI_vt_PHYS)
+ax[2, 3].plot(IBI_t_OPT, IBI_vt_OPT)
 
