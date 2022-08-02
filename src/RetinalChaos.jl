@@ -73,7 +73,8 @@ import ForwardDiff as FD
 export FD
 include("fitting.jl")
 export extract_spike_trace, extract_burst_trace, extract_IBI_trace
-export SpikeLoss, BurstLoss, IBILoss
+#export SpikeLoss, BurstLoss, IBILoss
+export IntervalLoss
 export MeanSquaredErrorSOL, MeanSquaredError
 export TimescaleLoss
 
