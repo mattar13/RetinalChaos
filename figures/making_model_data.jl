@@ -35,7 +35,7 @@ gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
 timestamps, data = timeseries_analysis(sol, loc)
 hist_plot = plot_histograms(data, loc)
 
-#%% Model 2: Blocked Neurotransmission
+#%% Model 2: Blocked Neurotransmission 
 print("[$(now())]: Setting up parameters, conditions, and network settings... ")
 nx = ny = 64
 conds_dict = read_JSON("params/conds.json")
@@ -80,7 +80,7 @@ p = pars_dict |> extract_dict
 tspan = (0.0, 120e3)
 println("Complete")
 print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE, noise, u0, (0.0, 60e3), p)
+prob = SDEProblem(T_PDE, noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
 @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
 println("Completed")
 print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
@@ -98,10 +98,11 @@ anim = @animate for t = 1.0:animate_dt:sol.t[end]
      frame_i = reshape(sol(t) |> Array, (nx, ny))
      heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
 end
+
 gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
 timestamps, data = timeseries_analysis(sol, loc)
 hist_plot = plot_histograms(data, loc)
-
+data["SpikeDurs"]
 #%% lets make a loop that will change gCa but also lack GABA
 #gCa Spiking range = [7.0-9.0]
 param = :g_K
