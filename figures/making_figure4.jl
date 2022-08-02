@@ -1,5 +1,3 @@
-#=
-=#
 using Revise
 using Dates
 using RetinalChaos
@@ -15,161 +13,179 @@ width_inches = 7.5
 height_inches = 7.5
 fig4 = plt.figure("Physiology Data", figsize=(width_inches, height_inches))
 
-col1_ylabel = -0.12
+col1_ylabel = -0.21
 col2_ylabel = -0.11
 
-gs = fig4.add_gridspec(6, 2,
-     width_ratios=(0.50, 0.50),
-     height_ratios=(0.175, 0.175, 0.175, 0.175, 0.15, 0.15),
+gs = fig4.add_gridspec(5, 3,
+     #width_ratios=(0.50, 0.50),
+     #height_ratios=(0.16, 0.16, 0.15, 0.15, 0.15, 0.15),
      right=0.95, left=0.15,
      top=0.95, bottom=0.08,
      wspace=0.20, hspace=0.5)
 
-
-#fig, ax = plt.subplots(4)
-#ax[1].plot(t_phys_burst, vt_phys_burst)
-#ax[2].plot(t_iso_burst, vt_iso_burst)
-#ax[3].plot(t_ng_burst, vt_ng_burst)
-#ax[4].plot(t_wave_burst, vt_wave_burst)
-#We should load some simulation data from another place
-
 #axA = fig4.add_subplot(py"""$(gs)[0, :]""")
 axA1 = fig4.add_subplot(gs[1, 1])
+ylim(-50.0, 10.0)
 ylabel("Whole Cell \n Vm (mV)")
-axA1.plot(t_phys_burst ./ 1000, vt_phys_burst, c=:black, lw=lw_standard)
+axA1.set_title("Spikes")
+axA1.plot(spike_t_PHYS ./ 1000, spike_vt_PHYS, c=:black, lw=lw_standard)
 axA1.xaxis.set_visible(false) #Turn off the bottom axis
 axA1.spines["bottom"].set_visible(false)
 axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA1.yaxis.set_major_locator(MultipleLocator(20.0))
+axA1.yaxis.set_minor_locator(MultipleLocator(10.0))
 
 axA2 = fig4.add_subplot(gs[1, 2])
-axA2.plot(t_phys_IBI ./ 1000, vt_phys_IBI, c=:black, lw=lw_standard)
+ylim(-90.0, 10.0)
+axA2.set_title("Bursts")
+axA2.plot(burst_t_PHYS ./ 1000, burst_vt_PHYS, c=:black, lw=lw_standard)
 axA2.xaxis.set_visible(false) #Turn off the bottom axis
 axA2.spines["bottom"].set_visible(false)
+axA2.yaxis.set_major_locator(MultipleLocator(40.0))
+axA2.yaxis.set_minor_locator(MultipleLocator(20.0))
 
+axA3 = fig4.add_subplot(gs[1, 3])
+ylim(-90.0, 10.0)
+axA3.set_title("Interburst Interval")
+axA3.plot(IBI_t_PHYS ./ 1000, IBI_vt_PHYS, c=:black, lw=lw_standard)
+axA3.xaxis.set_visible(false)
+axA3.spines["bottom"].set_visible(false)
+axA3.yaxis.set_major_locator(MultipleLocator(40.0))
+axA3.yaxis.set_minor_locator(MultipleLocator(20.0))
+
+# Figure Part B
 #axB = fig4.add_subplot(py"""$(gs)[1, :]""")
 axB1 = fig4.add_subplot(gs[2, 1])
+ylim(-50.0, 10.0)
 ylabel("Isolated \n Vt (mV)")
-axB1.plot(t_iso_burst ./ 1000, vt_iso_burst, c=:red, lw=lw_standard)
+axB1.plot(spike_t_ISO ./ 1000, spike_vt_ISO, c=:red, lw=lw_standard)
 axB1.xaxis.set_visible(false) #Turn off the bottom axis
 axB1.spines["bottom"].set_visible(false)
 axB1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB1.yaxis.set_major_locator(MultipleLocator(20.0))
+axB1.yaxis.set_minor_locator(MultipleLocator(10.0))
 
 axB2 = fig4.add_subplot(gs[2, 2])
-axB2.plot(t_iso_IBI ./ 1000, vt_iso_IBI, c=:red, lw=lw_standard)
+ylim(-90.0, 10.0)
+axB2.plot(burst_t_ISO ./ 1000, burst_vt_ISO, c=:red, lw=lw_standard)
 axB2.xaxis.set_visible(false) #Turn off the bottom axis
 axB2.spines["bottom"].set_visible(false)
+axB2.yaxis.set_major_locator(MultipleLocator(40.0))
+axB2.yaxis.set_minor_locator(MultipleLocator(20.0))
 
+axB3 = fig4.add_subplot(gs[2, 3])
+ylim(-90.0, 10.0)
+axB3.plot(IBI_t_ISO ./ 1000, IBI_vt_ISO, c=:red, lw=lw_standard)
+axB3.xaxis.set_visible(false) #Turn off the bottom axis
+axB3.spines["bottom"].set_visible(false)
+axB3.yaxis.set_major_locator(MultipleLocator(40.0))
+axB3.yaxis.set_minor_locator(MultipleLocator(20.0))
+
+# Figure part C
 axC1 = fig4.add_subplot(gs[3, 1])
+ylim(-50.0, 10.0)
 ylabel("No GABA \n Vt (mV)")
-axC1.plot(t_ng_burst ./ 1000, vt_ng_burst, c=:blue, lw=lw_standard)
+axC1.plot(spike_t_NG ./ 1000, spike_vt_NG, c=:blue, lw=lw_standard)
 axC1.xaxis.set_visible(false) #Turn off the bottom axis
 axC1.spines["bottom"].set_visible(false)
 axC1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axC1.yaxis.set_major_locator(MultipleLocator(20.0))
+axC1.yaxis.set_minor_locator(MultipleLocator(10.0))
 
-axC1 = fig4.add_subplot(gs[3, 2])
-axC1.plot(t_ng_IBI ./ 1000, vt_ng_IBI, c=:blue, lw=lw_standard)
-axC1.xaxis.set_visible(false) #Turn off the bottom axis
-axC1.spines["bottom"].set_visible(false)
+axC2 = fig4.add_subplot(gs[3, 2])
+ylim(-90.0, 10.0)
+axC2.plot(burst_t_NG, burst_vt_NG, c=:blue, lw=lw_standard)
+axC2.xaxis.set_visible(false) #Turn off the bottom axis
+axC2.spines["bottom"].set_visible(false)
+axC2.yaxis.set_major_locator(MultipleLocator(40.0))
+axC2.yaxis.set_minor_locator(MultipleLocator(20.0))
+
+#Need to run this one again
+axC3 = fig4.add_subplot(gs[3, 3])
+ylim(-90.0, 10.0)
+axC3.plot(IBI_t_NG ./ 1000, IBI_vt_NG, c=:blue, lw=lw_standard)
+axC3.xaxis.set_visible(false) #Turn off the bottom axis
+axC3.spines["bottom"].set_visible(false)
+axC3.yaxis.set_major_locator(MultipleLocator(40.0))
+axC3.yaxis.set_minor_locator(MultipleLocator(20.0))
 
 #axC = fig4.add_subplot(py"""$(gs)[2, :]""")
 axD1 = fig4.add_subplot(gs[4, 1])
+ylim(-50.0, 10.0)
 ylabel("Default \n Vt (mV)")
 xlabel("Time (s)")
-axD1.plot(t_wave_burst ./ 1000, vt_wave_burst, c=:green, lw=lw_standard)
+axD1.plot((spike_t_WAVE.-spike_t_WAVE[1]) ./ 1000, spike_vt_WAVE, c=:green, lw=lw_standard)
 axD1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axD1.yaxis.set_major_locator(MultipleLocator(20.0))
+axD1.yaxis.set_minor_locator(MultipleLocator(10.0))
 
-axD1 = fig4.add_subplot(gs[4, 2])
+axD2 = fig4.add_subplot(gs[4, 2])
+ylim(-90.0, 10.0)
 xlabel("Time (s)")
-axD1.plot(t_wave_IBI ./ 1000, vt_wave_IBI, c=:green, lw=lw_standard)
+axD2.plot((burst_t_WAVE.-burst_t_WAVE[1]) ./ 1000, burst_vt_WAVE, c=:green, lw=lw_standard)
+axD2.yaxis.set_major_locator(MultipleLocator(40.0))
+axD2.yaxis.set_minor_locator(MultipleLocator(20.0))
 
-#Figure D spike duration
-gsDR = gs[5, 1].subgridspec(ncols=1, nrows=3)
+axD3 = fig4.add_subplot(gs[4, 3])
+ylim(-90.0, 10.0)
+xlabel("Time (s)")
+axD3.plot((IBI_t_WAVE.-IBI_t_WAVE[1]) ./ 1000, IBI_vt_WAVE, c=:green, lw=lw_standard)
+axD3.yaxis.set_major_locator(MultipleLocator(40.0))
+axD3.yaxis.set_minor_locator(MultipleLocator(20.0))
+#Make Bar Graphs showing the MSE loss between each RandomNumbers
 
-axDR1 = fig4.add_subplot(gsDR[1, 1])
-axDR1.plot(sdur_edges, sdur_weights, c=:green, lw=lw_standard)
-axDR1.xaxis.set_visible(false) #Turn off the bottom axis
-axDR1.spines["bottom"].set_visible(false)
+jitter_dataPHYS_spike = 0.5 .* rand(length(phys_spike_durs))
+jitter_dataISO_spike = 0.5 .* rand(length(dataISO["SpikeDurs"])) .+ 1
+jitter_dataNG_spike = 0.5 .* rand(length(dataNG["SpikeDurs"])) .+ 2
+jitter_dataWAVE_spike = 0.5 .* rand(length(dataWAVE["SpikeDurs"])) .+ 3
 
-axDR2 = fig4.add_subplot(gsDR[2, 1])
-ylabel("Probability")
-axDR2.plot(iso_sdur_edges, iso_sdur_weights, c=:blue, lw=lw_standard)
-axDR2.xaxis.set_visible(false) #Turn off the bottom axis
-axDR2.spines["bottom"].set_visible(false)
-axDR2.yaxis.set_label_coords(col2_ylabel, 0.5)
+labels = ["PHYS", "ISO", "NoG", "OPT"]
+pos = [0.25, 1.25, 2.25, 3.25]
+axE1 = fig4.add_subplot(gs[5, 1])
+#ylim(0.0, 100.0)
+#axE1.plot(sdur_weights, sdur_edges, c = :black)
+axE1.scatter(jitter_dataPHYS_spike, phys_spike_durs./1000, s=5.0, c=:black)
+axE1.scatter(jitter_dataISO_spike, dataISO["SpikeDurs"]./1000, s=5.0, c=:red)
+axE1.scatter(jitter_dataNG_spike, dataNG["SpikeDurs"]./1000, s=5.0, c=:blue)
+axE1.scatter(jitter_dataWAVE_spike, dataWAVE["SpikeDurs"]./1000, s=5.0, c=:green)
+axE1.set_xticks(pos)
+axE1.set_xticklabels(labels)
+#axE1.bar(labels, [dataPHYS["SpikeDurAvg"], eMSE_ISO, spikeMSE_NG, spikeMSE_WAVE], color=[:black, :red, :blue, :green])
+ylabel("Duration (s)")
 
-axDR3 = fig4.add_subplot(gsDR[3, 1])
-axDR3.plot(wave_sdur_edges, wave_sdur_weights, c=:red, lw=lw_standard)
+jitter_dataPHYS_burst = 0.5 .* rand(length(phys_burst_durs))
+jitter_dataISO_burst = 0.5 .* rand(length(dataISO["BurstDurs"])) .+ 1
+jitter_dataNG_burst = 0.5 .* rand(length(dataNG["BurstDurs"])) .+ 2
+jitter_dataWAVE_burst = 0.5 .* rand(length(dataWAVE["BurstDurs"])) .+ 3
 
-gsDL = gs[5, 2].subgridspec(ncols=1, nrows=3)
+axE2 = fig4.add_subplot(gs[5, 2])
+axE2.scatter(jitter_dataPHYS_burst, phys_burst_durs ./ 1000, s=5.0, c=:black)
+axE2.scatter(jitter_dataISO_burst, dataISO["BurstDurs"] ./ 1000, s=5.0, c=:red)
+axE2.scatter(jitter_dataNG_burst, dataNG["BurstDurs"] ./ 1000, s=5.0, c=:blue)
+axE2.scatter(jitter_dataWAVE_burst, dataWAVE["BurstDurs"] ./ 1000, s=5.0, c=:green)
+axE2.set_xticks(pos)
+axE2.set_xticklabels(labels)
+#axE2.bar(labels, [burstMSE_ISO, burstMSE_NG, burstMSE_WAVE], color=[:red, :blue, :green])
 
-axDL1 = fig4.add_subplot(gsDL[1, 1])
-axDL1.plot(isi_edges, isi_weights, c=:green, lw=lw_standard)
-axDL1.xaxis.set_visible(false) #Turn off the bottom axis
-axDL1.spines["bottom"].set_visible(false)
+jitter_dataPHYS_ibi = 0.5 .* rand(length(phys_ibis))
+jitter_dataISO_ibi = 0.5 .* rand(length(dataISO["IBIs"])) .+ 1
+jitter_dataNG_ibi = 0.5 .* rand(length(dataNG["IBIs"])) .+ 2
+jitter_dataWAVE_ibi = 0.5 .* rand(length(dataWAVE["IBIs"])) .+ 3
 
-axDL2 = fig4.add_subplot(gsDL[2, 1])
-axDL2.plot(iso_isi_edges, iso_isi_weights, c=:blue, lw=lw_standard)
-axDL2.xaxis.set_visible(false) #Turn off the bottom axis
-axDL2.spines["bottom"].set_visible(false)
+axE3 = fig4.add_subplot(gs[5, 3])
+axE3.scatter(jitter_dataPHYS_ibi, phys_ibis ./ 1000, s=5.0, c=:black)
+axE3.scatter(jitter_dataISO_ibi, dataISO["IBIs"] ./ 1000, s=5.0, c=:red)
+axE3.scatter(jitter_dataNG_ibi, dataNG["IBIs"] ./ 1000, s=5.0, c=:blue)
+axE3.scatter(jitter_dataWAVE_ibi, dataWAVE["IBIs"] ./ 1000, s=5.0, c=:green)
+axE3.set_xticks(pos)
+axE3.set_xticklabels(labels)
+#axE3.bar(labels, [IBIMSE_ISO, IBIMSE_NG, IBIMSE_WAVE], color=[:red, :blue, :green])
 
-axDL3 = fig4.add_subplot(gsDL[3, 1])
-axDL3.plot(wave_isi_edges, wave_isi_weights, c=:red, lw=lw_standard)
-
-gsER = gs[6, 1].subgridspec(ncols=1, nrows=3)
-
-axER1 = fig4.add_subplot(gsER[1, 1])
-axER1.plot(bdur_edges ./ 1000, bdur_weights, c=:green, lw=lw_standard)
-axER1.xaxis.set_visible(false) #Turn off the bottom axis
-axER1.spines["bottom"].set_visible(false)
-
-axER2 = fig4.add_subplot(gsER[2, 1])
-ylabel("Probability")
-axER2.plot(iso_bdur_edges ./ 1000, iso_bdur_weights, c=:blue, lw=lw_standard)
-axER2.xaxis.set_visible(false) #Turn off the bottom axis
-axER2.spines["bottom"].set_visible(false)
-axER2.yaxis.set_label_coords(col2_ylabel, 0.5)
-
-axER3 = fig4.add_subplot(gsER[3, 1])
-axER3.plot(wave_bdur_edges ./ 1000, wave_bdur_weights, c=:red, lw=lw_standard)
-
-gsEL = gs[6, 2].subgridspec(ncols=1, nrows=3)
-
-axEL1 = fig4.add_subplot(gsEL[1, 1])
-axEL1.plot(ibi_edges / 1000, ibi_weights, c=:green, lw=lw_standard)
-axEL1.xaxis.set_visible(false) #Turn off the bottom axis
-axEL1.spines["bottom"].set_visible(false)
-
-axEL2 = fig4.add_subplot(gsEL[2, 1])
-axEL2.plot(iso_ibi_edges / 1000, iso_ibi_weights, c=:blue, lw=lw_standard)
-axEL2.xaxis.set_visible(false) #Turn off the bottom axis
-axEL2.spines["bottom"].set_visible(false)
-
-axEL3 = fig4.add_subplot(gsEL[3, 1])
-axEL3.plot(wave_ibi_edges / 1000, wave_ibi_weights, c=:red, lw=lw_standard)
-
-axEL3.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axEL3.annotate("B", (0.51, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-axEL3.annotate("C", (0.01, 0.80), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axEL3.annotate("D", (0.51, 0.80), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-axEL3.annotate("E", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axEL3.annotate("F", (0.51, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-axEL3.annotate("G", (0.01, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axEL3.annotate("H", (0.51, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-axEL3.annotate("I", (0.01, 0.30), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axEL3.annotate("J", (0.51, 0.30), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-axEL3.annotate("K", (0.01, 0.15), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axEL3.annotate("L", (0.51, 0.15), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-#axEL3.annotate("D", (0.01, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
-#axEL3.annotate("C", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-#axEL3.annotate("F", (0.51, 0.47), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-
+axE3.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axE3.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axE3.annotate("C", (0.01, 0.60), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axE3.annotate("D", (0.01, 0.40), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axE3.annotate("E", (0.01, 0.20), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
 #%%
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
@@ -178,3 +194,41 @@ print("[$(now())]: Saving the figure 4...")
 fig4.savefig("$(loc)/figure4_ModelComparison.png")
 plt.close("all")
 println(" Completed")
+
+#%% Print the results of all the traces
+println("Data Values")
+println("-----------------------------------------------")
+println("""
+
+ISO_n = $(length(iso_baselines))
+ISO Baseline Avg: $(iso_baseline_avg|>x->round(x, digits = 2))±$(iso_baseline_SEM|>x->round(x, digits = 2))
+ISO Minimum Avg: $(iso_min_avg|>x->round(x, digits = 2))±$(iso_min_SEM|>x->round(x, digits = 2))
+ISO Maximum Avg: $(iso_max_avg|>x->round(x, digits = 2))±$(iso_max_SEM|>x->round(x, digits = 2))
+ISO Spike Duration Avg: $(dataISO["SpikeDurAvg"]|>x->round(x, digits = 2))±$(dataISO["SpikeDurSEM"]|>x->round(x, digits = 2))
+ISO Burst Duration Avg: $(dataISO["BurstDurAvg"]|>x->round(x, digits = 2))±$(dataISO["BurstDurSEM"]|>x->round(x, digits = 2))
+ISO IBI_Avg: $(dataISO["IBIAvg"]./1000|>x->round(x, digits = 2))±$(dataISO["IBISEM"]./1000|>x->round(x, digits = 2))
+
+NO GABA n = $(length(ng_baselines))
+NO GABA Baseline Avg: $(ng_baseline_avg|>x->round(x, digits = 2))±$(ng_baseline_SEM|>x->round(x, digits = 2))
+NO GABA Minimum Avg: $(ng_min_avg|>x->round(x, digits = 2))±$(ng_min_SEM|>x->round(x, digits = 2))
+NO GABA Maximum Avg: $(ng_max_avg|>x->round(x, digits = 2))±$(ng_max_SEM|>x->round(x, digits = 2))
+NO GABA Spike Duration Avg: $(dataNG["SpikeDurAvg"]|>x->round(x, digits = 2))±$(dataNG["SpikeDurSEM"]|>x->round(x, digits = 2))
+NO GABA Burst Duration Avg: $(dataNG["BurstDurAvg"]|>x->round(x, digits = 2))±$(dataNG["BurstDurSEM"]|>x->round(x, digits = 2))
+NO GABA IBI_Avg: $(dataNG["IBIAvg"]./1000|>x->round(x, digits = 2))±$(dataNG["IBISEM"]./1000|>x->round(x, digits = 2))
+
+WAVE n = $(length(wave_baselines))
+WAVE Baseline Avg: $(wave_baseline_avg|>x->round(x, digits = 2))±$(wave_baseline_SEM|>x->round(x, digits = 2))
+WAVE Minimum Avg: $(wave_min_avg|>x->round(x, digits = 2))±$(wave_min_SEM|>x->round(x, digits = 2))
+WAVE Maximum Avg: $(wave_max_avg|>x->round(x, digits = 2))±$(wave_max_SEM|>x->round(x, digits = 2))
+WAVE Spike Duration Avg: $(dataWAVE["SpikeDurAvg"]|>x->round(x, digits = 2))±$(dataWAVE["SpikeDurSEM"]|>x->round(x, digits = 2))
+WAVE Burst Duration Avg: $(dataWAVE["BurstDurAvg"]|>x->round(x, digits = 2))±$(dataWAVE["BurstDurSEM"]|>x->round(x, digits = 2))
+WAVE IBI_Avg: $(dataWAVE["IBIAvg"]./1000|>x->round(x, digits = 2))±$(dataWAVE["IBISEM"]./1000|>x->round(x, digits = 2))
+
+PHYS n = $(length(phys_baseline))
+PHYS Baseline Avg: $(phys_baseline_avg|>x->round(x, digits = 2))±$(phys_baseline_SEM|>x->round(x, digits = 2))
+PHYS Minimum Avg: $(phys_min_avg|>x->round(x, digits = 2))±$(phys_min_SEM|>x->round(x, digits = 2))
+PHYS Maximum Avg: $(phys_max_avg|>x->round(x, digits = 2))±$(phys_max_SEM|>x->round(x, digits = 2))
+PHYS Spike Duration Avg: $(phys_spike_avg|>x->round(x, digits = 2))±$(phys_spike_SEM |>x->round(x, digits = 2))
+PHYS Burst Duration Avg: $(phys_burst_avg|>x->round(x, digits = 2))±$(phys_burst_SEM|>x->round(x, digits = 2))
+PHYS IBI_Avg: $(phys_ibis_avg./1000|>x->round(x, digits = 2))±$(phys_ibis_SEM./1000|>x->round(x, digits = 2))
+""")
