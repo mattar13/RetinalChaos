@@ -147,10 +147,14 @@ function get_timestamps(sol::DiffEqBase.AbstractODESolution{T,N,S}; idxs = 1, Z:
 end
 
 function timeseries_analysis(sol::DiffEqBase.AbstractODESolution{T,N,S};
-    dt=1.0, kwargs...
+    dt=1.0, idxs = -1, kwargs...
 ) where{T, N, S}
     t = sol.t[1]:dt:sol.t[end]
-    vm_array = sol(t) |> Array
+    if idxs == -1
+        vm_array = sol(t) |> Array
+    else
+        vm_array = sol(t, idxs = idxs) |> Array
+    end
     return timeseries_analysis(t, vm_array; kwargs...)
 end
 
