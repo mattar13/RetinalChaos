@@ -14,6 +14,7 @@ pars_dict = read_JSON("params\\params.json")
 pars_dict[:I_app] = 15.0
 pars_dict[:ρi] = 0.0
 pars_dict[:ρe] = 0.0
+pars_dict[:C_m] = 13.6
 p = pars_dict |> extract_dict
 #Step 3: determine the timespan
 tspan = (0.0, 120e3)
@@ -26,68 +27,51 @@ println(" Completed")
 
 # Run the analysis 
 print("[$(now())]: Running analysis... ")
-dt = 0.01 #Set the time differential
-thresh = calculate_threshold(sol) #Extract the threshold
-spike_tstamps = get_timestamps(sol)
-spike_durs, isi = extract_interval(spike_tstamps, max_duration=100, max_interval=100)
-burst_tstamps, SPB = max_interval_algorithim(spike_tstamps)
-burst_durs, ibi = extract_interval(burst_tstamps)
-burst_tstamps
-#t_series = tspan[1]:dt:tspan[end]
-#vt = sol(t_series, idxs=[1])
-burst_lims = burst_tstamps[2, :]#lets set the limits for area of interest
-t_rng = burst_lims[1]:dt:burst_lims[2] #Set up the plotting range
-println(" Completed")
+ts, data = RetinalChaos.timeseries_analysis(sol)
+tSpike, vnSpike = extract_spike_trace(ts, data, idx=1, spike_dur=200)
 
-# Load the data into the correct format
-print("[$(now())]: Extracting data... ")
-A_dx = 20 #the tick interval is 20ms
-A_dt = 0.01
-A_trng = (burst_lims[1]:A_dt:burst_lims[1]+200) #Set the range of points to plot
-tSpike = (A_trng .- A_trng[1]) #Create the formatted time span
-vSpike = sol(A_trng, idxs=1)
-nSpike = sol(A_trng, idxs=2)
-maximum(vSpike)
-minimum(vSpike)
-B_dt = 1.0
-B_trng = (burst_lims[1]-1500):dt:(burst_lims[2]+1500)
-tBurst = (B_trng .- B_trng[1]) ./ 1000 #Offset the time range
-vBurst = sol(B_trng, idxs=1)
-cBurst = sol(B_trng, idxs=3)
-import RetinalChaos.M_INF
-f(v) = pars_dict[:δ] * (-pars_dict[:g_Ca] * M_INF(v, pars_dict[:V1], pars_dict[:V2]) * (v - pars_dict[:E_Ca]))
-vrng = -80.0:1.0:0.0
-crng = f.(vrng)
+#Upsample the spike time
+dtSpike = 0.01 #Set the time differential
+tSpike = tSpike[1]:dtSpike:tSpike[end]
+vSpike = sol(tSpike, idxs=1)
+nSpike = sol(tSpike, idxs=2)
+#tSpike = tSpike .- tSpike[1]
 
-C_dt = 10.0
-C_trng = (burst_tstamps[2, 2]-1000):C_dt:(burst_tstamps[3, 2]+10000)
-
-tIBI = (C_trng .- C_trng[1]) ./ 1000
-vIBI = sol(C_trng, idxs=1)
-cIBI = sol(C_trng, idxs=3)
-aIBI = sol(C_trng, idxs=4)
-bIBI = sol(C_trng, idxs=5)
-println(" Completed")
-
-#%% Prepare the arrows
-
-#Spikes
+#Spikes arrows
 deltaArrow = 1.0
-tSpikeArrow = LinRange(A_trng[1], A_trng[end], 25)
+tSpikeArrow = LinRange(tSpike[1], tSpike[end], 25)
 vSpikeArrow = sol(tSpikeArrow, idxs=[1]) |> Array
 nSpikeArrow = sol(tSpikeArrow, idxs=[2]) |> Array
 dvSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[1]) .- vSpikeArrow
 dnSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[2]) .- nSpikeArrow
 
+#extract the bursts
+beginBurst = ts["Bursts"][1][2]
+dtBurst = 1.0
+tBurst = (beginBurst-1000):dtBurst:(beginBurst+2000)
+vBurst = sol(tBurst, idxs=1)
+cBurst = sol(tBurst, idxs=3)
+#tBurst = (tBurst .- tBurst[1]) ./ 1000 #Offset the time range
+import RetinalChaos.M_INF
+f(v) = pars_dict[:δ] * (-pars_dict[:g_Ca] * M_INF(v, pars_dict[:V1], pars_dict[:V2]) * (v - pars_dict[:E_Ca]))
+vrng = -80.0:1.0:0.0
+crng = f.(vrng)
 
 #Bursts
-#tBurstArrow = LinRange(B_trng[1], B_trng[end], 25)
-tBurstArrow = B_trng[1]:250:B_trng[end]
-
+tBurstArrow = tBurst[1]:250:tBurst[end]
 vBurstArrow = sol(tBurstArrow, idxs=[1]) |> Array
 cBurstArrow = sol(tBurstArrow, idxs=[3]) |> Array
 dvBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[1]) .- vBurstArrow
 dcBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[3]) .- cBurstArrow
+
+#extract the IBI
+C_dt = 10.0
+ts["Bursts"][1]
+tIBI = (ts["Bursts"][1][2, 2]-1000):C_dt:(ts["Bursts"][1][3, 2]+10000)
+vIBI = sol(tIBI, idxs=1)
+cIBI = sol(tIBI, idxs=3)
+aIBI = sol(tIBI, idxs=4)
+bIBI = sol(tIBI, idxs=5)
 
 #IBIs
 tIBIArrow = LinRange(C_trng[1], C_trng[end], 100)
@@ -100,6 +84,7 @@ dvIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[1]) .- vIBIArrow
 dcIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[3]) .- cIBIArrow
 daIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[4]) .- cIBIArrow
 dbIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[5]) .- cIBIArrow
+println(" Completed")
 
 #plt.clf() #While drawing you can use this to clear the figure 
 
@@ -123,15 +108,15 @@ col2_ylabel = -0.25
 #% =====================================================Make panel A===================================================== %%#
 vlims = (-55.0, 5.0)
 nlims = (-0.1, 1.1)
-clims = (0.0, 0.6)
-alims = (-0.1, 1.1)
-blims = (-0.1, 1.1)
+clims = (0.0, 0.5)
+alims = (-0.1, 0.6)
+blims = (-0.1, 0.6)
 
 #Do the plotting
 gsAL = gs[1, 1].subgridspec(ncols=1, nrows=2)
 axA1 = fig1.add_subplot(gsAL[1])
 ylim(vlims)
-axA1.plot(tSpike, vSpike, c=v_color, lw=lw_standard)
+axA1.plot(tSpike .- tSpike[1], vSpike, c=v_color, lw=lw_standard)
 ylabel("Voltage \n (mV)")
 axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
 axA1.xaxis.set_visible(false) #Turn off the bottom axis
@@ -141,8 +126,8 @@ axA1.yaxis.set_minor_locator(MultipleLocator(25.0))
 
 axA2 = fig1.add_subplot(gsAL[2])
 ylim(nlims)
-axA2.plot(tSpike, nSpike, c=n_color, lw=lw_standard)
-ylabel("K-Chan. \n open ratio")
+axA2.plot(tSpike .- tSpike[1], nSpike, c=n_color, lw=lw_standard)
+ylabel("K-Chan. \n open prob.")
 xlabel("Time (ms)")
 axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
 axA2.yaxis.set_major_locator(MultipleLocator(1.00))
@@ -154,7 +139,7 @@ ylim(nlims)
 axAR.plot(vSpike, nSpike, c=:black, lw=lw_standard)
 add_direction(axAR, vSpikeArrow, nSpikeArrow, dvSpikeArrow, dnSpikeArrow)
 xlabel("Voltage (mV)")
-ylabel("K-Chan. prob.")
+ylabel("K-Chan. \n open prob.")
 axAR.xaxis.set_major_locator(MultipleLocator(25.0))
 axAR.xaxis.set_minor_locator(MultipleLocator(12.5))
 axAR.yaxis.set_major_locator(MultipleLocator(0.50))
@@ -162,22 +147,22 @@ axAR.yaxis.set_minor_locator(MultipleLocator(0.25))
 axAR.yaxis.set_label_coords(col2_ylabel, 0.5)
 #add arrows here?
 #% ===============================================Make panel B=============================================== %%#
-vlims = (-105.0, 5.0)
+vlims = (-75.0, 5.0)
 
 gsBL = gs[2, 1].subgridspec(ncols=1, nrows=2)
 axB1 = fig1.add_subplot(gsBL[1])
 ylim(vlims)
-axB1.plot(tBurst, vBurst, c=v_color, lw=lw_standard)
+axB1.plot((tBurst .- tBurst[1]) ./ 1000, vBurst, c=v_color, lw=lw_standard)
 axB1.xaxis.set_visible(false) #Turn off the bottom axis
 ylabel("Voltage \n (mV)")
 axB1.yaxis.set_label_coords(col1_ylabel, 0.5)
 axB1.spines["bottom"].set_visible(false)
-axB1.yaxis.set_major_locator(MultipleLocator(50.0))
-axB1.yaxis.set_minor_locator(MultipleLocator(25.0))
+axB1.yaxis.set_major_locator(MultipleLocator(25.0))
+axB1.yaxis.set_minor_locator(MultipleLocator(12.5))
 
 axB2 = fig1.add_subplot(gsBL[2])
 ylim(clims)
-axB2.plot(tBurst, cBurst, c=c_color, lw=lw_standard)
+axB2.plot((tBurst .- tBurst[1]) ./ 1000, cBurst, c=c_color, lw=lw_standard)
 xlabel("Time (s)")
 ylabel("[Ca2+] \n (mM)")
 axB2.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -187,7 +172,6 @@ axB2.yaxis.set_minor_locator(MultipleLocator(0.50))
 axBR = fig1.add_subplot(gs[2, 2])
 xlim(vlims)
 ylim(clims)
-size(cBurst)
 add_direction(axBR, vBurstArrow, cBurstArrow, dvBurstArrow, dcBurstArrow, color=c_color)
 axBR.plot(vBurst, cBurst, c=c_color, lw=2.0)
 xlabel("Voltage (mV)")
@@ -202,7 +186,7 @@ axBR.yaxis.set_minor_locator(MultipleLocator(0.15))
 gsCL = gs[3, 1].subgridspec(ncols=1, nrows=4)
 axCL1 = fig1.add_subplot(gsCL[1])
 ylim(-0.1, 0.61)
-axCL1.plot(tIBI, cIBI, c=c_color, lw=lw_standard)
+axCL1.plot((tIBI .- tIBI[1]) ./ 1000, cIBI, c=c_color, lw=lw_standard)
 ylabel("[Ca2+] \n (mM)")
 axCL1.xaxis.set_visible(false) #Turn off the bottom axis
 axCL1.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -212,7 +196,7 @@ axCL1.yaxis.set_minor_locator(MultipleLocator(0.3))
 
 axCL2 = fig1.add_subplot(gsCL[2])
 ylim(-1.1, 0.1)
-axCL2.plot(tIBI, -aIBI, c=a_color, lw=lw_standard)
+axCL2.plot((tIBI .- tIBI[1]) ./ 1000, -aIBI, c=a_color, lw=lw_standard)
 ylabel("cAMP \n (At)")
 axCL2.xaxis.set_visible(false) #Turn off the bottom axis
 axCL2.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -222,7 +206,7 @@ axCL2.yaxis.set_minor_locator(MultipleLocator(0.5))
 
 axCL3 = fig1.add_subplot(gsCL[3])
 ylim(-0.1, 1.1)
-axCL3.plot(tIBI, bIBI, c=b_color, lw=lw_standard)
+axCL3.plot((tIBI .- tIBI[1]) ./ 1000, bIBI, c=b_color, lw=lw_standard)
 ylabel("TREK \n (Bt)")
 axCL3.xaxis.set_visible(false) #Turn off the bottom axis
 axCL3.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -232,7 +216,7 @@ axCL3.yaxis.set_minor_locator(MultipleLocator(0.5))
 
 axCL4 = fig1.add_subplot(gsCL[4])
 ylim(-90.0, 5.0)
-axCL4.plot(tIBI, vIBI, c=v_color, lw=lw_standard)
+axCL4.plot((tIBI .- tIBI[1]) ./ 1000, vIBI, c=v_color, lw=lw_standard)
 xlabel("Time (s)")
 ylabel("Voltage \n (mV)")
 axCL4.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -242,7 +226,7 @@ axCL4.yaxis.set_minor_locator(MultipleLocator(30.0))
 gsCR = gs[3, 2].subgridspec(ncols=1, nrows=5, height_ratios=[0.2, 0.2, 0.2, 0.2, 0.2])
 axCR1 = fig1.add_subplot(gsCR[1])
 xlim(-0.1, 0.61)
-ylim(-0.1, 1.1)
+ylim(-0.1, 0.6)
 axCR1.plot(cIBI, aIBI, c=a_color, lw=lw_standard)
 add_direction(axCR1, cIBIArrow, aIBIArrow, dcIBIArrow, daIBIArrow, color=a_color)
 xlabel("[Ca2+](mM)")
@@ -254,8 +238,8 @@ axCR1.yaxis.set_major_locator(MultipleLocator(1.0))
 axCR1.yaxis.set_minor_locator(MultipleLocator(0.5))
 
 axCR2 = fig1.add_subplot(gsCR[3])
-xlim(-0.1, 1.1)
-ylim(-0.1, 1.1)
+xlim(-0.1, 0.6)
+ylim(-0.1, 0.6)
 axCR2.plot(aIBI, bIBI, c=b_color, lw=lw_standard)
 add_direction(axCR2, aIBIArrow, bIBIArrow, daIBIArrow, dbIBIArrow, color=b_color)
 xlabel("cAMP decay (At)")
@@ -267,7 +251,7 @@ axCR2.yaxis.set_major_locator(MultipleLocator(1.0))
 axCR2.yaxis.set_minor_locator(MultipleLocator(0.5))
 
 axCR3 = fig1.add_subplot(gsCR[5])
-xlim(-0.1, 1.1)
+xlim(-0.1, 0.6)
 ylim(-90.0, 5.0)
 axCR3.plot(bIBI, vIBI, c=v_color, lw=lw_standard)
 add_direction(axCR3, bIBIArrow, vIBIArrow, dbIBIArrow, dvIBIArrow, color=v_color)
@@ -292,6 +276,6 @@ println(" Complete")
 #%% Save the figure
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 print("[$(now())]: Saving the figure 1...")
-fig1.savefig("$(loc)/figure1_ModelVariables.png")
+fig1.savefig("$(loc)/figure1_ModelVariables.jpg")
 plt.close("all")
 println(" Completed")
