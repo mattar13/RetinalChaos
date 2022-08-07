@@ -196,6 +196,6 @@ axC2.annotate("F", (0.53, 0.35), xycoords="figure fraction", annotation_clip=fal
 #%% Save the Plot 
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 print("[$(now())]: Saving the figure 2...")
-fig2.savefig("$(loc)/figure2_BiophysicalProperties.png")
+fig2.savefig("$(loc)/figure2_BiophysicalProperties.jpg")
 plt.close("all")
 println(" Completed")

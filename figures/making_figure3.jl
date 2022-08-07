@@ -37,10 +37,10 @@ println(" Completed")
 #%% Run the analysis
 print("[$(now())]: Running analysis... ")
 dt = 1.0; #Set the time differential
-thresh = calculate_threshold(sol); #Extract the threshold
-spike_tstamps = get_timestamps(sol); #Extract the spikes
-burst_tstamps, SPB = max_interval_algorithim(spike_tstamps); #Extract the bursts
+ts, data = timeseries_analysis(sol)
+burst_tstamps = ts["Bursts"][1] #Extract the bursts
 println(" Completed")
+
 
 #%% Extract plotting data
 print("[$(now())]: Extracting data... ")
@@ -136,7 +136,7 @@ fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inc
 gs = fig3.add_gridspec(4, 2,
      width_ratios=(0.77, 0.23),
      height_ratios=(0.2, 0.26, 0.26, 0.26),
-     right=0.95, left=0.1,
+     right=0.91, left=0.1,
      top=0.95, bottom=0.08,
      wspace=0.10, hspace=0.4
 )
@@ -153,7 +153,7 @@ axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
 axA1.spines["bottom"].set_visible(false)
 
 axA2 = fig3.add_subplot(gsA[2, 1])
-ylim(0.0, 5.0)
+ylim(0.0, 4.0)
 axA2.plot(t, et, c=:green, lw=lw_standard)
 axA2.plot(t, it, c=:red, lw=lw_standard)
 ylabel("NT. Rel. \n (mM)")
@@ -235,7 +235,7 @@ axCR.yaxis.set_visible(false) #Turn off the bottom axis
 axCR.set_aspect("equal", "box")
 axCR.spines["bottom"].set_visible(false)
 axCR.spines["left"].set_visible(false)
-xlabel("Avg. GABA Release")
+xlabel("Avg. GABA \n Release (mM)")
 cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.25, 0.5])
 cbarI.ax.set_ylabel("Average It (GABA)")
 
@@ -246,7 +246,7 @@ cmapYV = plt.get_cmap("Blues")
 cmapYD = plt.get_cmap("Greens")
 cmapXN = plt.get_cmap("Reds")
 cmapXT = plt.get_cmap("Purples")
-ylim(-25.0, 10.0)
+ylim(-15.0, 10.0)
 #Plot the Nasal direction
 for (i, dyv) in enumerate(dY_V)
      axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=lw_standard)
@@ -256,23 +256,23 @@ axD1.xaxis.set_visible(false) #Turn off the bottom axis
 axD1.spines["bottom"].set_visible(false)
 
 axD2 = fig3.add_subplot(gsDL[3, 2])
-ylim(-10.0, 10.0)
+ylim(-15.0, 10.0)
 #Plot the Nasal direction
-
 for (i, dyd) in enumerate(reverse(dY_D))
      axD2.plot(t, I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=lw_standard)
 end
 xlabel("Time (s)")
 
 axDC = fig3.add_subplot(gsDL[2, 2])
-ylim(-25.0, 10.0)
+ylim(-15.0, 10.0)
 axDC.plot(t, I_TOTAL[center_y, center_x, :], c=:black, lw=lw_standard)
 axDC.xaxis.set_visible(false) #Turn off the bottom axis
 axDC.spines["bottom"].set_visible(false)
 axDC.spines["left"].set_visible(false)
 axDC.yaxis.set_visible(false) 
+
 axD3 = fig3.add_subplot(gsDL[2, 1])
-ylim(-25.0, 10.0)
+ylim(-15.0, 10.0)
 ylabel("Current (pA)")
 for (i, dxn) in enumerate(reverse(dX_N))
      axD3.plot(t, I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=lw_standard)
@@ -282,11 +282,12 @@ xlabel("Time (s)")
 #axD3.spines["bottom"].set_visible(false)
 
 axD4 = fig3.add_subplot(gsDL[2, 3])
-ylim(-25.0, 10.0)
+ylim(-15.0, 10.0)
 for (i, dxt) in enumerate(dX_T)
      axD4.plot(t, I_TOTAL[center_y, dxt, :], c=cmapXT(i / length(dX_T)), lw=lw_standard)
 end
 xlabel("Time (s)")
+
 axDR = fig3.add_subplot(gs[4, 2])
 ctr_i = axDR.contourf(avg_I_TOTAL, cmap="RdYlGn", levels=-5.0:0.5:5.0, extend="both")
 axDR.plot([center_x], [center_y], linewidth=0.0, marker="o", ms=4.0)
@@ -310,11 +311,6 @@ axDR.spines["bottom"].set_visible(false)
 axDR.spines["left"].set_visible(false)
 cbari = fig3.colorbar(ctr_i, ticks=[-25.0, 0.0, 10.0])
 cbari.ax.set_ylabel("Induced Current (pA)")
-#Lets put text labeling nasal temporal 
-#axDR.text(-1.0, center_y, "N", ha="center", va="center")
-#axDR.text(nx, center_y, "T", ha="center", va="center")
-#axDR.text(center_x, -1.0, "D", ha="center", va="center")
-#axDR.text(center_x, ny, "Top", ha="center", va="center")
 
 axDR.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 axDR.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
@@ -326,7 +322,7 @@ println(" Completed")
 #%% Save the plot
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 print("[$(now())]: Saving the figure 3...")
-fig3.savefig("$(loc)/figure3_Neurotransmitters.png")
+fig3.savefig("$(loc)/Figure4_Neurotransmitters.jpg")
 plt.close("all")
 println(" Completed")
 
@@ -340,20 +336,24 @@ anim = @animate for i = 1:100:length(t)
      #contourf(frame_e, e_frame, clims=(0.0, 1.0))
      contour_e = contourf(e_frame,
           ratio=:equal, grid=false,
-          ylabel="t = $(t[i])",
-          xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-          c=:curl, clims=(0.0, 1.0), levels=0.0:0.05:3.0
+          ylabel="t = $(round(t[i], digits = 2))",
+          xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny),
+          c=:curl, clims=(0.0, 1.0), levels=0.0:0.05:3.0,
+          colorbar_title="[ACh] (μM)"
      )
+     xlabel("")
      contour_i = contourf(i_frame,
-          ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-          c=:jet, clims=(0.0, 1.0), levels=0.0:0.05:3.0
+          ratio=:equal, grid=false, xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny),
+          c=:jet, clims=(0.0, 1.0), levels=0.0:0.05:3.0, 
+          colorbar_title = "[GABA] (μM)"
      )
 
      contour_I = contourf(I_frame,
-          ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-          c=:RdYlGn, clims=(-5.0, 5.0), levels=-10.0:0.5:10.0
+          ratio=:equal, grid=false, xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny),
+          c=:RdYlGn, clims=(-8.0, 8.0), levels=-15.0:0.5:15.0, 
+          colorbar_title = "Induced Current (pA)"
      )
      plot(contour_e, contour_i, contour_I, layout=3)
 end
 
-gif(anim, "$(loc)/supplemental_animation.gif")
+gif(anim, "$(loc)/S1 Neurotransmitter Conductance.gif")
