@@ -106,9 +106,9 @@ function extract_trace(ts::Dict{String,Matrix{T}}, data;
 
     trace = data["DataArray"][trace_rng]
     if normalize
-        spike = standardize(UnitRangeTransform, trace)
+        trace = standardize(UnitRangeTransform, trace)
     end
-    return t, spike
+    return t, trace
 end
 
 function extract_trace(ts::Dict{String,Vector{Matrix{T}}}, data;
