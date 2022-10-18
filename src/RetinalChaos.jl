@@ -1,6 +1,10 @@
 module RetinalChaos
-using DiffEqBase
-using StatsBase
+
+#==Base imports==#
+import Base.length
+import Base.print
+import Dates.now
+export now
 
 #===========================================Import logging materials===========================================#
 using Logging: global_logger
@@ -9,47 +13,37 @@ global_logger(TerminalLogger())
 using ProgressMeter
 export @showprogress
 
-const version = :master
-param_path = joinpath(splitpath(pathof(RetinalChaos))[1:end-2]..., "params")
-version_info() = println(version)
-import Base.length
-import Base.print
-import Dates.now
-export now
-#======================================Import all the pre-loaded packages======================================#
+#======================================Exports======================================#
+using DifferentialEquations, ModelingToolkit
 
-using DifferentialEquations #Differential Equations packages
 export ODEProblem, SDEProblem, solve
 export SOSRI, SOSRA, SROCK1, SRIW1, SKenCarp #Export any algorithims
 export SRIW1
 export SROCK1 #Needs a dt specification
-#import DiffEqBase.AbstractODEProblem
-#export SDEProblem, ODEProblem, solve, SOSRI
 export EnsembleProblem, EnsembleThreads
 
-using CUDA
-export cu, allowscalar
+#create a function that completes setup
 
-include("models.jl")
-export T_ODE, T_SDE, T_PDE
-#export GABA_ODE, GABA_SDE, GABA_PDE
-export GABA_PDE_gNULL
-export t_pars, t_conds
-export GABA_pars, GABA_conds
-export noise
+include("open_parameters.jl") #Load all of the parameters
+include("auxillary_functions.jl") #Load all of the necessary functions
+include("ODE_equations.jl") #Load all model equations
+#using CUDA
+#export cu, allowscalar
 
+#Import all the auxillary functions
 #===========================================Loading the Parameters=============================================#
-using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
-include("utilities.jl")
-export read_JSON, extract_dict, p_find, u_find
-export save, load
-export @save
+#using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
+#include("utilities.jl")
+#export read_JSON, extract_dict, p_find, u_find
+#export save, load
+#export @save
+
 using Distributions, StatsBase
 export Binomial, Histogram, fit
 
 
 #==========================================Extracting wave and events==========================================#
-using ePhys #Export the wave extraction utilities
+#using ePhys #Export the wave extraction utilities
 
 include("wave_extraction.jl") #Export functions for wave extraction
 export calculate_threshold, timeseries_analysis
@@ -81,19 +75,9 @@ export TimescaleLoss
 #=
 using Telegram, Telegram.API, ConfigEnv
 
-if verbose 
-     print("[$(now())]: Plotting utilities imported in: ")
-     @time using Plots, Measures     
-else
-     using Plots, Measures 
-end
-
-using ResettableStacks, RandomNumbers, LinearAlgebra #These packages are needed to load the problems
-
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
 using Statistics, StatsBase
 using Images, ImageSegmentation
-check_version() = println("Version 1.0")
 ######################UTILITIES######################
 =#
 end
