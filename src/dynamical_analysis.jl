@@ -2,33 +2,16 @@
 ensemble_func()  sets up a ensemble problem
 """
 
-function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars, verbose = false)
+function ensemble_func(prob, i, repeat, idx::Int64, val_rng; verbose = false)
     #println("Running this version")
-    if run_func_on == :pars
-        if verbose
-            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
-        end
-        prob.p[idx] = val_rng[i]
-        prob
-    elseif run_func_on == :conds
-        if verbose
-            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
-        end
-        prob.u0[idx] = val_rng[i]
-        prob
-    end
-end
-
-function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=false)
-
-    idx_par = findall(sym .== keys(ODEModel.var_to_name))
-    println(idx_par)
     if verbose
         println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
     end
-    prob.p[idx_par] .= val_rng[i]
+    prob.p[idx] = val_rng[i]
     prob
 end
+
+ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=false) = ensemble_func(prob, i , repeat, findfirst(sym .== keys(ODEModel.var_to_name)), val_rng; verbose = verbose)
 
 """
 monte_func() sets up a monte carlo problem
