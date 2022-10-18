@@ -5,58 +5,59 @@ include("../figures/figure_setup.jl")
 
 #%% Part 1: Running an ensemble problems
 #Setp 1: Import all parameters and make the model
-conds_dict = read_JSON("params\\conds.json")
-u0 = conds_dict |> extract_dict #Initial conditions
-pars_dict = read_JSON("params\\params.json")
-#pars_dict[:C_m] = 1.9
-#pars_dict[:I_app] = 1.0
-pars_dict[:I_app] = 5.0
-pars_dict[:ρe] = 0.0
-pars_dict[:ρi] = 0.0
-pars_dict[:g_TREK] = 0.0 #Remove the sAHP
-p = pars_dict |> extract_dict #Parameters
-tspan = (0.0, 30e3) #Timespan
-prob = ODEProblem(T_ODE, u0, tspan, p) #ODE problem
+import RetinalChaos.ODEModel #import the ODEModel
+import RetinalChaos.u0 #import the 
+import RetinalChaos.parameters
+
+#Step 3: determine the timespan
+tmin = 0.0
+tmax = 300.0
+
+#Step 4: set the parameters
+parameters[I_app] = 0.0
+parameters[ρe] = 0.0
+parameters[ρi] = 0.0
+parameters[g_TREK] = 0.0 #Remove the sAHP
+
+prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters) #ODE problem
 #prob = SDEProblem(T_SDE, noise, u0, tspan, p) #ODE problem
 
 #Step 2: Determine the number of trajectories and the parameter to adjust
 n_trajectories = 40
-par_idx = p_find(:δ; list_p=t_pars); #Point to the index of the parameter
-test_rng = LinRange(0.001, 0.10, n_trajectories); #Determine the range of the parameters (specified above)
-prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par_idx, test_rng) #Set up the problem function to indicate that the voltage will be altered
+
+#Point to the index of the parameter
+test_rng = LinRange(-120.0, 10.0, n_trajectories); #Determine the range of the parameters (specified above)
+prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, :I_app, test_rng) #Set up the problem function to indicate that the voltage will be altered
 ensemble_prob = EnsembleProblem(prob, prob_func=prob_func); #Set up the problem
 
 #Step 4: Run the simulation #Noise uses SOSRI(), 
 @time sim = solve(ensemble_prob, saveat=1.0, trajectories=n_trajectories, EnsembleThreads());
 
 #%% Plot the solutions 
-plt_a = plot(sim[1], vars=[1], c=:jet, line_z=1, clims=(test_rng[1], test_rng[end]))
-plt_b = plot(sim[1], vars=(1, 2), c=:jet, line_z=1, xlims=(-70.0, 10.0), clims=(test_rng[1], test_rng[end]))
+plt_a = plot(sim[1], idxss=[v], c=:jet, line_z=1, clims=(test_rng[1], test_rng[end]))
+plt_b = plot(sim[1], vidxss=(v, n), c=:jet, line_z=1, ylims = (0.0, 1.0), xlims=(-70.0, 10.0), clims=(test_rng[1], test_rng[end]))
 for (sol_idx, sol_i) in enumerate(sim)
     println(test_rng[sol_idx])
     plot!(plt_a, sol_i, vars=[1], c=:jet, line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
-    plot!(plt_b, sol_i, vars=(1, 2), c=:jet, xlims=(-70.0, 10.0), line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
+    plot!(plt_b, sol_i, vars=(1, 2), c=:jet, ylims = (0.0, 1.0), xlims=(-70.0, 10.0), line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
 end
 plot(plt_a, plt_b, layout=2)
 
 #%% Part 2: Running a equilibria analysis
-conds_dict = read_JSON("params\\conds.json")
-u0 = conds_dict |> extract_dict
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = 10.0 #Set initial applied current to 0
-pars_dict[:ρi] = 0.0 #remove GABA influence
-pars_dict[:ρe] = 0.0 #remove ACh influence
-pars_dict[:g_K] = 3.2
-pars_dict[:g_TREK] = 0.0 #Remove the sAHP
-p = pars_dict |> extract_dict
+parameters[I_app] = 10.0 #Set initial applied current to 0
+parameters[ρi] = 0.0 #remove GABA influence
+parameters[ρe] = 0.0 #remove ACh influence
+parameters[g_K] = 3.2
+parameters[g_TREK] = 0.0 #Remove the sAHP
 
 #Step 3: determine the timespan
-tspan = (0.0, 300e3);
+tmin = 0.0
+tmax = 300e3
 
 #Step 4: set up the equilibria problem
-prob_eq = ODEProblem(T_ODE, u0, tspan, p)
+prob_eq = ODEProblem(ODEModel, u0, (tmin, tmax), parameters)
 sol = solve(prob_eq, progress=true, progress_steps=1)
-plot(sol, vars=(1, 2), plotdensity=Int64(1e6))
+plot(sol, vars=(v, n), plotdensity=Int64(1e6))
 
 #%% Step 5: Running a Codimensional-1 analysis
 codim1 = (:δ)

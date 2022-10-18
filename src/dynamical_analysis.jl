@@ -19,25 +19,14 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; run_func_on = :pars
     end
 end
 
-function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose = false)
-    
-    idx_cond = sym |> u_find
-    idx_par = sym |> p_find
+function ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=false)
 
-    if !isnothing(idx_par) 
-        if verbose
-            println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
-        end
-        prob.p[idx_par] = val_rng[i]
-    end    
-    
-    if !isnothing(idx_cond)
-        if verbose
-            println("Changing condition $(prob.u0[idx]) -> $(val_rng[i])")
-        end
-        prob.u0[idx_cond] = val_rng[i]
+    idx_par = findall(sym .== keys(ODEModel.var_to_name))
+    println(idx_par)
+    if verbose
+        println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
     end
-    
+    prob.p[idx_par] .= val_rng[i]
     prob
 end
 
