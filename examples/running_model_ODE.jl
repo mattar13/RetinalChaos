@@ -1,22 +1,20 @@
 using Revise
 using RetinalChaos
+using Plots
 
-#Step 1: Import the initial conditions
-conds_dict = read_JSON("params\\conds.json")
-u0 = conds_dict |> extract_dict
-
-#Step 2: Import the parameters
-pars_dict = read_JSON("params\\params.json")
-p = pars_dict |> extract_dict
+import RetinalChaos.ODEModel #import the ODEModel
+import RetinalChaos.u0 #import the 
+import RetinalChaos.parameters
 
 #Step 3: determine the timespan
-tspan = (0.0, 300e3)
+tmin = 0.0
+tmax = 300e3
 
 #Step 4: set up the problem
-prob = ODEProblem(T_ODE, u0, tspan, p)
+prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters)
 
 #Step 5: Solve the problem
 @time sol = solve(prob);
 
 #Once you have the solution you can do anything like plotting or other math
-plot(sol)
+plot(sol, idxs=[v, I_Na, I_Ca, I_K], layout=(4, 1), lw=2.0, c=:red)
