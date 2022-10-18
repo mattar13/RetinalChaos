@@ -16,6 +16,7 @@ export @showprogress
 #======================================Exports======================================#
 using DifferentialEquations, ModelingToolkit
 using Symbolics
+export reload_parameters
 export ODEProblem, SDEProblem, solve
 export SOSRI, SOSRA, SROCK1, SRIW1, SKenCarp #Export any algorithims
 export SRIW1
