@@ -17,7 +17,7 @@ ICa(v) = -g_Ca * M∞(v) * (v - E_Ca)
 IK(v) = -g_K * n * (v - E_K)
 ITREK(v) = -g_TREK * b * (v - E_K)
 IACh(v) = -g_ACh * ħe(e) * (v - E_ACh)
-IGABA(v) = -g_GABA * ħi(i) * (v - E_GABA)
+IGABA(v) = -g_GABA * ħi(i) * (v - E_Cl)
 INa(v) = -g_Na * m^3 * h * (v - E_Na)
 
 ∇²(u) = Dxx(u) + Dyy(u) #This is the diffusion aspect of the equation
