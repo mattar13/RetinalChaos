@@ -6,40 +6,44 @@ include("../figures/figure_setup.jl")
 #%% Part 1: Running an ensemble problems
 #Setp 1: Import all parameters and make the model
 import RetinalChaos.ODEModel #import the ODEModel
+import RetinalChaos.SDEModel #import the SDEModel
 import RetinalChaos.u0 #import the 
 import RetinalChaos.parameters
 
 #Step 3: determine the timespan
 tmin = 0.0
-tmax = 300.0
+tmax = 30e3
 
 #Step 4: set the parameters
-parameters[I_app] = 0.0
-parameters[ρe] = 0.0
-parameters[ρi] = 0.0
-parameters[g_TREK] = 0.0 #Remove the sAHP
-
-prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters) #ODE problem
+reload_parameters()
+#parameters[I_app] = 10.0
+#parameters[ρe] = 0.0
+#parameters[ρi] = 0.0
+#parameters[g_TREK] = 0.0 #Remove the sAHP
+parameters[E_Cl]
+prob = SDEProblem(SDEModel, u0, (tmin, tmax), parameters) #ODE problem
 #prob = SDEProblem(T_SDE, noise, u0, tspan, p) #ODE problem
 
 #Step 2: Determine the number of trajectories and the parameter to adjust
-n_trajectories = 40
-
-#Point to the index of the parameter
-test_rng = LinRange(-120.0, 10.0, n_trajectories); #Determine the range of the parameters (specified above)
-prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, :I_app, test_rng) #Set up the problem function to indicate that the voltage will be altered
+reload_parameters()
+n_trajectories = 5
+par = :E_Cl #Adjust the noise
+pmin = -65.0 #Determine the minimum parameter
+pmax = 55.0 #Determine the maximum range of parameters
+test_rng = LinRange(pmin, pmax, n_trajectories); #Determine the range of the parameters (specified above)
+prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par, test_rng) #Set up the problem function to indicate that the voltage will be altered
 ensemble_prob = EnsembleProblem(prob, prob_func=prob_func); #Set up the problem
 
 #Step 4: Run the simulation #Noise uses SOSRI(), 
-@time sim = solve(ensemble_prob, saveat=1.0, trajectories=n_trajectories, EnsembleThreads());
+@time sim = solve(ensemble_prob, SOSRI(), saveat=1.0, trajectories=n_trajectories, EnsembleThreads());
 
 #%% Plot the solutions 
-plt_a = plot(sim[1], idxss=[v], c=:jet, line_z=1, clims=(test_rng[1], test_rng[end]))
-plt_b = plot(sim[1], vidxss=(v, n), c=:jet, line_z=1, ylims = (0.0, 1.0), xlims=(-70.0, 10.0), clims=(test_rng[1], test_rng[end]))
+plt_a = plot(sim[1], idxs=[v], c=:jet, line_z=1, clims=(test_rng[1], test_rng[end]))
+plt_b = plot(sim[1], idxs=(v, n), c=:jet, line_z=1, ylims=(0.0, 1.0), xlims=(-70.0, 10.0), clims=(test_rng[1], test_rng[end]))
 for (sol_idx, sol_i) in enumerate(sim)
     println(test_rng[sol_idx])
-    plot!(plt_a, sol_i, vars=[1], c=:jet, line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
-    plot!(plt_b, sol_i, vars=(1, 2), c=:jet, ylims = (0.0, 1.0), xlims=(-70.0, 10.0), line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
+    plot!(plt_a, sol_i, idxs=[1], c=:jet, line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
+    plot!(plt_b, sol_i, idxs=(1, 2), c=:jet, ylims=(0.0, 1.0), xlims=(-70.0, 10.0), line_z=test_rng[sol_idx], clims=(test_rng[1], test_rng[end]), legend=false)
 end
 plot(plt_a, plt_b, layout=2)
 
@@ -47,7 +51,6 @@ plot(plt_a, plt_b, layout=2)
 parameters[I_app] = 10.0 #Set initial applied current to 0
 parameters[ρi] = 0.0 #remove GABA influence
 parameters[ρe] = 0.0 #remove ACh influence
-parameters[g_K] = 3.2
 parameters[g_TREK] = 0.0 #Remove the sAHP
 
 #Step 3: determine the timespan
