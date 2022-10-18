@@ -5,14 +5,10 @@ using Plots
 import RetinalChaos.SDEModel #import the ODEModel
 import RetinalChaos.u0 #import the 
 import RetinalChaos.parameters
-
-parameters[I_app]
-parameters[I_app] = 0.0
-parameters[I_app]
-
+reload_parameters()
 #Step 3: determine the timespan
 tmin = 0.0
-tmax = 300e3
+tmax = 60e3
 
 #Step 4: set up the problem
 probSDE = SDEProblem(SDEModel, u0, (tmin, tmax), parameters)
