@@ -1,3 +1,4 @@
+println("Loading model")
 @named SAC_seperate = ODESystem([
      Dt(v) ~ (ILeak(v) + ICa(v) + IK(v) + ITREK(v) + IACh(v) + IGABA(v) + INa(v) + I_app + W) / C_m,
      I_Ca ~ ICa(v),
@@ -14,3 +15,9 @@
      Dt(W) ~ -W / τw
 ])
 ODEModel = structural_simplify(SAC_seperate)
+
+sig = 0.1
+noise_eqs = zeros(length(ODEModel.eqs))
+noise_eqs[end] = sig
+
+@named SDEModel = SDESystem(ODEModel, noise_eqs)
