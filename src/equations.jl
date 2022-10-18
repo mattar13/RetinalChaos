@@ -16,8 +16,7 @@ println("Loading model")
 ])
 ODEModel = structural_simplify(SAC_seperate)
 
-sig = 0.1
 noise_eqs = zeros(length(ODEModel.eqs))
-noise_eqs[end] = sig
+noise_eqs[end] = 0.1 #This is reduced by sig in the model
 
 @named SDEModel = SDESystem(ODEModel, noise_eqs)
