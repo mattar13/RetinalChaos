@@ -15,18 +15,31 @@ export @showprogress
 
 #======================================Exports======================================#
 using DifferentialEquations, ModelingToolkit
-
+using Symbolics
 export ODEProblem, SDEProblem, solve
 export SOSRI, SOSRA, SROCK1, SRIW1, SKenCarp #Export any algorithims
 export SRIW1
 export SROCK1 #Needs a dt specification
 export EnsembleProblem, EnsembleThreads
 
-#create a function that completes setup
-
+#Don't explicitly export anything
 include("open_parameters.jl") #Load all of the parameters
 include("auxillary_functions.jl") #Load all of the necessary functions
-include("ODE_equations.jl") #Load all model equations
+include("equations.jl") #Load all model equations
+
+#export all of the parameters so we can edit something
+export v, I_Ca, I_Na, I_K, n, m, h, c, a, b, e, i, W #Initial conditions
+export g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m
+export V3, V4, τn
+export C_0, λ, δ, τc
+export α, τa, β, τb, ρe, ρi, τACh, τGABA, VSe, VSi, V0e, V0i
+export De, Di
+export τw
+export g_Na, E_Na 
+export V7, V8, V9
+export V10, V11, V12
+export V13, V14, V15
+export V16, V17, V18
 #using CUDA
 #export cu, allowscalar
 

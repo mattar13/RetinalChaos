@@ -13,6 +13,7 @@ println("Loading parameters")
 @parameters V13 V14 V15
 @parameters V16 V17 V18
 
+Dt = Differential(t)
 Dx = Differential(x)
 Dy = Differential(y)
 Dxx = Differential(x)^2
@@ -91,6 +92,5 @@ u0 = Dict(
      W => 0.0
 )
 
-#@variables v(..) I_Ca(..) I_Na(..) I_K(..) n(..) m(..) h(..) c(..) a(..) b(..) e(..) i(..) W(..)
-
+#@variables v(..) n(..) m(..) h(..) c(..) a(..) b(..) e(..) i(..) W(..)
 #Dt = Differential(t)

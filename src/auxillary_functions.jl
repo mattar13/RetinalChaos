@@ -1,3 +1,4 @@
+println("Loading auxillary functions")
 M∞(v) = (1 + tanh((v - V1) / V2)) / 2
 N∞(v) = (1 + tanh((v - V3) / V4)) / 2
 Λ(V) = cosh((V - V3) / (2 * V4));
