@@ -15,6 +15,8 @@ export @showprogress
 
 #======================================Exports======================================#
 using DifferentialEquations, ModelingToolkit
+import ModelingToolkit as MTK
+export MTK
 using Symbolics
 export reload_parameters
 export ODEProblem, SDEProblem, solve
@@ -36,7 +38,7 @@ export C_0, λ, δ, τc
 export α, τa, β, τb, ρe, ρi, τACh, τGABA, VSe, VSi, V0e, V0i
 export De, Di
 export τw, σ
-export g_Na, E_Na 
+export g_Na, E_Na
 export V7, V8, V9
 export V10, V11, V12
 export V13, V14, V15
@@ -46,9 +48,9 @@ export V16, V17, V18
 
 #Import all the auxillary functions
 #===========================================Loading the Parameters=============================================#
-#using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
-#include("utilities.jl")
-#export read_JSON, extract_dict, p_find, u_find
+using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
+include("utilities.jl")
+export read_JSON, extract_dict, indexof
 #export save, load
 #export @save
 
@@ -64,12 +66,15 @@ export calculate_threshold, timeseries_analysis
 export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
 export extract_waves
 
-
-using ForwardDiff, NLsolve, LinearAlgebra #Imported for dynamical analysis
+using BifurcationKit
+import BifurcationKit as BK
+export BK #Use this explicitly for Bifurcation kit utilities
+using ForwardDiff, NLsolve, Setfield, LinearAlgebra #Imported for dynamical analysis
 include("dynamical_analysis.jl") # Export functions for dynamical analysis
 export ensemble_func
 export find_equilibria, find_bifurcation
 export codim_map
+export @lens, norminf
 
 using RecipesBase #I want to avoid using thisPlots
 include("plotting.jl")
