@@ -21,17 +21,19 @@ using Symbolics
 export reload_parameters
 export ODEProblem, SDEProblem, solve
 export SOSRI, SOSRA, SROCK1, SRIW1, SKenCarp #Export any algorithims
-export SRIW1
+export SRIW1, EM
 export SROCK1 #Needs a dt specification
 export EnsembleProblem, EnsembleThreads
-
+export PresetTimeCallback
 #Don't explicitly export anything
 include("open_parameters.jl") #Load all of the parameters
 include("auxillary_functions.jl") #Load all of the necessary functions
 include("equations.jl") #Load all model equations
 
 #export all of the parameters so we can edit something
-export v, I_Ca, I_Na, I_K, n, m, h, c, a, b, e, i, W #Initial conditions
+export v,  n, m, h, c, a, b, e, i, W #Initial conditions
+export I_Ca, I_Na, I_K
+export I_ext
 export g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_Cl, I_app, C_m
 export V3, V4, τn
 export C_0, λ, δ, τc

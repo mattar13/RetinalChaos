@@ -1,3 +1,5 @@
+norminf(x) = norm(x, Inf)
+
 """
 ensemble_func()  sets up a ensemble problem
 """
@@ -11,7 +13,7 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; verbose = false)
     prob
 end
 
-ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=false) = ensemble_func(prob, i , repeat, findfirst(sym .== keys(ODEModel.var_to_name)), val_rng; verbose = verbose)
+ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=false) = ensemble_func(prob, i , repeat, indexof(sym), val_rng; verbose = verbose)
 
 """
 monte_func() sets up a monte carlo problem

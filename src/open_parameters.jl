@@ -1,6 +1,9 @@
 println("Loading parameters")
 @parameters t x y #Dimensions
-@variables v(t) I_Ca(t) I_Na(t) I_K(t) n(t) m(t) h(t) c(t) a(t) b(t) e(t) i(t) W(t) #Initial conditions
+@variables v(t) n(t) m(t) h(t) c(t) a(t) b(t) e(t) i(t) W(t) #Initial conditions
+#Observables
+@variables I_Ca(t) I_Na(t) I_K(t)
+@variables I_ext(t)
 @parameters g_leak E_leak g_Ca V1 V2 E_Ca g_K E_K g_TREK g_ACh k_ACh E_ACh g_GABA k_GABA E_Cl I_app C_m
 @parameters V3 V4 τn
 @parameters C_0 λ δ τc
@@ -78,6 +81,7 @@ parameters = Dict(
 
 
 u0 = Dict(
+     I_ext => 0.0,
      v => -65.0,
      I_Na => 0.0,
      I_Ca => 0.0,
