@@ -16,6 +16,7 @@ export @showprogress
 #======================================Exports======================================#
 using DifferentialEquations, ModelingToolkit
 import ModelingToolkit as MTK
+using MethodOfLines, DomainSets, DiffEqOperators #These are for loading the PDEs
 export MTK
 using Symbolics
 export reload_parameters
@@ -31,7 +32,9 @@ include("auxillary_functions.jl") #Load all of the necessary functions
 include("equations.jl") #Load all model equations
 
 #export all of the parameters so we can edit something
-export v,  n, m, h, c, a, b, e, i, W #Initial conditions
+export v, n, m, h, c, a, b, e, i, W #Initial conditions for ODEs and SDEs
+export v̂, n̂, m̂, ĥ, ĉ, â, b̂, ê, î, Ŵ #Initial conditions for PDEs
+
 export I_Ca, I_Na, I_K
 export I_ext
 export g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_Cl, I_app, C_m
@@ -78,8 +81,8 @@ export find_equilibria, find_bifurcation
 export codim_map
 export @lens, norminf
 
-using RecipesBase #I want to avoid using thisPlots
-include("plotting.jl")
+#using RecipesBase #I want to avoid using thisPlots
+#include("plotting.jl")
 #export animate_solution
 
 
@@ -89,7 +92,7 @@ export FD
 include("fitting.jl")
 export extract_spike_trace, extract_burst_trace, extract_IBI_trace
 #export SpikeLoss, BurstLoss, IBILoss
-export IntervalLoss
+export IntervalLoss, MSELoss
 export MeanSquaredErrorSOL, MeanSquaredError
 export TimescaleLoss
 
