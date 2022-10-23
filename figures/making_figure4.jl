@@ -139,7 +139,7 @@ jitter_dataISO_spike = 0.5 .* rand(length(dataISO["SpikeDurs"])) .+ 1
 jitter_dataNG_spike = 0.5 .* rand(length(dataNG["SpikeDurs"])) .+ 2
 jitter_dataWAVE_spike = 0.5 .* rand(length(dataWAVE["SpikeDurs"])) .+ 3
 
-labels = ["PHYS", "ISO", "NoG", "OPT"]
+labels = ["PHYS", "ISO", "NoG", "WAV"]
 pos = [0.25, 1.25, 2.25, 3.25]
 axE1 = fig4.add_subplot(gs[5, 1])
 #ylim(0.0, 100.0)
@@ -191,7 +191,7 @@ axE3.annotate("E", (0.01, 0.20), xycoords="figure fraction", annotation_clip=fal
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 #loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Journal Submissions\2021 A Computational Model - Sci. Rep\Figures"
 print("[$(now())]: Saving the figure 4...")
-fig4.savefig("$(loc)/figure4_ModelComparison.png")
+fig4.savefig("$(loc)/Figure5_ModelComparison.png")
 plt.close("all")
 println(" Completed")
 

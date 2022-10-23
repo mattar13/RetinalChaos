@@ -4,26 +4,26 @@ include("figure_setup.jl")
 
 println("Running the plotting script for figure 1")
 #%% Open data
-#Step 1: Import the initial conditions
-print("[$(now())]: Setting up modelling data... ")
-conds_dict = read_JSON("params\\conds.json")
-conds_dict[:v] = -65.0
-u0 = conds_dict |> extract_dict
-#Step 2: Import the parameters
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = 15.0
-pars_dict[:ρi] = 0.0
-pars_dict[:ρe] = 0.0
-pars_dict[:C_m] = 13.6
-p = pars_dict |> extract_dict
+#Step 1: Import the model, initial conditions, and parameters
+import RetinalChaos.ODEModel #import the ODEModel
+import RetinalChaos.u0 #import the 
+import RetinalChaos.parameters
+
+#Step 2: Adjust parameters
+parameters[I_app] = 15.0
+parameters[ρi] = 0.0
+parameters[ρe] = 0.0
+
 #Step 3: determine the timespan
-tspan = (0.0, 120e3)
+tmin = 0.0
+tmax = 120e3
+
 #Step 4: set up the problem
-prob = ODEProblem(T_ODE, u0, tspan, p)
+prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters)
+
 #Step 5: Solve the problem
 sol = solve(prob, progress=true, progress_steps=1);
 println(" Completed")
-#plot(sol)
 
 # Run the analysis 
 print("[$(now())]: Running analysis... ")
@@ -52,10 +52,6 @@ tBurst = (beginBurst-1000):dtBurst:(beginBurst+2000)
 vBurst = sol(tBurst, idxs=1)
 cBurst = sol(tBurst, idxs=3)
 #tBurst = (tBurst .- tBurst[1]) ./ 1000 #Offset the time range
-import RetinalChaos.M_INF
-f(v) = pars_dict[:δ] * (-pars_dict[:g_Ca] * M_INF(v, pars_dict[:V1], pars_dict[:V2]) * (v - pars_dict[:E_Ca]))
-vrng = -80.0:1.0:0.0
-crng = f.(vrng)
 
 #Bursts
 tBurstArrow = tBurst[1]:250:tBurst[end]

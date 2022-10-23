@@ -12,6 +12,7 @@ using RetinalChaos
 import RetinalChaos: Φ, ħ, ∇
 import RetinalChaos: T_ODE_NT_Release, get_timestamps, max_interval_algorithim
 import Plots: contourf
+pyplot()
 include("figure_setup.jl")
 println("Running the plotting script for figure 3")
 
@@ -327,6 +328,15 @@ plt.close("all")
 println(" Completed")
 
 #%% Generate a diffusion animation
+fig, ax = plt.subplots(2)
+anim = @animate for i = 1:10
+     ax[1].plot(rand(10))
+     ax[2].plot(rand(10))
+end
+     
+     
+
+#%%
 anim = @animate for i = 1:100:length(t)
      print("[$(now())]: Animating simulation...")
      println(i)
