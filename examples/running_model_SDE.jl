@@ -6,6 +6,7 @@ import RetinalChaos.SDEModel #import the ODEModel
 import RetinalChaos.u0 #import the 
 import RetinalChaos.parameters
 reload_parameters()
+
 #Step 3: determine the timespan
 tmin = 0.0
 tmax = 60e3

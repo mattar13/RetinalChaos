@@ -2,18 +2,19 @@ using Revise
 using RetinalChaos
 using Plots
 
-import RetinalChaos.ODEModel #import the ODEModel
-import RetinalChaos.u0 #import the 
-import RetinalChaos.parameters
+#Step 1: Import the:
+import RetinalChaos.ODEModel # the ODEModel
+import RetinalChaos.u0 #the initial condutions 
+import RetinalChaos.parameters #the parameters
 
-#Step 3: determine the timespan
+#Step 2: determine the timespan
 tmin = 0.0
 tmax = 300e3
 
-#Step 4: set up the problem
+#Step 3: set up the problem
 prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters)
 
-#Step 5: Solve the problem
+#Step 4: Solve the problem
 @time sol = solve(prob);
 
 #Once you have the solution you can do anything like plotting or other math
