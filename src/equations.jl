@@ -17,18 +17,15 @@ print("Loading ODE models... ")
      Dt(W) ~ -W / τw
 ])
 ODEModel = structural_simplify(SAC_Algebraic)
+println("Complete")
 #SDE=============================================================================================================#
 print("Loading SDE models... ")
-#noise_eqs = zeros(length(ODEModel.eqs))
 noise_eqs = zeros(length(ODEModel.eqs))
 noise_eqs[end] = 0.1
-#Add in the observed variables
+
 @named SDEModel = SDESystem(ODEModel, noise_eqs)
 println("Complete")
-
 #PDE=============================================================================================================#
-
-println("Loading PDE models")
 PDEeqs = [
      Dt(v̂(x, y, t)) ~ (ÎLeak(v̂(x, y, t)) + ÎCa(v̂(x, y, t)) + ÎK(v̂(x, y, t)) + ÎTREK(v̂(x, y, t)) + ÎACh(v̂(x, y, t)) + ÎGABA(v̂(x, y, t)) + ÎNa(v̂(x, y, t)) + I_app + Ŵ(x, y, t)) / C_m,
      Dt(n̂(x, y, t)) ~ (Λ(v̂(x, y, t)) * ((N∞(v̂(x, y, t)) - n̂(x, y, t)))) / τn,

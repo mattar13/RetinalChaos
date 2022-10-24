@@ -33,7 +33,7 @@ include("auxillary_functions.jl") #Load all of the necessary functions
 include("equations.jl") #Load all model equations
 include("load_models.jl")
 #export all of the parameters so we can edit something
-export loadODE, loadSDE
+export loadODE, loadSDE, loadPDE, loadSPDE
 
 export x,y,t
 export v, n, m, h, c, a, b, e, i, W #Initial conditions for ODEs and SDEs
