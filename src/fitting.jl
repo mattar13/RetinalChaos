@@ -320,26 +320,40 @@ end
 function TimescaleLoss(tsŶ, dataŶ, tsY, dataY;
     dt=1.0, spike_dur=25, burst_dur=1000, IBI_dur=60e3,
     spike_weight=1.0, burst_weight=1.0, IBI_weight=1.0,
-    normalize=true
+    normalize=true, verbose = false, return_each = true, 
+    mode = :RMSE
 )
     #We can change the data to normalize
     spike_MSE = IntervalLoss(tsŶ, dataŶ, tsY, dataY; dt=dt, tstamps = "Spikes", duration=spike_dur, normalize=normalize) * spike_weight
-    #println(spike_MSE)
     burst_MSE = IntervalLoss(tsŶ, dataŶ, tsY, dataY; dt=dt, tstamps = "Bursts", duration=burst_dur, normalize=normalize) * burst_weight
-    #println(burst_MSE)
     IBI_MSE = IntervalLoss(tsŶ, dataŶ, tsY, dataY; dt=dt, tstamps = "Bursts", duration=IBI_dur, normalize=normalize) * IBI_weight
-    #println(IBI_MSE)
+    if verbose
+        println("MSE from spike: $(spike_MSE)")
+        println("MSE from bursts: $(burst_MSE)")
+        println("MSE from IBI: $(IBI_MSE)")
+    end
     #We can either return each number individually or sum them
-    return spike_MSE + burst_MSE + IBI_MSE
+    if mode == :RMSE
+        spike_MSE = √(spike_MSE)
+        burst_MSE= √(burst_MSE)
+        IBI_MSE= √(IBI_MSE)
+    end
+    if return_each
+        return (spike_MSE, burst_MSE, IBI_MSE)
+    else
+        return spike_MSE + burst_MSE + IBI_MSE
+    end
 end
 
-function TimescaleLoss(Ŷ, Y; dt=1.0, kwargs...)
+function TimescaleLoss(Ŷ, Y; dt=1.0, kwargs...) where T<:Real
+    println("Here")
     tsŶ, dataŶ = timeseries_analysis(Ŷ)
     tsY, dataY = timeseries_analysis(Y)
     TimescaleLoss(tsŶ, dataŶ, tsY, dataY; dt=dt, kwargs...)
 end
 
 #This will allow us to calculate loss on a single parameter set
+#=
 function TimescaleLoss(Ŷ, p::Vector{T}; idxs = 1, kwargs...) where {T<:Real}
     dt = Ŷ.dt
     conds_dict = read_JSON("params\\conds.json")
@@ -349,3 +363,4 @@ function TimescaleLoss(Ŷ, p::Vector{T}; idxs = 1, kwargs...) where {T<:Real}
     sol = solve(prob, SOSRI(), save_idxs = idxs, saveat=dt, progress=true, progress_steps=1)
     TimescaleLoss(Ŷ, sol; dt=dt, kwargs...)
 end
+=#

@@ -21,3 +21,12 @@ IGABA(v) = -g_GABA * ħi(i) * (v - E_Cl)
 INa(v) = -g_Na * m^3 * h * (v - E_Na)
 
 ∇²(u) = Dxx(u) + Dyy(u) #This is the diffusion aspect of the equation
+
+#Each one of these versions needs a PDE version
+ÎLeak(v̂) = -g_leak * (v̂ - E_leak)
+ÎCa(v̂) = -g_Ca * M∞(v̂) * (v̂ - E_Ca)
+ÎK(v̂) = -g_K * n̂(x,y,t) * (v̂ - E_K)
+ÎTREK(v̂) = -g_TREK * b̂(x,y,t) * (v̂ - E_K)
+ÎACh(v̂) = -g_ACh * ħe(ê(x,y,t)) * (v̂ - E_ACh)
+ÎGABA(v̂) = -g_GABA * ħi(î(x,y,t)) * (v̂ - E_Cl)
+ÎNa(v̂) = -g_Na * m̂(x,y,t)^3 * ĥ(x,y,t) * (v̂ - E_Na)

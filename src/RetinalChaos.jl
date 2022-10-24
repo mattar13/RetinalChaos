@@ -32,6 +32,7 @@ include("auxillary_functions.jl") #Load all of the necessary functions
 include("equations.jl") #Load all model equations
 
 #export all of the parameters so we can edit something
+export x,y,t
 export v, n, m, h, c, a, b, e, i, W #Initial conditions for ODEs and SDEs
 export v̂, n̂, m̂, ĥ, ĉ, â, b̂, ê, î, Ŵ #Initial conditions for PDEs
 
@@ -96,6 +97,9 @@ export IntervalLoss, MSELoss
 export MeanSquaredErrorSOL, MeanSquaredError
 export TimescaleLoss
 
+#Load all of the old modelling aspects. We can use that one for PDE
+includ("models.jl")
+export T_PDE
 #=
 using Telegram, Telegram.API, ConfigEnv
 

@@ -11,7 +11,7 @@ using Plots
 #Step 1: Set up the network properties
 print("[$(now())]: Setting up parameters, conditions, and network settings... ")
 nx = ny = 125
-net = T_PDE
+net = RetinalChaos.T_PDE
 #Step 2: Import the initial conditions
 conds_dict = read_JSON("params/conds.json")
 u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))

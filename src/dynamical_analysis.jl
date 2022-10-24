@@ -4,7 +4,7 @@ norminf(x) = norm(x, Inf)
 ensemble_func()  sets up a ensemble problem
 """
 
-function ensemble_func(prob, i, repeat, idx::Int64, val_rng; verbose = false)
+function ensemble_func(prob, i, repeat, idx::Int64, val_rng; verbose = true)
     #println("Running this version")
     if verbose
         println("Changing parameter $(prob.p[idx]) -> $(val_rng[i])")
@@ -13,7 +13,7 @@ function ensemble_func(prob, i, repeat, idx::Int64, val_rng; verbose = false)
     prob
 end
 
-ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=false) = ensemble_func(prob, i , repeat, indexof(sym), val_rng; verbose = verbose)
+ensemble_func(prob, i, repeat, sym::Symbol, val_rng; verbose=true) = ensemble_func(prob, i , repeat, indexof(sym), val_rng; verbose = verbose)
 
 """
 monte_func() sets up a monte carlo problem
