@@ -1,22 +1,10 @@
 println("Loading dimensions")
 #These parameters are about the x, y, and time dimension
 @parameters t x y #Dimensions
-xmin = ymin = tmin = 0.0 #Initial time
-xmax = ymax = 3.0 #max space
-tmax = 60e3 #max time
-dt = 1.0 #time differential
-dx = dy = 0.5 #X and Y Space differential
-#For ODE and SDE models these can be set manually
-
-#Load the time and space domains
-domains = [
-     x ∈ Interval(xmin, xmax)
-     y ∈ Interval(ymin, ymax)
-     t ∈ Interval(tmin, tmax)
-]
 
 println("Loading parameters")
 @variables v(t) n(t) m(t) h(t) c(t) a(t) b(t) e(t) i(t) W(t) #Initial conditions
+@variables v̂(..) n̂(..) m̂(..) ĥ(..) ĉ(..) â(..) b̂(..) ê(..) î(..) Ŵ(..)
 #Observables
 @variables I_Ca(t) I_Na(t) I_K(t)
 @variables I_ext(t)
@@ -75,7 +63,7 @@ parameters = Dict(
      g_GABA => 0.9,
      k_GABA => 0.1,
      E_Cl => -65.0,
-     g_Na => 120.0,
+     g_Na => 2.0,
      E_Na => 55.0, #55.0
      De => 0.005,
      Di => 0.005,
@@ -97,18 +85,18 @@ parameters = Dict(
 
 u0 = Dict(
      I_ext => 0.0,
-     v => -65.0,
+     v => -63.6,
      I_Na => 0.0,
      I_Ca => 0.0,
      I_K => 0.0,
      n => 0.0,
-     m => 0.0,
-     h => 1.0,
+     m => 0.062,
+     h => 0.550,
      c => 0.085,
-     a => 0.1,
-     b => 0.03,
-     e => 0.0,
-     i => 0.0,
+     a => 0.026,
+     b => 0.0,
+     e => 0.066,
+     i => 0.053,
      W => 0.0
 )
 
@@ -151,7 +139,7 @@ function reload_parameters()
      parameters[g_GABA] = 0.9
      parameters[k_GABA] = 0.1
      parameters[E_Cl] = -65.0
-     parameters[g_Na] = 120.0
+     parameters[g_Na] = 2.0
      parameters[E_Na] = 55.0 #55.
      parameters[De] = 0.005
      parameters[Di] = 0.005

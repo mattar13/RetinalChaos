@@ -17,8 +17,6 @@ print("Loading ODE models... ")
      Dt(W) ~ -W / τw
 ])
 ODEModel = structural_simplify(SAC_Algebraic)
-println("Complete")
-
 #SDE=============================================================================================================#
 print("Loading SDE models... ")
 #noise_eqs = zeros(length(ODEModel.eqs))
@@ -29,7 +27,7 @@ noise_eqs[end] = 0.1
 println("Complete")
 
 #PDE=============================================================================================================#
-#=
+
 println("Loading PDE models")
 PDEeqs = [
      Dt(v̂(x, y, t)) ~ (ÎLeak(v̂(x, y, t)) + ÎCa(v̂(x, y, t)) + ÎK(v̂(x, y, t)) + ÎTREK(v̂(x, y, t)) + ÎACh(v̂(x, y, t)) + ÎGABA(v̂(x, y, t)) + ÎNa(v̂(x, y, t)) + I_app + Ŵ(x, y, t)) / C_m,
@@ -43,23 +41,3 @@ PDEeqs = [
      Dt(î(x, y, t)) ~ (Di * ∇²(î(x, y, t)) + ρi * Φi(v̂(x, y, t)) - î(x, y, t)) / τGABA,
      Dt(Ŵ(x, y, t)) ~ -Ŵ(x, y, t) / τw
 ]
-
-@named PDEModel = PDESystem(PDEeqs, bcs, domains, dimensions, states, ps) #Create the undiscretized PDE system
-
-println("Discretizing the model")
-discretization = MOLFiniteDifference([x => dx, y => dy], t)
-# This gives an ODEProblem since it's time-dependent
-grid = get_discrete(PDEModel, discretization) #Make a representation of the discrete map
-discreteX = grid[x]
-discreteY = grid[y]
-nx = length(discreteX)
-ny = length(discreteY)
-@time probPDE = discretize(PDEModel, discretization)
-
-sig = 0.1
-function g(du, u, p, t)
-     du[end] .= sig
-     return du
-end
-probSPDE = SDEProblem(probPDE.f, g, probPDE.u0, probPDE.tspan, probPDE.p)
-=#

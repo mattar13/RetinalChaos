@@ -16,8 +16,9 @@ export @showprogress
 #======================================Exports======================================#
 using DifferentialEquations, ModelingToolkit
 import ModelingToolkit as MTK
-using MethodOfLines, DomainSets, DiffEqOperators #These are for loading the PDEs
 export MTK
+using MethodOfLines, DomainSets, DiffEqOperators #These are for loading the PDEs
+export Interval
 using Symbolics
 export reload_parameters
 export ODEProblem, SDEProblem, solve
@@ -30,8 +31,10 @@ export PresetTimeCallback
 include("open_parameters.jl") #Load all of the parameters
 include("auxillary_functions.jl") #Load all of the necessary functions
 include("equations.jl") #Load all model equations
-
+include("load_models.jl")
 #export all of the parameters so we can edit something
+export loadODE, loadSDE
+
 export x,y,t
 export v, n, m, h, c, a, b, e, i, W #Initial conditions for ODEs and SDEs
 export v̂, n̂, m̂, ĥ, ĉ, â, b̂, ê, î, Ŵ #Initial conditions for PDEs
@@ -57,8 +60,8 @@ export V16, V17, V18
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
 export read_JSON, extract_dict, indexof
-#export save, load
-#export @save
+export save, load
+export @save
 
 using Distributions, StatsBase
 export Binomial, Histogram, fit
@@ -81,7 +84,7 @@ export ensemble_func
 export find_equilibria, find_bifurcation
 export codim_map
 export @lens, norminf
-
+export t_pars, t_conds
 #using RecipesBase #I want to avoid using thisPlots
 #include("plotting.jl")
 #export animate_solution
@@ -98,13 +101,14 @@ export MeanSquaredErrorSOL, MeanSquaredError
 export TimescaleLoss
 
 #Load all of the old modelling aspects. We can use that one for PDE
-includ("models.jl")
+include("models.jl")
 export T_PDE
+using Statistics, StatsBase
+export std
 #=
 using Telegram, Telegram.API, ConfigEnv
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
-using Statistics, StatsBase
 using Images, ImageSegmentation
 ######################UTILITIES######################
 =#

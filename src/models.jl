@@ -36,7 +36,7 @@ The equation for this is as follows:
 R_INF(v, VS, VH) = (1 + tanh((v - VS) / VH)) / 2;
 R_INF(v::T, VS::T, VH::T) where {T<:Real} = (1 + tanh((v - VS) / VH)) / 2;
 #CuArrays.@cufunc R_INF(v, VS, VH) = (1 + tanh((v - VS)/VH))/2;
-R_INF(v::CuArray, VS, VH) = R_INF.(v, VS, VH)
+#R_INF(v::CuArray, VS, VH) = R_INF.(v, VS, VH)
 export R_INF
 
 M_INF(v::T, V1::T, V2::T) where {T} = (1 + tanh((v - V1) / V2)) / 2;
@@ -58,7 +58,7 @@ This equation related voltage to the rate constant of opening Potassium channels
 Λ(V, V3, V4) = cosh((V - V3) / (2 * V4));
 Λ(v::T, V3::T, V4::T) where {T<:Real} = cosh((v - V3) / (2 * V4));
 #CuArrays.@cufunc Λ(v, V3, V4) = cosh((v-V3)/(2*V4));
-Λ(v::CuArray, V3, V4) = LAM.(v, V3, V4)
+#Λ(v::CuArray, V3, V4) = LAM.(v, V3, V4)
 export Λ
 """
 NEED DOC
@@ -66,7 +66,7 @@ NEED DOC
 Φ(v, κ, V_0) = 1 / (1 + exp(-κ * (v - V_0)))
 Φ(v::T, κ::T, V_0::T) where {T<:Real} = 1 / (1 + exp(-κ * (v - V_0)))
 #CuArrays.@cufunc Φ(v, κ, V_0) = 1/(1 + exp(-κ * (v - V_0)))
-Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
+#Φ(v::CuArray, κ, V_0) = Φ.(v, κ, V_0)
 
 """
 NEED DOC
@@ -74,7 +74,7 @@ NEED DOC
 ħ(e, K_d) = (e^2) / (e^2 + K_d)
 ħ(e::T, K_d::T) where {T<:Real} = (e^2) / (e^2 + K_d)
 #CuArrays.@cufunc ħ(e, K_d) = (e^2)/(e^2 + K_d)
-ħ(e::CuArray, K_d) = ħ.(e, K_d)
+#ħ(e::CuArray, K_d) = ħ.(e, K_d)
 
 const old_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :Vs, :V0, :D, :τw, :σ]
 const old_conds = [:v, :n, :c, :a, :b, :e, :W]
