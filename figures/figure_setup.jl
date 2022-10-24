@@ -1,3 +1,10 @@
+const v_color = :deepskyblue
+const n_color = :magenta
+const c_color = :green
+const a_color = :purple
+const b_color = :red
+const e_color = :blue
+const w_color = :gray
 #Scientific reports figure sizes is 
 #For guidance, Nature's standard figure sizes are 89 mm wide (single column) and 183 mm wide (double column). 
 #The full depth of a Nature page is 247 mm. 
