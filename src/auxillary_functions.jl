@@ -20,7 +20,9 @@ IACh(v) = -g_ACh * ħe(e) * (v - E_ACh)
 IGABA(v) = -g_GABA * ħi(i) * (v - E_Cl)
 INa(v) = -g_Na * m^3 * h * (v - E_Na)
 
-∇²(u) = Dxx(u) + Dyy(u) #This is the diffusion aspect of the equation
+#bias_yP
+#bias_
+∇²(u) = Dyy(u) - (2*u) + Dxx(u) #This is the diffusion aspect of the equation
 
 #Each one of these versions needs a PDE version
 ÎLeak(v̂) = -g_leak * (v̂ - E_leak)
