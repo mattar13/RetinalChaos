@@ -34,7 +34,7 @@ PDEeqs = [
      Dt(ĉ(x, y, t)) ~ (C_0 + δ * ÎCa(v̂(x, y, t)) - λ * ĉ(x, y, t)) / τc,
      Dt(â(x, y, t)) ~ (α * ĉ(x, y, t)^4 * (1 - â(x, y, t)) - â(x, y, t)) / τa,
      Dt(b̂(x, y, t)) ~ (β * â(x, y, t)^4 * (1 - b̂(x, y, t)) - b̂(x, y, t)) / τb,
-     Dt(ê(x, y, t)) ~ (De * ∇²(ê(x, y, t)) + ρe * Φe(v̂(x, y, t)) - ê(x, y, t)) / τACh,
-     Dt(î(x, y, t)) ~ (Di * ∇²(î(x, y, t)) + ρi * Φi(v̂(x, y, t)) - î(x, y, t)) / τGABA,
+     Dt(ê(x, y, t)) ~ (De * ∇²(ê(x, y, t)) + ρe*Φe(v̂(x, y, t)) - ê(x, y, t)) / τACh,
+     Dt(î(x, y, t)) ~ (Di * ∇²(î(x, y, t)) + ρi*Φi(v̂(x, y, t)) - î(x, y, t)) / τGABA,
      Dt(Ŵ(x, y, t)) ~ -Ŵ(x, y, t) / τw
 ]
