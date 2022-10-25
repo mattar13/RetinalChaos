@@ -1,7 +1,7 @@
+include("figure_setup.jl")
 using RetinalChaos
 import RetinalChaos: get_timestamps
-include("figure_setup.jl")
-
+plt.pygui(true) #Make the GUI external to vscode
 println("Running the plotting script for figure 1")
 #%% Open data
 #Step 1: Import the model, initial conditions, and parameters
@@ -13,6 +13,7 @@ import RetinalChaos.parameters
 parameters[I_app] = 15.0
 parameters[ρi] = 0.0
 parameters[ρe] = 0.0
+parameters[g_Na] = 0.0 #Don't include voltage gated sodium channels
 
 #Step 3: determine the timespan
 tmin = 0.0
@@ -24,62 +25,67 @@ prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters)
 #Step 5: Solve the problem
 sol = solve(prob, progress=true, progress_steps=1);
 println(" Completed")
+ODEModel.states
 
+fig, ax = plt.subplots(1)
+ax.plot(sol.t, sol(sol.t, idxs = v))
+fig
 # Run the analysis 
 print("[$(now())]: Running analysis... ")
 ts, data = RetinalChaos.timeseries_analysis(sol)
-tSpike, vnSpike = extract_spike_trace(ts, data, idx=1, spike_dur=200)
+tSpike, vnSpike = extract_spike_trace(ts, data, cell_n = 2, idx = 1, spike_dur=200)
+ts["Spikes"]
 
 #Upsample the spike time
 dtSpike = 0.01 #Set the time differential
 tSpike = tSpike[1]:dtSpike:tSpike[end]
-vSpike = sol(tSpike, idxs=1)
-nSpike = sol(tSpike, idxs=2)
+vSpike = sol(tSpike, idxs=2)
+nSpike = sol(tSpike, idxs=3)
 #tSpike = tSpike .- tSpike[1]
 
 #Spikes arrows
 deltaArrow = 1.0
 tSpikeArrow = LinRange(tSpike[1], tSpike[end], 25)
-vSpikeArrow = sol(tSpikeArrow, idxs=[1]) |> Array
-nSpikeArrow = sol(tSpikeArrow, idxs=[2]) |> Array
+vSpikeArrow = sol(tSpikeArrow, idxs=[2]) |> Array
+nSpikeArrow = sol(tSpikeArrow, idxs=[3]) |> Array
 dvSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[1]) .- vSpikeArrow
 dnSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[2]) .- nSpikeArrow
 
 #extract the bursts
-beginBurst = ts["Bursts"][1][2]
+beginBurst = ts["Bursts"][2][2]
 dtBurst = 1.0
 tBurst = (beginBurst-1000):dtBurst:(beginBurst+2000)
-vBurst = sol(tBurst, idxs=1)
-cBurst = sol(tBurst, idxs=3)
+vBurst = sol(tBurst, idxs=2)
+cBurst = sol(tBurst, idxs=6)
 #tBurst = (tBurst .- tBurst[1]) ./ 1000 #Offset the time range
 
 #Bursts
 tBurstArrow = tBurst[1]:250:tBurst[end]
-vBurstArrow = sol(tBurstArrow, idxs=[1]) |> Array
-cBurstArrow = sol(tBurstArrow, idxs=[3]) |> Array
+vBurstArrow = sol(tBurstArrow, idxs=[2]) |> Array
+cBurstArrow = sol(tBurstArrow, idxs=[6]) |> Array
 dvBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[1]) .- vBurstArrow
 dcBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[3]) .- cBurstArrow
 
 #extract the IBI
 C_dt = 1.0
-ts["Bursts"][1]
-tIBI = (ts["Bursts"][1][2, 2]-1000):C_dt:(ts["Bursts"][1][3, 2]+10000)
-vIBI = sol(tIBI, idxs=1)
-cIBI = sol(tIBI, idxs=3)
-aIBI = sol(tIBI, idxs=4)
-bIBI = sol(tIBI, idxs=5)
+ts["Bursts"][2][2,2]
+tIBI = (ts["Bursts"][2][2, 2]-1000):C_dt:(ts["Bursts"][2][3, 2]+10000)
+vIBI = sol(tIBI, idxs=2)
+cIBI = sol(tIBI, idxs=6)
+aIBI = sol(tIBI, idxs=7)
+bIBI = sol(tIBI, idxs=8)
 
 #IBIs
 tIBIArrow = LinRange(tIBI[1], tIBI[end], 100)
-vIBIArrow = sol(tIBIArrow, idxs=[1]) |> Array
-cIBIArrow = sol(tIBIArrow, idxs=[3]) |> Array
-aIBIArrow = sol(tIBIArrow, idxs=[4]) |> Array
-bIBIArrow = sol(tIBIArrow, idxs=[5]) |> Array
+vIBIArrow = sol(tIBIArrow, idxs=[2]) |> Array
+cIBIArrow = sol(tIBIArrow, idxs=[6]) |> Array
+aIBIArrow = sol(tIBIArrow, idxs=[7]) |> Array
+bIBIArrow = sol(tIBIArrow, idxs=[8]) |> Array
 
-dvIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[1]) .- vIBIArrow
-dcIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[3]) .- cIBIArrow
-daIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[4]) .- cIBIArrow
-dbIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[5]) .- cIBIArrow
+dvIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[2]) .- vIBIArrow
+dcIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[6]) .- cIBIArrow
+daIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[7]) .- cIBIArrow
+dbIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[8]) .- cIBIArrow
 println(" Completed")
 
 #plt.clf() #While drawing you can use this to clear the figure 
@@ -272,6 +278,7 @@ println(" Complete")
 #%% Save the figure
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 print("[$(now())]: Saving the figure 1...")
+fig1
 fig1.savefig("$(loc)/Figure2_ModelVariables.jpg")
 plt.close("all")
 println(" Completed")

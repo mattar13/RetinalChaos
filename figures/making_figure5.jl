@@ -1,7 +1,7 @@
 using Revise
-using RetinalChaos
-using PhysAnalysis, ABFReader
 include("figure_setup.jl")
+using RetinalChaos
+using ePhys
 include("opening_data.jl")
 
 #%%
