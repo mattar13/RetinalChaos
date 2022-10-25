@@ -54,17 +54,22 @@ function loadPDE(u0::Dict{Num,T}, parameters::Dict{Num,T};
      discretization = MOLFiniteDifference([x => dx, y => dy], t)
      # This gives an ODEProblem since it's time-dependent
      grid = get_discrete(PDEModel, discretization) #Make a representation of the discrete map
-     discreteX = grid[x]
-     discreteY = grid[y]
-     discreteT = tmin:dt:tmax
      #Discretize the ODE
      @time probPDE = discretize(PDEModel, discretization)
+     
+     #Adding a strong bolus of Acetylcholine
+     new_u0 = probPDE.u0
+     new_u0[121*7+50] = 10.0
+     new_prob = remake(probPDE; u0=new_u0)
+
      println("Complete")
      return grid, probPDE
 end
 
 function loadSPDE(u0::Dict{Num,T}, parameters::Dict{Num,T}; kwargs...) where {T<:Real}
      grid, probPDE = loadPDE(u0, parameters; kwargs...)
+     nx = length(grid[x])
+     ny = length(grid[y])
      print("Adding a noise term to the equation... ")
      sig = 0.1
      function g(du, u, p, t)
