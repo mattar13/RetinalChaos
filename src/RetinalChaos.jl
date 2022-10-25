@@ -34,7 +34,7 @@ include("equations.jl") #Load all model equations
 include("load_models.jl")
 #export all of the parameters so we can edit something
 export loadODE, loadSDE, loadPDE, loadSPDE
-
+export remake
 export x,y,t
 export v, n, m, h, c, a, b, e, i, W #Initial conditions for ODEs and SDEs
 export v̂, n̂, m̂, ĥ, ĉ, â, b̂, ê, î, Ŵ #Initial conditions for PDEs
