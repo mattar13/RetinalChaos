@@ -16,6 +16,7 @@ parameters[I_app] = 0.0
 parameters[g_Na] = 0.0
 parameters[De] = 0.1
 #For ODE and SDE models these can be set manually
+
 GRID, probSPDE = loadSPDE(u0, parameters,
      tmax=tmax,
      xmax=10.0, ymax=10.0,

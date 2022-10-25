@@ -79,8 +79,15 @@ NEED DOC
 const old_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_d, :E_ACh, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρ, :τACh, :Vs, :V0, :D, :τw, :σ]
 const old_conds = [:v, :n, :c, :a, :b, :e, :W]
 
-const t_pars = [:g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_TREK, :g_ACh, :k_ACh, :E_ACh, :g_GABA, :k_GABA, :E_GABA, :I_app, :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρe, :ρi, :τACh, :τGABA, :Vse, :Vsi, :V0e, :V0i, :De, :Di, :τw, :σ]
-const t_conds = [:v, :n, :c, :a, :b, :e, :i, :W]
+const t_pars = [
+    :g_leak, :E_leak, :g_Ca, :V1, :V2, :E_Ca, :g_K, :E_K, :g_Na, :E_Na, 
+    :g_TREK, :g_ACh, :k_ACh, :E_ACh, :g_GABA, :k_GABA, :E_Cl, 
+    :I_app, 
+    :C_m, :V3, :V4, :τn, :C_0, :λ, :δ, :τc, :α, :τa, :β, :τb, :ρe, :ρi, :τACh, :τGABA, :Vse, :Vsi, :V0e, :V0i, :De, :Di, :τw,      
+    :V7, :V8,:V9,:V10,:V11,:V12,:V13,:V14,:V15,:V16,:V17,:V18, 
+    :σ
+]
+const t_conds = [:v, :n, :m, :h, :c, :a, :b, :e, :i, :W]
 
 const lansdell_pars = [:I_app, :E_Ca, :E_K, :E_Leak, :E_ACh, :V1, :V2, :V3, :V4, :g_Ca, :g_K, :g_Leak, :λ, :g_ACh, :δ, :C_m, :τr, :τs, :τACh, :γ, :α, :β, :k, :V0, :D, :μ]
 const lansdell_conds = [:v, :r, :s, :a, :W]

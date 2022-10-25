@@ -21,8 +21,7 @@ good_paths = [2, 3, 4, 5, 9] #I have further refined the paths
 for path in paths[good_paths]
      print("[$(now())] Opening $path... ")
      data_raw = readABF(path,
-          channels=["Im_scaled"], time_unit=:ms,
-          stimulus_name=nothing, flatten_episodic=true
+          channels=["Im_scaled"], stimulus_name="IN 2", time_unit=:ms, flatten_episodic=true
      )
      data_i = downsample(data_raw, 1 / 1.0) #downsample the data
      #These have to be done before highpass filtering the data
@@ -33,8 +32,8 @@ for path in paths[good_paths]
      push!(phys_min, minimum(data_i))
      push!(phys_max, maximum(data_i))
 
-     data_i = highpass_filter(data_i, freq=0.01)
-     timestamps, data = timeseries_analysis(data_i)
+     data_i = ePhys.filter_data(data_raw, mode=:Highpass, freq_start=0.01)
+     timestamps, data = timeseries_analysis(data_raw)
 
      #println(min_phys)
 
@@ -91,7 +90,7 @@ print("Opening physiological data... ")
 dt = 0.5
 file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
 target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
-dataŶ  = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
+dataŶ = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
 downsample!(dataŶ, 1 / dt)
 tsPHYS, dataPHYS = timeseries_analysis(dataŶ)
 println("Complete")
@@ -114,15 +113,6 @@ iso_xIdx = 636
 spike_t_ISO, spike_vt_ISO = extract_spike_trace(tsISO, dataISO, normalize=false, cell_n=iso_xIdx, idx=1)
 burst_t_ISO, burst_vt_ISO = extract_burst_trace(tsISO, dataISO, normalize=false, cell_n=iso_xIdx, idx=1)
 IBI_t_ISO, IBI_vt_ISO = extract_IBI_trace(tsISO, dataISO, normalize=false, cell_n=iso_xIdx, idx=1)
-
-print("Calculating loss of Isolated data... ")
-
-#spikeMSE_ISO = IntervalLoss(tsPHYS, dataPHYS, tsISO, dataISO, tstamps="Spikes", duration=spike_dur, normalize=true)
-#burstMSE_ISO = IntervalLoss(tsPHYS, dataPHYS, tsISO, dataISO, tstamps="Bursts", duration=burst_dur, normalize=true)
-#IBIMSE_ISO = IntervalLoss(tsPHYS, dataPHYS, tsISO, dataISO, tstamps="Bursts", duration=IBI_dur, normalize=true)
-ISO_loss = TimescaleLoss(tsPHYS, dataPHYS, tsISO, dataISO)
-println("Complete")
-
 
 iso_baselines = calculate_threshold(dataISO["DataArray"], Z=1.0, dims=2)
 iso_baseline_avg = sum(iso_baselines) / length(iso_baselines)
@@ -152,7 +142,7 @@ iso_ibi_hfit = fit(Histogram, dataISO["IBIs"], LinRange(0.0, 120000, 50))
 iso_ibi_weights = iso_ibi_hfit.weights / maximum(iso_ibi_hfit.weights)
 iso_ibi_edges = collect(iso_ibi_hfit.edges[1])[1:length(iso_ibi_weights)]
 
-#We need to run this one again and for a longer period
+#%% We need to run this one again and for a longer period
 print("Opening No GABA data... ")
 noGABA_path = "$(data_root)/no_GABA_model"
 dataNG = load("$(noGABA_path)/data.jld2")
@@ -164,13 +154,6 @@ ng_xIdx = 2130
 spike_t_NG, spike_vt_NG = extract_spike_trace(tsNG, dataNG, normalize=false, cell_n=ng_xIdx, idx=1)
 burst_t_NG, burst_vt_NG = extract_burst_trace(tsNG, dataNG, normalize=false, cell_n=ng_xIdx, idx=1)
 IBI_t_NG, IBI_vt_NG = extract_IBI_trace(tsNG, dataNG, normalize=false, cell_n=ng_xIdx, idx=1)
-println("Complete")
-
-print("Calculating loss of No GABA data... ")
-#spikeMSE_NG = IntervalLoss(tsPHYS, dataPHYS, tsNG, dataNG, tstamps="Spikes", duration=spike_dur, normalize=true)
-#burstMSE_NG = IntervalLoss(tsPHYS, dataPHYS, tsNG, dataNG, tstamps="Bursts", duration=burst_dur, normalize=true)
-#IBIMSE_NG = IntervalLoss(tsPHYS, dataPHYS, tsNG, dataNG, tstamps="Bursts", duration=IBI_dur, normalize=true)
-NG_loss = TimescaleLoss(tsPHYS, dataPHYS, tsNG, dataNG)
 println("Complete")
 
 #Calculate the MSE between each of the data points
@@ -202,7 +185,61 @@ noGABA_ibi_hfit = fit(Histogram, dataNG["IBIs"], LinRange(0.0, 120000, 50))
 noGABA_ibi_weights = noGABA_ibi_hfit.weights / maximum(noGABA_ibi_hfit.weights)
 noGABA_ibi_edges = collect(noGABA_ibi_hfit.edges[1])[1:length(noGABA_ibi_weights)]
 
+#%% Run the GABA reversal model
+print("Opening No GABA data... ")
+ECl55_path = "$(data_root)/ECl55_model"
+dataEC = load("$(ECl55_path)/data.jld2")
+tsEC = load("$(ECl55_path)/timestamps.jld2")
+tsEC = convert(Dict{String,Vector{Matrix{Float64}}}, tsEC)
+#ng_xIdx = rand(findall(tsNG["Bursts"] .!= nothing))
+ec_xIdx = 2130
 
+spike_t_EC, spike_vt_EC = extract_spike_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
+burst_t_EC, burst_vt_EC = extract_burst_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
+IBI_t_EC, IBI_vt_EC = extract_IBI_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
+println("Complete")
+
+print("Calculating loss of No GABA data... ")
+println("Complete")
+
+#Calculate the MSE between each of the data points
+ec_baselines = calculate_threshold(dataEC["DataArray"], Z=1.0, dims=2)
+ec_baseline_avg = sum(ec_baselines) / length(ec_baselines)
+ec_baseline_SEM = std(ec_baselines) / sqrt(length(ec_baselines))
+
+ec_min = minimum(dataEC["DataArray"], dims=2)
+ec_min_avg = sum(ec_min) / length(ec_min)
+ec_min_SEM = std(ec_min) / sqrt(length(ec_min))
+
+ec_max = maximum(dataEC["DataArray"], dims=2)
+ec_max_avg = sum(ec_max) / length(ec_max)
+ec_max_SEM = std(ec_max) / sqrt(length(ec_max))
+
+ec_sdur_hfit = fit(Histogram, dataEC["SpikeDurs"], LinRange(0.0, 100.0, 50))
+ec_sdur_weights = ec_sdur_hfit.weights / maximum(ec_sdur_hfit.weights)
+ec_sdur_edges = collect(ec_sdur_hfit.edges[1])[1:length(ec_sdur_weights)]
+
+ec_isi_hfit = fit(Histogram, dataEC["ISIs"], LinRange(0.0, 100.0, 50))
+ec_isi_weights = ec_isi_hfit.weights / maximum(ec_isi_hfit.weights)
+ec_isi_edges = collect(ec_isi_hfit.edges[1])[1:length(ec_isi_weights)]
+
+ec_bdur_hfit = fit(Histogram, dataEC["BurstDurs"], LinRange(0.0, 2000.0, 50))
+ec_bdur_weights = ec_bdur_hfit.weights / maximum(ec_bdur_hfit.weights)
+ec_bdur_edges = collect(ec_bdur_hfit.edges[1])[1:length(ec_bdur_weights)]
+
+ec_ibi_hfit = fit(Histogram, dataEC["IBIs"], LinRange(0.0, 120000, 50))
+ec_ibi_weights = ec_ibi_hfit.weights / maximum(ec_ibi_hfit.weights)
+ec_ibi_edges = collect(ec_ibi_hfit.edges[1])[1:length(ec_ibi_weights)]
+
+dataEC["SpikeDurAvg"]
+dataEC["SpikeDurSEM"]
+
+dataEC["BurstDurAvg"]
+dataEC["BurstDurSEM"]
+
+dataEC
+dataEC["IBIAvg"]
+dataEC["IBISEM"]
 # Extract the wave model
 print("Opening wave data... ")
 wave_path = "$(data_root)/wave_model"
@@ -216,11 +253,6 @@ spike_t_WAVE, spike_vt_WAVE = extract_spike_trace(tsWAVE, dataWAVE, normalize=fa
 burst_t_WAVE, burst_vt_WAVE = extract_burst_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
 IBI_t_WAVE, IBI_vt_WAVE = extract_IBI_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
 println("Complete")
-
-#spikeMSE_WAVE = IntervalLoss(tsPHYS, dataPHYS, tsWAVE, dataWAVE, tstamps="Spikes", duration=spike_dur, normalize=true)
-#burstMSE_WAVE = IntervalLoss(tsPHYS, dataPHYS, tsWAVE, dataWAVE, tstamps="Bursts", duration=burst_dur, normalize=true)
-#IBIMSE_WAVE = IntervalLoss(tsPHYS, dataPHYS, tsWAVE, dataWAVE, tstamps="Bursts", duration=IBI_dur, normalize=true)
-WAVE_loss = TimescaleLoss(tsPHYS, dataPHYS, tsWAVE, dataWAVE)
 
 wave_baselines = calculate_threshold(dataWAVE["DataArray"], Z=1.0, dims=2)
 wave_baseline_avg = sum(wave_baselines) / length(wave_baselines)
@@ -249,58 +281,3 @@ wave_bdur_edges = collect(wave_bdur_hfit.edges[1])[1:length(wave_bdur_weights)]
 wave_ibi_hfit = fit(Histogram, dataWAVE["IBIs"], LinRange(0.0, 120e3, 50))
 wave_ibi_weights = wave_ibi_hfit.weights / maximum(wave_ibi_hfit.weights)
 wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
-
-
-
-#%% Data testing 
-#Find out what files are good
-#=
-#Good: 2,3,4,5, 9
-#OK: 1, 15
-#Bad: 6, 7, 8, 10, 11, 12, 13, 14, 16, 17
-data_raw = readABF(paths[17],
-     channels=["Im_scaled"], time_unit=:ms,
-     stimulus_name=nothing, flatten_episodic=true
-)
-data_original = copy(data_raw)
-data_original = downsample(data_raw, 1 / 1.0)
-data_i = downsample(data_raw, 1 / 1.0) #downsample the data
-data_i = highpass_filter(data_i, freq=0.01)
-timestamps, data = timeseries_analysis(data_i)
-
-t = data["Time"]
-data_arr = data["DataArray"][1, :, 1]
-
-fig, ax = plt.subplots(2, 3)
-ax[1, 1].plot(t, data_original.data_array[1, :], c=:blue)
-ax[1, 1].vlines(timestamps["Spikes"][1][:, 1], ymin=-90.0, ymax=10.0, color=:green)
-ax[1, 1].vlines(timestamps["Spikes"][1][:, 2], ymin=-90.0, ymax=10.0, color=:red)
-
-ax[2, 1].plot(t, data_arr, c=:black)
-ax[2, 1].hlines(thresholds, xmin=0.0, xmax=t[end], color=:red)
-ax[2, 1].vlines(timestamps["Spikes"][1][:, 1], ymin=-10.0, ymax=10.0, color=:green)
-ax[2, 1].vlines(timestamps["Spikes"][1][:, 2], ymin=-10.0, ymax=10.0, color=:red)
-
-
-sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 100.0, 50))
-sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
-sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
-
-isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 100.0, 50))
-isi_weights = isi_hfit.weights / maximum(isi_hfit.weights)
-isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
-
-bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 50))
-bdur_weights = bdur_hfit.weights / maximum(bdur_hfit.weights)
-bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
-
-ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 120e3, 50))
-ibi_weights = ibi_hfit.weights / maximum(ibi_hfit.weights)
-ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
-
-
-ax[1, 2].plot(sdur_edges, sdur_weights)
-ax[2, 2].plot(isi_edges, isi_weights)
-ax[1, 3].plot(bdur_edges, bdur_weights)
-ax[2, 3].plot(ibi_edges, ibi_weights)
-=#

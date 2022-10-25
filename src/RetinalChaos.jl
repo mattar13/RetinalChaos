@@ -102,7 +102,7 @@ export TimescaleLoss
 
 #Load all of the old modelling aspects. We can use that one for PDE
 include("models.jl")
-export T_PDE
+export T_PDE, noise
 using Statistics, StatsBase
 export std
 #=
