@@ -197,13 +197,13 @@ function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T
     dW = view(dU, :, :, 8)
 
     @. dv = (-g_leak * (v - E_leak)
-             -g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
-             -g_K * n * (v - E_K)
-             -g_TREK * b * (v - E_K)
-             -g_ACh * ħ(e, k_ACh) * (v - E_ACh)
-             -g_GABA * ħ(i, k_GABA) * (v - E_GABA)
-             + I_app
-             + W
+            -g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+            -g_K * n * (v - E_K)
+            -g_TREK * b * (v - E_K)
+            -g_ACh * ħ(e, k_ACh) * (v - E_ACh)
+            -g_GABA * ħ(i, k_GABA) * (v - E_GABA)
+            + I_app
+            + W
     ) / C_m
     @. dn = (Λ(v, V3, V4) * ((R_INF(v, V3, V4) - n))) / τn
     @. dc = (C_0 + δ * (-g_Ca * R_INF(v, V1, V2) * (v - E_Ca)) - λ * c) / τc
