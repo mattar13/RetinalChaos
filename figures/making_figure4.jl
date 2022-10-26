@@ -1,10 +1,10 @@
 using Revise
+include("figure_setup.jl")
 using Dates
 using RetinalChaos
 using StatsBase, Statistics
 using ePhys
 import ePhys: dwt_filter
-include("figure_setup.jl")
 include("opening_data.jl")
 
 #%%
@@ -25,7 +25,7 @@ gs = fig4.add_gridspec(5, 3,
 
 #axA = fig4.add_subplot(py"""$(gs)[0, :]""")
 axA1 = fig4.add_subplot(gs[1, 1])
-ylim(-50.0, 10.0)
+ylim(-90.0, 10.0)
 ylabel("Whole Cell \n Vm (mV)")
 axA1.set_title("Spikes")
 axA1.plot(spike_t_PHYS ./ 1000, spike_vt_PHYS, c=:black, lw=lw_standard)
@@ -56,7 +56,7 @@ axA3.yaxis.set_minor_locator(MultipleLocator(20.0))
 # Figure Part B
 #axB = fig4.add_subplot(py"""$(gs)[1, :]""")
 axB1 = fig4.add_subplot(gs[2, 1])
-ylim(-50.0, 10.0)
+ylim(-90.0, 10.0)
 ylabel("Isolated \n Vt (mV)")
 axB1.plot(spike_t_ISO ./ 1000, spike_vt_ISO, c=:red, lw=lw_standard)
 axB1.xaxis.set_visible(false) #Turn off the bottom axis
@@ -81,11 +81,11 @@ axB3.spines["bottom"].set_visible(false)
 axB3.yaxis.set_major_locator(MultipleLocator(40.0))
 axB3.yaxis.set_minor_locator(MultipleLocator(20.0))
 
-# Figure part C
+# Figure part C Normal Wave model
 axC1 = fig4.add_subplot(gs[3, 1])
-ylim(-50.0, 10.0)
-ylabel("No GABA \n Vt (mV)")
-axC1.plot(spike_t_NG ./ 1000, spike_vt_NG, c=:blue, lw=lw_standard)
+ylim(-90.0, 10.0)
+ylabel("ECl -55 \n Vt (mV)")
+axC1.plot(spike_t_EC ./ 1000, spike_vt_EC, c=:blue, lw=lw_standard)
 axC1.xaxis.set_visible(false) #Turn off the bottom axis
 axC1.spines["bottom"].set_visible(false)
 axC1.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -94,7 +94,7 @@ axC1.yaxis.set_minor_locator(MultipleLocator(10.0))
 
 axC2 = fig4.add_subplot(gs[3, 2])
 ylim(-90.0, 10.0)
-axC2.plot(burst_t_NG, burst_vt_NG, c=:blue, lw=lw_standard)
+axC2.plot(burst_t_EC, burst_vt_EC, c=:blue, lw=lw_standard)
 axC2.xaxis.set_visible(false) #Turn off the bottom axis
 axC2.spines["bottom"].set_visible(false)
 axC2.yaxis.set_major_locator(MultipleLocator(40.0))
@@ -103,7 +103,7 @@ axC2.yaxis.set_minor_locator(MultipleLocator(20.0))
 #Need to run this one again
 axC3 = fig4.add_subplot(gs[3, 3])
 ylim(-90.0, 10.0)
-axC3.plot(IBI_t_NG ./ 1000, IBI_vt_NG, c=:blue, lw=lw_standard)
+axC3.plot(IBI_t_EC ./ 1000, IBI_vt_EC, c=:blue, lw=lw_standard)
 axC3.xaxis.set_visible(false) #Turn off the bottom axis
 axC3.spines["bottom"].set_visible(false)
 axC3.yaxis.set_major_locator(MultipleLocator(40.0))
@@ -111,8 +111,8 @@ axC3.yaxis.set_minor_locator(MultipleLocator(20.0))
 
 #axC = fig4.add_subplot(py"""$(gs)[2, :]""")
 axD1 = fig4.add_subplot(gs[4, 1])
-ylim(-50.0, 10.0)
-ylabel("Default \n Vt (mV)")
+ylim(-90.0, 10.0)
+ylabel("ECl -65 \n Vt (mV)")
 xlabel("Time (s)")
 axD1.plot((spike_t_WAVE.-spike_t_WAVE[1]) ./ 1000, spike_vt_WAVE, c=:green, lw=lw_standard)
 axD1.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -136,17 +136,17 @@ axD3.yaxis.set_minor_locator(MultipleLocator(20.0))
 
 jitter_dataPHYS_spike = 0.5 .* rand(length(phys_spike_durs))
 jitter_dataISO_spike = 0.5 .* rand(length(dataISO["SpikeDurs"])) .+ 1
-jitter_dataNG_spike = 0.5 .* rand(length(dataNG["SpikeDurs"])) .+ 2
+jitter_dataEC_spike = 0.5 .* rand(length(dataEC["SpikeDurs"])) .+ 2
 jitter_dataWAVE_spike = 0.5 .* rand(length(dataWAVE["SpikeDurs"])) .+ 3
 
-labels = ["PHYS", "ISO", "NoG", "WAV"]
+labels = ["PHYS", "ISO", "ECl", "WAV"]
 pos = [0.25, 1.25, 2.25, 3.25]
 axE1 = fig4.add_subplot(gs[5, 1])
 #ylim(0.0, 100.0)
 #axE1.plot(sdur_weights, sdur_edges, c = :black)
 axE1.scatter(jitter_dataPHYS_spike, phys_spike_durs./1000, s=5.0, c=:black)
 axE1.scatter(jitter_dataISO_spike, dataISO["SpikeDurs"]./1000, s=5.0, c=:red)
-axE1.scatter(jitter_dataNG_spike, dataNG["SpikeDurs"]./1000, s=5.0, c=:blue)
+axE1.scatter(jitter_dataEC_spike, dataEC["SpikeDurs"]./1000, s=5.0, c=:blue)
 axE1.scatter(jitter_dataWAVE_spike, dataWAVE["SpikeDurs"]./1000, s=5.0, c=:green)
 axE1.set_xticks(pos)
 axE1.set_xticklabels(labels)
@@ -155,13 +155,13 @@ ylabel("Duration (s)")
 
 jitter_dataPHYS_burst = 0.5 .* rand(length(phys_burst_durs))
 jitter_dataISO_burst = 0.5 .* rand(length(dataISO["BurstDurs"])) .+ 1
-jitter_dataNG_burst = 0.5 .* rand(length(dataNG["BurstDurs"])) .+ 2
+jitter_dataEC_burst = 0.5 .* rand(length(dataEC["BurstDurs"])) .+ 2
 jitter_dataWAVE_burst = 0.5 .* rand(length(dataWAVE["BurstDurs"])) .+ 3
 
 axE2 = fig4.add_subplot(gs[5, 2])
 axE2.scatter(jitter_dataPHYS_burst, phys_burst_durs ./ 1000, s=5.0, c=:black)
 axE2.scatter(jitter_dataISO_burst, dataISO["BurstDurs"] ./ 1000, s=5.0, c=:red)
-axE2.scatter(jitter_dataNG_burst, dataNG["BurstDurs"] ./ 1000, s=5.0, c=:blue)
+axE2.scatter(jitter_dataEC_burst, dataEC["BurstDurs"] ./ 1000, s=5.0, c=:blue)
 axE2.scatter(jitter_dataWAVE_burst, dataWAVE["BurstDurs"] ./ 1000, s=5.0, c=:green)
 axE2.set_xticks(pos)
 axE2.set_xticklabels(labels)
@@ -169,13 +169,13 @@ axE2.set_xticklabels(labels)
 
 jitter_dataPHYS_ibi = 0.5 .* rand(length(phys_ibis))
 jitter_dataISO_ibi = 0.5 .* rand(length(dataISO["IBIs"])) .+ 1
-jitter_dataNG_ibi = 0.5 .* rand(length(dataNG["IBIs"])) .+ 2
+jitter_dataEC_ibi = 0.5 .* rand(length(dataEC["IBIs"])) .+ 2
 jitter_dataWAVE_ibi = 0.5 .* rand(length(dataWAVE["IBIs"])) .+ 3
 
 axE3 = fig4.add_subplot(gs[5, 3])
 axE3.scatter(jitter_dataPHYS_ibi, phys_ibis ./ 1000, s=5.0, c=:black)
 axE3.scatter(jitter_dataISO_ibi, dataISO["IBIs"] ./ 1000, s=5.0, c=:red)
-axE3.scatter(jitter_dataNG_ibi, dataNG["IBIs"] ./ 1000, s=5.0, c=:blue)
+axE3.scatter(jitter_dataEC_ibi, dataEC["IBIs"] ./ 1000, s=5.0, c=:blue)
 axE3.scatter(jitter_dataWAVE_ibi, dataWAVE["IBIs"] ./ 1000, s=5.0, c=:green)
 axE3.set_xticks(pos)
 axE3.set_xticklabels(labels)
@@ -215,6 +215,14 @@ NO GABA Maximum Avg: $(ng_max_avg|>x->round(x, digits = 2))±$(ng_max_SEM|>x->ro
 NO GABA Spike Duration Avg: $(dataNG["SpikeDurAvg"]|>x->round(x, digits = 2))±$(dataNG["SpikeDurSEM"]|>x->round(x, digits = 2))
 NO GABA Burst Duration Avg: $(dataNG["BurstDurAvg"]|>x->round(x, digits = 2))±$(dataNG["BurstDurSEM"]|>x->round(x, digits = 2))
 NO GABA IBI_Avg: $(dataNG["IBIAvg"]./1000|>x->round(x, digits = 2))±$(dataNG["IBISEM"]./1000|>x->round(x, digits = 2))
+
+ECl -55 n = $(length(ec_baselines))
+ECl -55 Baseline Avg: $(ec_baseline_avg|>x->round(x, digits = 2))±$(ec_baseline_SEM|>x->round(x, digits = 2))
+ECl -55 Minimum Avg: $(ec_min_avg|>x->round(x, digits = 2))±$(ec_min_SEM|>x->round(x, digits = 2))
+ECl -55 Maximum Avg: $(ec_max_avg|>x->round(x, digits = 2))±$(ec_max_SEM|>x->round(x, digits = 2))
+ECl -55 Spike Duration Avg: $(dataEC["SpikeDurAvg"]|>x->round(x, digits = 2))±$(dataEC["SpikeDurSEM"]|>x->round(x, digits = 2))
+ECl -55 Burst Duration Avg: $(dataEC["BurstDurAvg"]|>x->round(x, digits = 2))±$(dataEC["BurstDurSEM"]|>x->round(x, digits = 2))
+ECl -55 IBI_Avg: $(dataEC["IBIAvg"]./1000|>x->round(x, digits = 2))±$(dataEC["IBISEM"]./1000|>x->round(x, digits = 2))
 
 WAVE n = $(length(wave_baselines))
 WAVE Baseline Avg: $(wave_baseline_avg|>x->round(x, digits = 2))±$(wave_baseline_SEM|>x->round(x, digits = 2))
