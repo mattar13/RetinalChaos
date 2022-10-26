@@ -121,7 +121,7 @@ prob = SDEProblem(T_PDE_w_NA, RetinalChaos.noise, u0, (0.0, 120e3), p) #Extend t
 @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
 println("Completed")
 print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE, RetinalChaos.noise, warmup[end], tspan, p)
+prob = SDEProblem(T_PDE_w_NA, RetinalChaos.noise, warmup[end], tspan, p)
 @time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
 println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\ECl55_model"
