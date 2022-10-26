@@ -7,6 +7,7 @@ import RetinalChaos.ODEModel # the ODEModel
 import RetinalChaos.u0 #the initial condutions 
 import RetinalChaos.parameters #the parameters
 
+parameters[I_app] = 10.0
 #Step 2: determine the timespan
 tmin = 0.0
 tmax = 300e3
