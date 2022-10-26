@@ -90,7 +90,7 @@ print("Opening physiological data... ")
 dt = 0.5
 file_loc = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Patching"
 target_file = "$(file_loc)/2019_11_03_Patch/Animal_2/Cell_3/19n03042.abf"
-dataŶ = readABF(target_file, channels=["Vm_prime4"], stimulus_name=nothing, time_unit=:ms)
+dataŶ = readABF(target_file, channels=["Vm_prime4"], stimulus_name="Im_sec5", time_unit=:ms)
 downsample!(dataŶ, 1 / dt)
 tsPHYS, dataPHYS = timeseries_analysis(dataŶ)
 println("Complete")
@@ -108,8 +108,8 @@ dataISO = load("$(isolated_path)/data.jld2")
 tsISO = load("$(isolated_path)/timestamps.jld2")
 tsISO = convert(Dict{String,Vector{Matrix{Float64}}}, tsISO)
 
-#iso_xIdx = rand(findall(map(x -> size(x, 1) > 1, isolated_timestamps["Bursts"])))
-iso_xIdx = 636
+iso_xIdx = rand(findall(map(x -> size(x, 1) > 1, tsISO["Bursts"])))
+iso_xIdx = 2739
 spike_t_ISO, spike_vt_ISO = extract_spike_trace(tsISO, dataISO, normalize=false, cell_n=iso_xIdx, idx=1)
 burst_t_ISO, burst_vt_ISO = extract_burst_trace(tsISO, dataISO, normalize=false, cell_n=iso_xIdx, idx=1)
 IBI_t_ISO, IBI_vt_ISO = extract_IBI_trace(tsISO, dataISO, normalize=false, cell_n=iso_xIdx, idx=1)
@@ -149,8 +149,8 @@ dataNG = load("$(noGABA_path)/data.jld2")
 tsNG = load("$(noGABA_path)/timestamps.jld2")
 tsNG = convert(Dict{String,Vector{Matrix{Float64}}}, tsNG)
 #ng_xIdx = rand(findall(tsNG["Bursts"] .!= nothing))
-ng_xIdx = 2130
-
+ng_xIdx = 2066
+#ng_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsNG["Bursts"])))
 spike_t_NG, spike_vt_NG = extract_spike_trace(tsNG, dataNG, normalize=false, cell_n=ng_xIdx, idx=1)
 burst_t_NG, burst_vt_NG = extract_burst_trace(tsNG, dataNG, normalize=false, cell_n=ng_xIdx, idx=1)
 IBI_t_NG, IBI_vt_NG = extract_IBI_trace(tsNG, dataNG, normalize=false, cell_n=ng_xIdx, idx=1)
@@ -191,9 +191,9 @@ ECl55_path = "$(data_root)/ECl55_model"
 dataEC = load("$(ECl55_path)/data.jld2")
 tsEC = load("$(ECl55_path)/timestamps.jld2")
 tsEC = convert(Dict{String,Vector{Matrix{Float64}}}, tsEC)
-#ng_xIdx = rand(findall(tsNG["Bursts"] .!= nothing))
-ec_xIdx = 2130
 
+ec_xIdx = 3957
+#ec_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsEC["Bursts"])))
 spike_t_EC, spike_vt_EC = extract_spike_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
 burst_t_EC, burst_vt_EC = extract_burst_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
 IBI_t_EC, IBI_vt_EC = extract_IBI_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
@@ -237,7 +237,6 @@ dataEC["SpikeDurSEM"]
 dataEC["BurstDurAvg"]
 dataEC["BurstDurSEM"]
 
-dataEC
 dataEC["IBIAvg"]
 dataEC["IBISEM"]
 # Extract the wave model
@@ -247,8 +246,8 @@ dataWAVE = load("$(wave_path)/data.jld2")
 tsWAVE = load("$(wave_path)/timestamps.jld2")
 tsWAVE = convert(Dict{String,Vector{Matrix{Float64}}}, tsWAVE)
 #wave_xIdx = rand(findall(tsWAVE["Bursts"] .!= nothing))
-wave_xIdx = 1838
-
+ec_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsWAVE["Bursts"])))
+wave_xIdx = 1801
 spike_t_WAVE, spike_vt_WAVE = extract_spike_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
 burst_t_WAVE, burst_vt_WAVE = extract_burst_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
 IBI_t_WAVE, IBI_vt_WAVE = extract_IBI_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
