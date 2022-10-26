@@ -10,23 +10,19 @@ using Plots
 #%% Run the simulations
 #Step 1: Set up the network properties
 print("[$(now())]: Setting up parameters, conditions, and network settings... ")
-nx = ny = 25
-net = RetinalChaos.T_PDE
+nx = ny = 64
+net = RetinalChaos.T_PDE_w_NA
 #Step 2: Import the initial conditions
 conds_dict = read_JSON("params/conds.json")
 u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
 
 #Step 3: Import the parameters
 pars_dict = read_JSON("params/params.json")
-pars_dict[:I_app] = 0.0
-for par in pars_dict
-    println("$(par[1]) -> $(par[2])")
-end
-
+pars_dict[:g_Na] = 2.5
 p = pars_dict |> extract_dict
 
 #Step 4: Determine the timespan
-tspan = (0.0, 10.0)
+tspan = (0.0, 100e3)
 
 #Step 5: Set up the problem
 println("Complete")
@@ -36,7 +32,7 @@ print("[$(now())]: Warming up the model for 60s... ")
 prob = SDEProblem(net, noise, u0, (0.0, 60e3), p)
 @time warmup = solve(prob, SOSRI(),
     abstol=2e-2, reltol=2e-2, maxiters=1e7,
-    progress=true, save_everystep = false, progress_steps=1
+    progress=true, save_everystep=false, progress_steps=1
 );
 println("Completed")
 
@@ -49,22 +45,22 @@ prob = SDEProblem(net, noise, warmup[end], tspan, p)
     abstol=2e-2, reltol=0.2, maxiters=1e7,
     progress=true, progress_steps=1,
     #save_idxs=[1:(nx*ny)...],
-    );
-    println("Completed")
-    
-#%%
-v_test = map(t -> NetSol(t)[1,2,1], NetSol.t)
-Plots.plot(NetSol.t, v_test)
+);
+println("Completed")
 
 #%%
 # Step 7: Animate the solution
 animate_dt = 60.0
 anim = @animate for t = 1.0:animate_dt:NetSol.t[end]
-    println("[$(now())]: Animating simulation...")
-    frame_i = reshape(NetSol(t) |> Array, (nx, ny))
+    println("[$(now())]: Animating simulation at time $t...")
+    frame_i = NetSol(t)[:, :, 1]
     heatmap(frame_i, ratio=:equal, grid=false,
         xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
         c=:curl, clims=(-90.0, 0.0),
     )
 end
 gif(anim, "examples/animation.gif", fps=1000.0 / animate_dt)
+
+#%%
+v_test = map(t -> NetSol(t)[1, 2, 1], NetSol.t)
+Plots.plot(NetSol.t, v_test)
