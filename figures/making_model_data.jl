@@ -14,11 +14,11 @@ p = pars_dict |> extract_dict
 tspan = (0.0, 120e3)
 println("Complete")
 print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE, noise, u0, (0.0, 60e3), p)
+prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 60e3), p)
 @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
 println("Completed")
 print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE, noise, warmup[end], tspan, p)
+prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
 @time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
 println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\wave_model"
@@ -49,11 +49,11 @@ p = pars_dict |> extract_dict
 tspan = (0.0, 120e3)
 println("Complete")
 print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE, noise, u0, (0.0, 60e3), p)
+prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 60e3), p)
 @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
 println("Completed")
 print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE, noise, warmup[end], tspan, p)
+prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
 @time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
 println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\isolated_model"
@@ -82,11 +82,11 @@ p = pars_dict |> extract_dict
 tspan = (0.0, 120e3)
 println("Complete")
 print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE, noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
+prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
 @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
 println("Completed")
 print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE, noise, warmup[end], tspan, p)
+prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
 @time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
 println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\no_GABA_model"
@@ -112,12 +112,12 @@ nx = ny = 64
 conds_dict = read_JSON("params/conds.json")
 u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
 pars_dict = read_JSON("params/params.json")
-pars_dict[:E_GABA] = -55.0 #Block all GABA receptors
+pars_dict[:E_Cl] = -55.0 #Block all GABA receptors
 p = pars_dict |> extract_dict
 tspan = (0.0, 120e3)
 println("Complete")
 print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE, RetinalChaos.noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
+prob = SDEProblem(T_PDE_w_NA, RetinalChaos.noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
 @time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
 println("Completed")
 print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
@@ -171,7 +171,7 @@ anim = @animate for t = 1.0:animate_dt:size(solISO, 3)
           colorbar_title="Voltage (mV)"
      )
 end
-gif(anim, "$(save_loc)/S2 Neurotransmission Blocked Simulation.gif", fps=1000.0 / animate_dt)
+gif(anim, "$(save_loc)/S3 Neurotransmission Blocked Simulation.gif", fps=1000.0 / animate_dt)
 
 #%% Plot the no GABA simulation
 anim = @animate for t = 1.0:animate_dt:size(solNG, 3)
@@ -182,7 +182,7 @@ anim = @animate for t = 1.0:animate_dt:size(solNG, 3)
           colorbar_title="Voltage (mV)"
      )
 end
-gif(anim, "$(save_loc)/S3 NoGABA Simulation.gif", fps=1000.0 / animate_dt)
+gif(anim, "$(save_loc)/S4 NoGABA Simulation.gif", fps=1000.0 / animate_dt)
 
 #%% Plot the wave simulation
 anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
@@ -193,7 +193,7 @@ anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
           colorbar_title="Voltage (mV)"
      )
 end
-gif(anim, "$(save_loc)/S4 Wave Simulation.gif", fps=1000.0 / animate_dt)
+gif(anim, "$(save_loc)/S5 Wave Simulation.gif", fps=1000.0 / animate_dt)
 
 #%% Plot the ECl-55 simulation
 anim = @animate for t = 1.0:animate_dt:size(solECl, 3)
@@ -204,4 +204,4 @@ anim = @animate for t = 1.0:animate_dt:size(solECl, 3)
           colorbar_title="Voltage (mV)"
      )
 end
-gif(anim, "$(save_loc)/S5 ECl_-55 Simulation.gif", fps=1000.0 / animate_dt)
+gif(anim, "$(save_loc)/S6 ECl -55 Simulation.gif", fps=1000.0 / animate_dt)
