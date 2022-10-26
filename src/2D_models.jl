@@ -176,8 +176,13 @@ end
 
 #Version 4: GABA sensitive model.
 function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi = (1.0, 1.0), dYi = (0.1, 1.9)) where {T}
-    (g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_GABA, I_app, C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, Vse, Vsi, V0e, V0i, De, Di, τw, σ) = p
-
+    (
+        g_leak, E_leak, g_Ca, V1, V2, E_Ca, g_K, E_K, g_Na, E_Na,
+        g_TREK, g_ACh, k_ACh, E_ACh, g_GABA, k_GABA, E_Cl, I_app,
+        C_m, V3, V4, τn, C_0, λ, δ, τc, α, τa, β, τb, ρe, ρi, τACh, τGABA, Vse, Vsi, V0e, V0i, De, Di, τw,
+        V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18,
+        σ
+    ) = p
     v = view(U, :, :, 1)
     n = view(U, :, :, 2)
     c = view(U, :, :, 3)
@@ -201,7 +206,7 @@ function T_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T
             -g_K * n * (v - E_K)
             -g_TREK * b * (v - E_K)
             -g_ACh * ħ(e, k_ACh) * (v - E_ACh)
-            -g_GABA * ħ(i, k_GABA) * (v - E_GABA)
+            -g_GABA * ħ(i, k_GABA) * (v - E_Cl)
             + I_app
             + W
     ) / C_m
@@ -260,7 +265,6 @@ function Lansdell_PDE(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArra
     nothing
 end
 
-#=
 #Version 4: GABA sensitive model.
 function T_PDE_w_NA(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray, t::T; dXe=(1.0, 1.0), dYe=(1.0, 1.0), dXi=(1.0, 1.0), dYi=(0.1, 1.9)) where {T}
     (
@@ -281,25 +285,25 @@ function T_PDE_w_NA(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray,
     i = view(U, :, :, 9)
     W = view(U, :, :, 10)
 
-    dv = view(U, :, :, 1)
-    dn = view(U, :, :, 2)
-    dm = view(U, :, :, 3)
-    dh = view(U, :, :, 4)
-    dc = view(U, :, :, 5)
-    da = view(U, :, :, 6)
-    db = view(U, :, :, 7)
-    de = view(U, :, :, 8)
-    di = view(U, :, :, 9)
-    dW = view(U, :, :, 10)
+    dv = view(dU, :, :, 1)
+    dn = view(dU, :, :, 2)
+    dm = view(dU, :, :, 3)
+    dh = view(dU, :, :, 4)
+    dc = view(dU, :, :, 5)
+    da = view(dU, :, :, 6)
+    db = view(dU, :, :, 7)
+    de = view(dU, :, :, 8)
+    di = view(dU, :, :, 9)
+    dW = view(dU, :, :, 10)
 
     @. dv = (
         -g_leak * (v - E_leak)
-        #-g_Ca * R_inf(v, V1, V2) * (v - E_Ca)
-        #-g_Na * m^3*h*(v-E_Na)
-        #-g_K * n * (v - E_K)
-        #-g_TREK * b * (v - E_K)
-        #-g_ACh * ħ(e, k_ACh) * (v - E_ACh)
-        #-g_GABA * ħ(i, k_GABA) * (v - E_Cl)
+        -g_Ca * R_INF(v, V1, V2) * (v - E_Ca)
+        -g_Na * m^3*h*(v-E_Na)
+        -g_K * n * (v - E_K)
+        -g_TREK * b * (v - E_K)
+        -g_ACh * ħ(e, k_ACh) * (v - E_ACh)
+        -g_GABA * ħ(i, k_GABA) * (v - E_Cl)
         + I_app
         + W
     ) / C_m
@@ -321,4 +325,3 @@ function T_PDE_w_NA(dU::AbstractArray{T}, U::AbstractArray{T}, p::AbstractArray,
     @. dW = -W / τw
     nothing
 end
-=#
