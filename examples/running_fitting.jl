@@ -41,9 +41,6 @@ cbs = PresetTimeCallback(tstops, affect!)
 #Step 5: Solve the problem
 @time sol = solve(probSDE, callback=cbs, EM(), dt=dt, tstops=tstops); #So far the best method is SOSRI
 
-p = plot(sol, idxs=[v, I_ext], layout=(2, 1))
-plot!(p, data)
-
 #%% Calculate the loss of the functions
 tsPHYS, dataPHYS = timeseries_analysis(data)
 tsSOL, dataSOL = timeseries_analysis(sol)
