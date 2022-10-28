@@ -4,141 +4,35 @@ using Plots
 include("figure_setup.jl")
 # Run 3 models
 #%% Model 1: Regular Baseline model 
-print("[$(now())]: Setting up parameters, conditions, and network settings... ")
-nx = ny = 64
-conds_dict = read_JSON("params/conds.json")
-u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
-pars_dict = read_JSON("params/params.json")
-pars_dict[:C_m] = 13.6
-p = pars_dict |> extract_dict
-tspan = (0.0, 120e3)
-println("Complete")
-print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 60e3), p)
-@time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
-println("Completed")
-print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
-@time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
-println("Completed")
+
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\wave_model"
-if !isdir(loc) #If the directory doesn't exist, make it
-     println("directory doesn't exist. Making it")
-     mkdir(loc)
-end
-animate_dt = 60.0
-anim = @animate for t = 1.0:animate_dt:sol.t[end]
-     println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
-     frame_i = reshape(sol(t) |> Array, (nx, ny))
-     heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
-end
-gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
-timestamps, data = timeseries_analysis(sol, loc)
-hist_plot = plot_histograms(data, loc)
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:C_m] = 13.6
+@time run_model(u_dict, p_dict, loc, tmax = 1000.0, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+@time run_model(u_dict, p_dict, loc, tmax = 1000.0, SOSRA(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 2: Blocked Neurotransmission 
-print("[$(now())]: Setting up parameters, conditions, and network settings... ")
-nx = ny = 64
-conds_dict = read_JSON("params/conds.json")
-u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
-pars_dict = read_JSON("params/params.json")
-pars_dict[:g_ACh] = 0.0 # Block all Acetylcholine receptors
-pars_dict[:g_GABA] = 0.0 #Block all GABA receptors
-pars_dict[:C_m] = 13.6
-p = pars_dict |> extract_dict
-tspan = (0.0, 120e3)
-println("Complete")
-print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 60e3), p)
-@time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
-println("Completed")
-print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
-@time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
-println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\isolated_model"
-if !isdir(loc) #If the directory doesn't exist, make it
-     println("directory doesn't exist. Making it")
-     mkdir(loc)
-end
-animate_dt = 60.0
-anim = @animate for t = 1.0:animate_dt:sol.t[end]
-     println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
-     frame_i = reshape(sol(t) |> Array, (nx, ny))
-     heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
-end
-gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
-timestamps, data = timeseries_analysis(sol, loc)
-hist_plot = plot_histograms(data, loc)
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:g_ACh] = 0.0 # Block all Acetylcholine receptors
+p_dict[:g_GABA] = 0.0 #Block all GABA receptors
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 3: No GABA
-print("[$(now())]: Setting up parameters, conditions, and network settings... ")
-nx = ny = 64
-conds_dict = read_JSON("params/conds.json")
-u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
-pars_dict = read_JSON("params/params.json")
-pars_dict[:g_GABA] = 0.0 #Block all GABA receptors
-p = pars_dict |> extract_dict
-tspan = (0.0, 120e3)
-println("Complete")
-print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
-@time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
-println("Completed")
-print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
-@time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
-println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\no_GABA_model"
-if !isdir(loc) #If the directory doesn't exist, make it
-     println("directory doesn't exist. Making it")
-     mkdir(loc)
-end
-animate_dt = 60.0
-anim = @animate for t = 1.0:animate_dt:sol.t[end]
-     println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
-     frame_i = reshape(sol(t) |> Array, (nx, ny))
-     heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
-end
-
-gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
-timestamps, data = timeseries_analysis(sol, loc)
-hist_plot = plot_histograms(data, loc)
-data["SpikeDurs"]
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:g_GABA] = 0.0 #Block all GABA receptors
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 4 ECl Differential
-print("[$(now())]: Setting up parameters, conditions, and network settings... ")
-nx = ny = 64
-conds_dict = read_JSON("params/conds.json")
-u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
-pars_dict = read_JSON("params/params.json")
-pars_dict[:E_Cl] = -55.0 #Block all GABA receptors
-p = pars_dict |> extract_dict
-tspan = (0.0, 120e3)
-println("Complete")
-print("[$(now())]: Warming up the model for 60s... ")
-prob = SDEProblem(T_PDE_w_NA, RetinalChaos.noise, u0, (0.0, 120e3), p) #Extend the warmup phase to get more burst behavior
-@time warmup = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, save_everystep=false, progress=true, progress_steps=1);
-println("Completed")
-print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-prob = SDEProblem(T_PDE_w_NA, RetinalChaos.noise, warmup[end], tspan, p)
-@time sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]);
-println("Completed")
 loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\ECl55_model"
-if !isdir(loc) #If the directory doesn't exist, make it
-     println("directory doesn't exist. Making it")
-     mkdir(loc)
-end
-animate_dt = 60.0
-anim = @animate for t = 1.0:animate_dt:sol.t[end]
-     println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
-     frame_i = reshape(sol(t) |> Array, (nx, ny))
-     heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
-end
-
-gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
-timestamps, data = timeseries_analysis(sol, loc)
-hist_plot = plot_histograms(data, loc)
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:E_Cl] = -55.0 #Block all GABA receptors
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% if we just wanted to open the data to plot a heatmap figure1_ModelVariables
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
@@ -205,3 +99,50 @@ anim = @animate for t = 1.0:animate_dt:size(solECl, 3)
      )
 end
 gif(anim, "$(save_loc)/S6 ECl -55 Simulation.gif", fps=1000.0 / animate_dt)
+
+#Open up data for the Diffusion experiments==================================================================================================================#
+
+#%% What are the effects of changing the synaptic release? 
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\FastEdiffusion"
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:De] = 0.01 #Make synaptic transmission faster
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+
+#Fast inhibitory ==================================================================================================================#
+#%% Change the inhibitory diffusion properties
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\FastIDiffusion"
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:Di] = 0.01 #Make synaptic transmission faster
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+
+#%% Change the inhibitory diffusion properties
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\FastI_EDiffusion"
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:De] = 0.01 #Make synaptic transmission faster
+p_dict[:Di] = 0.01 #Make synaptic transmission faster
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+
+#%% What are the effects of changing the synaptic release? 
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\SlowEdiffusion"
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:De] = 0.001 #Make synaptic transmission faster
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+
+#%% Change the inhibitory diffusion properties
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\SlowIDiffusion"
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:Di] = 0.001 #Make synaptic transmission faster
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+
+#%% Change the inhibitory diffusion properties
+loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\SlowI_EDiffusion"
+u_dict = read_JSON("params/conds.json")
+p_dict = read_JSON("params/params.json")
+p_dict[:Di] = 0.001 #Make synaptic transmission faster
+p_dict[:De] = 0.001 #Make synaptic transmission faster
+run_model(u_dict, p_dict, loc, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
