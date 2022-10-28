@@ -50,33 +50,87 @@ for (sol_idx, sol_i) in enumerate(sim)
      spike_end = spike_start + 20.0
      tSpike = spike_start:dt:spike_end
      vSpike = map(t -> sol_i(t, idxs=2), tSpike)
-     ax[sol_idx, 1].plot((tSpike .- tSpike[1]), vSpike, lw = 2.0, c=cmap[sol_idx])
+     ax[sol_idx, 1].plot((tSpike .- tSpike[1]), vSpike, lw=2.0, c=cmap[sol_idx])
      ax[sol_idx, 1].set_ylim(-85.0, 15.0)
-     ax[sol_idx, 1].set_ylabel("Membrane \n Voltage (mV)", fontsize = 15.0)
+     ax[sol_idx, 1].set_ylabel("Membrane \n Voltage (mV)", fontsize=15.0)
      tBurst = vbursts[1, 1]-500:dt:vbursts[1, 1]+1500
      vBurst = map(t -> sol_i(t, idxs=2), tBurst)
-     ax[sol_idx, 2].plot((tBurst .- tBurst[1])./1000, vBurst, lw = 2.0,  c=cmap[sol_idx])
+     ax[sol_idx, 2].plot((tBurst .- tBurst[1]) ./ 1000, vBurst, lw=2.0, c=cmap[sol_idx])
      ax[sol_idx, 2].set_ylim(-85.0, 15.0)
      tIBI = sol.t
      vIBI = map(t -> sol_i(t, idxs=2), tIBI)
-     ax[sol_idx, 3].plot((tIBI .- tIBI[1])./1000, vIBI, lw = 2.0, c=cmap[sol_idx])
+     ax[sol_idx, 3].plot((tIBI .- tIBI[1]) ./ 1000, vIBI, lw=2.0, c=cmap[sol_idx])
      ax[sol_idx, 3].set_ylim(-85.0, 15.0)
 end
 ax[1, 1].xaxis.set_visible(false) #Turn off the bottom axis
-ax[1, 1].legend(["gNa = 0.0 nS"], fontsize=12.0, handletextpad=0.5, loc = "lower center")
-ax[2, 1].legend(["gNa = 2.0 nS"], fontsize=12.0, handletextpad=0.5, loc = "lower center")
+ax[1, 1].legend(["gNa = 0.0 nS"], fontsize=12.0, handletextpad=0.5, loc="lower center")
+ax[2, 1].legend(["gNa = 2.0 nS"], fontsize=12.0, handletextpad=0.5, loc="lower center")
 ax[1, 1].spines["bottom"].set_visible(false)
 ax[1, 2].xaxis.set_visible(false) #Turn off the bottom axis
 ax[1, 2].spines["bottom"].set_visible(false)
 ax[1, 3].xaxis.set_visible(false) #Turn off the bottom axis
 ax[1, 3].spines["bottom"].set_visible(false)
 
-ax[2, 1].set_xlabel("Time (ms)", fontsize = 15.0)
-ax[2, 2].set_xlabel("Time (s)", fontsize = 15.0)
-ax[2, 3].set_xlabel("Time (s)", fontsize = 15.0)
+ax[2, 1].set_xlabel("Time (ms)", fontsize=15.0)
+ax[2, 2].set_xlabel("Time (s)", fontsize=15.0)
+ax[2, 3].set_xlabel("Time (s)", fontsize=15.0)
 
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
 print("[$(now())]: Saving the figure 2...")
 fig1.savefig("$(loc)/S2 Sodium Conductances.jpg")
 plt.close("all")
 println(" Completed")
+
+#%% How does each of the parameters affect the model statistics
+using DataFrames, XLSX
+
+probSDE = SDEProblem(SDEModel, u0, (tmin, tmax), parameters)
+percent = LinRange(0.50, 2.00, 10)
+
+n_trajectories = length(percent)
+dfSpikeDur = DataFrame(params="", initial=1.0, change=fill(Float64[], length(parameters)))
+dfBurstDur = DataFrame(params="", initial=1.0, change=fill(Float64[], length(parameters)))
+dfIBI = DataFrame(params="", initial=1.0, change=fill(Float64[], length(parameters)))
+
+for (idx, entry) in enumerate(parameters)
+     reload_parameters()
+     par = Symbol(entry[1])
+     println(par)
+     dfSpikeDur[idx, :params] = String(par)
+     dfSpikeDur[idx, :initial] = entry[2]
+
+     dfBurstDur[idx, :params] = String(par)
+     dfBurstDur[idx, :initial] = entry[2]
+
+     dfIBI[idx, :params] = String(par)
+     dfIBI[idx, :initial] = entry[2]
+
+     test_rng = entry[2] .* percent #Determine the range of the parameters (specified above)
+     if par ∈ [:Di, :De, :σ]
+
+     else
+          prob_func(prob, i, repeat) = ensemble_func(prob, i, repeat, par, test_rng) #Set up the problem function to indicate that the voltage will be altered
+          ensemble_prob = EnsembleProblem(probSDE, prob_func=prob_func) #Set up the problem
+          @time sim = solve(ensemble_prob, SOSRA(), trajectories=n_trajectories, EnsembleThreads())
+          spike_dur = Float64[]
+          burst_dur = Float64[]
+          IBI_dur = Float64[]
+          for sol in sim
+               timestamps, data = timeseries_analysis(sol)
+               #println(keys(data))
+               push!(spike_dur, data["SpikeDurAvg"])
+               push!(burst_dur, data["BurstDurAvg"])
+               push!(IBI_dur, data["IBIAvg"])
+          end
+          println(spike_dur)
+          dfSpikeDur[idx, :change] = spike_dur
+          dfBurstDur[idx, :change] = burst_dur
+          dfIBI[idx, :change] = IBI_dur
+     end
+end
+
+XLSX.writetable("$(loc)/change_data.xlsx",
+     "SpikeChane" => dfSpikeDur,
+     "BurstChange" => dfBurstDur,
+     "IBIChange" => dfIBI
+)
