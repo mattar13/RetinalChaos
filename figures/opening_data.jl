@@ -199,9 +199,6 @@ burst_t_EC, burst_vt_EC = extract_burst_trace(tsEC, dataEC, normalize=false, cel
 IBI_t_EC, IBI_vt_EC = extract_IBI_trace(tsEC, dataEC, normalize=false, cell_n=ec_xIdx, idx=1)
 println("Complete")
 
-print("Calculating loss of No GABA data... ")
-println("Complete")
-
 #Calculate the MSE between each of the data points
 ec_baselines = calculate_threshold(dataEC["DataArray"], Z=1.0, dims=2)
 ec_baseline_avg = sum(ec_baselines) / length(ec_baselines)
@@ -251,6 +248,48 @@ wave_xIdx = 1801
 spike_t_WAVE, spike_vt_WAVE = extract_spike_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
 burst_t_WAVE, burst_vt_WAVE = extract_burst_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
 IBI_t_WAVE, IBI_vt_WAVE = extract_IBI_trace(tsWAVE, dataWAVE, normalize=false, cell_n=wave_xIdx, idx=1)
+println("Complete")
+
+wave_baselines = calculate_threshold(dataWAVE["DataArray"], Z=1.0, dims=2)
+wave_baseline_avg = sum(wave_baselines) / length(wave_baselines)
+wave_baseline_SEM = std(wave_baselines) / sqrt(length(wave_baselines))
+
+wave_min = minimum(dataWAVE["DataArray"], dims=2)
+wave_min_avg = sum(wave_min) / length(wave_min)
+wave_min_SEM = std(wave_min) / sqrt(length(wave_min))
+
+wave_max = maximum(dataWAVE["DataArray"], dims=2)
+wave_max_avg = sum(wave_max) / length(wave_max)
+wave_max_SEM = std(wave_max) / sqrt(length(wave_max))
+
+wave_sdur_hfit = fit(Histogram, dataWAVE["SpikeDurs"], LinRange(0.0, 100.0, 50))
+wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
+wave_sdur_edges = collect(wave_sdur_hfit.edges[1])[1:length(wave_sdur_weights)]
+
+wave_isi_hfit = fit(Histogram, dataWAVE["ISIs"], LinRange(0.0, 100.0, 50))
+wave_isi_weights = wave_isi_hfit.weights / maximum(wave_isi_hfit.weights)
+wave_isi_edges = collect(wave_isi_hfit.edges[1])[1:length(wave_isi_weights)]
+
+wave_bdur_hfit = fit(Histogram, dataWAVE["BurstDurs"], LinRange(0.0, 2000.0, 50))
+wave_bdur_weights = wave_bdur_hfit.weights / maximum(wave_bdur_hfit.weights)
+wave_bdur_edges = collect(wave_bdur_hfit.edges[1])[1:length(wave_bdur_weights)]
+
+wave_ibi_hfit = fit(Histogram, dataWAVE["IBIs"], LinRange(0.0, 120e3, 50))
+wave_ibi_weights = wave_ibi_hfit.weights / maximum(wave_ibi_hfit.weights)
+wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
+
+# Extract the fast ACh
+print("Opening wave data... ")
+FASTe_path = wave_path = "$(data_root)/FastEdiffusion"
+dataFASTe = load("$(FASTe_path)/data.jld2")
+tsFASTe = load("$(FASTe_path)/timestamps.jld2")
+tsFASTe = convert(Dict{String,Vector{Matrix{Float64}}}, tsFASTe)
+#wave_xIdx = rand(findall(tsWAVE["Bursts"] .!= nothing))
+FASTe_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsFASTe["Bursts"])))
+FASTe_xIdx = 1801
+spike_t_FASTe, spike_vt_FASTe = extract_spike_trace(tsFASTe, dataFASTe, normalize=false, cell_n=wave_xIdx, idx=1)
+burst_t_FASTe, burst_vt_FASTe = extract_burst_trace(tsFASTe, dataFASTe, normalize=false, cell_n=wave_xIdx, idx=1)
+IBI_t_FASTe, IBI_vt_FASTe = extract_IBI_trace(tsFASTe, dataFASTe, normalize=false, cell_n=wave_xIdx, idx=1)
 println("Complete")
 
 wave_baselines = calculate_threshold(dataWAVE["DataArray"], Z=1.0, dims=2)
