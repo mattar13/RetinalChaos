@@ -138,7 +138,7 @@ function extract_trace(ts::Dict{String,Matrix{Matrix{T}}}, data;
 end
 
 extract_spike_trace(ts, data; spike_dur=25, kwargs...) = extract_trace(ts, data; tstamps="Spikes", duration=spike_dur, kwargs...)
-extract_burst_trace(ts, data; burst_dur=1000, kwargs...) = extract_trace(ts, data; tstamps="Bursts", duration=burst_dur, kwargs...)
+extract_burst_trace(ts, data; burst_dur=1500, kwargs...) = extract_trace(ts, data; tstamps="Bursts", duration=burst_dur, kwargs...)
 extract_IBI_trace(ts, data; IBI_dur=60e3, kwargs...) = extract_trace(ts, data; tstamps="Bursts", duration=IBI_dur, kwargs...)
 
 #This is the case if only a sinle trace is being calculated against another single trace
