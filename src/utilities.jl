@@ -200,70 +200,43 @@ end
 This function runs the model using the indicated parameters
 
 """
-function run_model(file_root::String, p_dict::Dict{Symbol, T}, u_dict::Dict{Symbol, T}; 
-        gpu::Bool = true, version::Symbol = :gACh,
-        abstol::Float64 = 2e-2, reltol::Float64 = 2e-2, maxiters::Float64 = 1e7,
-        model_file_type = :bson, 
-        iterations = 1 #this option sets the model up into sections so that we can break up the saving of the solutions
-    ) where T <: Real
-    
-    if !isdir(file_root)
-        mkdir(file_root)
-    end
+function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
+    tmax=120e3, xmax=64, ymax=64,
+    kwargs...
+) where {T<:Real}
 
-    #First write the parameters to the root
-    write_JSON(p_dict, "$(file_root)\\params.json") #write the parameters to save for later
-    write_JSON(u_dict, "$(file_root)\\iconds.json") #write the 
-    
-    #Load the network interface
-    if gpu
-        u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny]) |> cu
-        p0 = p_dict |> extract_dict
-    else
-        u0 = extract_dict(u_dict, p_dict[:nx], p_dict[:ny])
-        p0 = p_dict |> extract_dict
-    end
-
-    #Load the model and ODE interface
-    net = Network(p_dict[:nx], p_dict[:ny]; μ = p_dict[:μ], version = version, gpu = gpu)
-    NetProb = SDEProblem(net, noise, u0, (0f0 , p_dict[:t_warm]), p0)
-
-    print("[$(now())]: Warming up the solution... ")
-    @time sol = solve(NetProb, SOSRI(), 
-        abstol = 2e-2, reltol = 2e-2, maxiters = 1e7,
-        progress = true, progress_steps = 1, 
-        save_everystep = false
-    )
-
-    warmup = sol[end] #Keep this one as the original 
-    #Add this in because it seems that you need to constantly clean the function
-    sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-
-    #Save the warmed up solution
-    if model_file_type == :bson #In this case we want to make a backup of the file
-        BSON.@save "$(file_root)\\conds.bson" warmup #as a BSON file
-    elseif model_file_type == :jld2  #In this case we want to make a backup of the file
-        JLD2.@save "$(file_root)\\conds.jld2" warmup #This is only here to try to save the older files
-    end
-
-    results = RetinalChaos.SavedValues(Float64, Vector{Float64})
-    cb = RetinalChaos.SavingCallback(
-        (u, t, integrator) -> reshape(u[:,:,1], size(u,1) * size(u,2)), 
-        results
-    )
-
-    print("[$(now())]: Running the model... ")
-    NetProb = SDEProblem(net, noise, warmup, (0f0 , p_dict[:t_run]), p0)
-    #Run the solution saving values to results
-    @time sol = solve(NetProb, SOSRI(), 
-        callback = cb, #This saves the solution without actually saving anything to the GPU
-        abstol = abstol, reltol = reltol, maxiters = maxiters,
-        save_everystep = false, 
-        progress = true, progress_steps = 1
-    )
-    #make sure to zero out the solution to save GPU space 
-    sol = nothing; GC.gc(true); RetinalChaos.CUDA.reclaim()
-    
-    #We want to return the solution
-    return results
+    print("[$(now())]: Setting up parameters, conditions, and network settings... ")
+    u0 = extract_dict(u_dict, t_conds, dims=(xmax, ymax))
+    p = p_dict |> extract_dict
+    tspan = (0.0, tmax)
+    println("Complete")
+    print("[$(now())]: Warming up the model for 60s... ")
+    prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 60e3), p)
+    @time warmup = solve(prob, save_everystep=false, progress=true, progress_steps=1; kwargs...)
+    println("Completed")
+    print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
+    prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
+    @time sol = solve(prob, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]; kwargs...)
+    return sol
 end 
+
+function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T}, loc::String;
+    tmax=120e3, xmax=64, ymax=64, animate_dt = 60.0,
+    kwargs...
+) where {T<:Real}
+    sol = run_model(p_dict, u_dict, loc; tmax=tmax, xmax=xmax, ymax=ymax, kwargs...)
+    if !isdir(loc) #If the directory doesn't exist, make it
+        println("directory doesn't exist. Making it")
+        mkdir(loc)
+    end
+    animate_dt = 60.0
+    anim = @animate for t = 1.0:animate_dt:sol.t[end]
+        println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
+        frame_i = reshape(sol(t) |> Array, (nx, ny))
+        heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
+    end
+    gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
+    timestamps, data = timeseries_analysis(sol, loc)
+    hist_plot = plot_histograms(data, loc)
+    return timestamps, data, hist_plot
+end
