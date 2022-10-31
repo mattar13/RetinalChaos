@@ -1,369 +1,201 @@
-#=
-Figure 3 will include 4 rows. 
-Row 1 will be a voltage trace with Acetylcholine and GABA activations
-Row 2 will be GABA and ACh directional selectitivy
-Row 3 will be current maps
-Row 4 will be current induced by ACh and GABA
-=#
-
-using Revise
-
 using RetinalChaos
-import RetinalChaos: Φ, ħ, ∇
-import RetinalChaos: T_ODE_NT_Release, get_timestamps, max_interval_algorithim
-import Plots: contourf
-pyplot()
-include("figure_setup.jl")
-println("Running the plotting script for figure 3")
+import RetinalChaos: calculate_threshold, get
+import RetinalChaos: extract_equilibria, find_equilibria
+using LaTeXStrings, Statistics
+include("figure_setup.jl");
 
-#%% Set up modelling data
+println("Running the plotting script for figure 2")
+
+#%% Open data
 print("[$(now())]: Setting up modelling data... ")
 #Step 1: Import the initial conditions
 conds_dict = read_JSON("params\\conds.json")
+conds_dict[:v] = -25.0
 u0 = conds_dict |> extract_dict
 #Step 2: Import the parameters
 pars_dict = read_JSON("params\\params.json")
 pars_dict[:I_app] = 15.0
-pars_dict[:g_ACh] = 0.0
-pars_dict[:g_GABA] = 0.0
+pars_dict[:ρi] = 0.0
+pars_dict[:ρe] = 0.0
 p = pars_dict |> extract_dict
 #Step 3: determine the timespan
 tspan = (0.0, 300e3)
 #Step 4: set up the problem
-prob = ODEProblem(T_ODE_NT_Release, u0, tspan, p)
+prob = SDEProblem(T_SDE, noise, u0, tspan, p)
 #Step 5: Solve the problem
-sol = solve(prob, progress=true, progress_steps=1);
-println(" Completed")
-
-#%% Run the analysis
-print("[$(now())]: Running analysis... ")
-dt = 1.0; #Set the time differential
-ts, data = timeseries_analysis(sol)
-burst_tstamps = ts["Bursts"][1] #Extract the bursts
+sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1);
 println(" Completed")
 
 
-#%% Extract plotting data
+#% Run a dynamical analysis to get the equilibrium
+print("[$(now())]: Setting up equilibrium data... ")
+conds_dict = read_JSON("params\\conds.json")
+u0 = conds_dict |> extract_dict
+pars_dict_eq = read_JSON("params\\params.json")
+pars_dict_eq[:I_app] = 0.0 #Set initial applied current to 0
+pars_dict_eq[:ρi] = 0.0 #remove GABA influence
+pars_dict_eq[:ρe] = 0.0 #remove ACh influence
+pars_dict_eq[:g_TREK] = 0.0 #Remove the sAHP
+p_eq = pars_dict_eq |> extract_dict
+prob_eq = ODEProblem(T_ODE, u0, (0.0, 100.0), p_eq)
+# Conduct the codim analysis
+codim1 = (:I_app)
+c1_lims = (-70.0, 30.0)
+c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
+println(" Completed")
+#% 
 print("[$(now())]: Extracting data... ")
-offset = 2000
-t = burst_tstamps[2, 1]-offset:dt:burst_tstamps[2, 2]+offset
-vt = sol(t, idxs=1)
-et = sol(t, idxs=6)
-it = sol(t, idxs=7)
-t = (t .- t[1]) ./ 1000
+res = extract_equilibria(c1_map) #Pass back all of the equilibria
+points = res[1]
+saddle_p = res[2]
+stable_p = res[3]
+unstable_p = res[4]
+unstable_focus_p = res[5]
+stable_focus_p = res[6]
 
-v_rng = -80.0:1.0:0.0
-Vse = pars_dict[:Vse]
-V0e = pars_dict[:V0e]
-Vsi = pars_dict[:Vsi]
-V0i = pars_dict[:V0i]
-ρe = pars_dict[:ρe]
-ρi = pars_dict[:ρi]
-ACH_r = Φ.(v_rng, Vse, V0e) * ρe
-GABA_r = Φ.(v_rng, Vsi, V0i) * ρi
+last_saddle_idx = findlast(isnan.(saddle_p) .== 0)
+saddle_bifurcation = points[last_saddle_idx]
+saddle_eq = saddle_p[last_saddle_idx]
+
+#% Extract plotting data
+dt = 1.0
+t = (sol.t[1]:dt:120e3)
+vt = sol(t, idxs=1)
+bt = sol(t, idxs=5)
+wt = sol(t, idxs=8)
+t = t / 1000
+
+gTREK = -pars_dict[:g_TREK]
+EK = pars_dict[:E_K]
+ITREK = gTREK .* bt[2:end] .* (vt[1:end-1] .- EK) #We want to measure the current from the value before
+ITREK_avg = sum(ITREK)/length(ITREK)
+ITREK_SEM = std(ITREK)/sqrt(length(ITREK))
 println(" Completed")
 
-# Generate a release map
-print("[$(now())]: Generating a neurotransmitter release map... ")
-De = pars_dict[:De]
-Di = pars_dict[:Di]
-nx = ny = 25
-ACH_map = zeros(nx, ny, length(t))
-GABA_map = zeros(nx, ny, length(t))
-
-center_x = round(Int64, nx / 2) #Because the index starts from 0 subtract 1
-center_y = round(Int64, ny / 2) #Because the indexing starts from 0
-# Calculate each frames diffusion
-dXe = (1.0, 1.0)
-dYe = (1.0, 1.0)
-dXi = (1.0, 1.0)
-dYi = (0.1, 1.9)
-for i = 1:length(t)
-     if i == 1
-          ACH_map[center_x+1, center_y+1, 1] = et[i] #Set intial map
-          GABA_map[center_x+1, center_y+1, 1] = it[i] #Set initial map
-     else
-          #println(i)
-          e_i = ACH_map[:, :, i-1]
-          i_i = GABA_map[:, :, i-1]
-          de = zeros(size(e_i))
-          di = zeros(size(i_i))
-          ∇(de, e_i, De, dX=dXe, dY=dYe)
-          ∇(di, i_i, Di, dX=dXi, dY=dYi)
-          println(sum(e_i))
-          ACH_map[:, :, i] += de + e_i
-          GABA_map[:, :, i] += di + i_i
-          ACH_map[center_x+1, center_y+1, i] = et[i] #Set intial map
-          GABA_map[center_x+1, center_y+1, i] = it[i] #Set initial map
-     end
-end
-
-# Set the frame stops for Images
-frame_stops = LinRange(burst_tstamps[2, 1] + dt, burst_tstamps[2, 2] + 200, 4) .- burst_tstamps[2, 1] .+ (offset)
-frame_stops = round.(Int64, frame_stops)
-avg_ACH = sum(ACH_map, dims=3)[:, :, 1] ./ length(t)
-avg_GABA = sum(GABA_map, dims=3)[:, :, 1] ./ length(t)
-
-#Generate current maps
-pars_dict = read_JSON("params\\params.json") #Might need to reload parameters
-gACh = pars_dict[:g_ACh]
-EACh = pars_dict[:E_ACh]
-kACh = pars_dict[:k_ACh]
-gGABA = pars_dict[:g_GABA]
-EGABA = pars_dict[:E_GABA]
-kGABA = pars_dict[:k_GABA]
-V_CLAMP = -40.0
-I_ACh = -gACh .* ħ.(ACH_map, kACh) .* (V_CLAMP - EACh)
-I_GABA = -gGABA .* ħ.(GABA_map, kGABA) .* (V_CLAMP - EGABA)
-I_TOTAL = I_ACh + I_GABA
-avg_I_TOTAL = sum(I_TOTAL, dims=3)[:, :, 1] ./ size(I_TOTAL, 3)
-
-#Maximal calculations
-I_ACh_max = -gACh .* 1 .* (V_CLAMP - EACh)
-I_GABA_max = -gGABA .* 1 .* (V_CLAMP - EGABA)
-
-# Finally we need to extract some data from the X or y
-dY_D = 3:2:center_y
-dY_V = center_y+3:2:nx-1
-dX_N = 3:2:center_x
-dX_T = center_x+3:2:ny-1
-
-#%% Lets plot
+#%% Let s set up the figures
 print("[$(now())]: Plotting... ")
 width_inches = 7.5
-height_inches = 7.5
-fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inches))
+height_inches = 5.0
+fig2 = plt.figure("Biophysical Noise", figsize=(width_inches, height_inches))
 
-gs = fig3.add_gridspec(4, 2,
-     width_ratios=(0.77, 0.23),
-     height_ratios=(0.2, 0.26, 0.26, 0.26),
-     right=0.91, left=0.1,
-     top=0.95, bottom=0.08,
-     wspace=0.10, hspace=0.4
+gs = fig2.add_gridspec(3, 2,
+     width_ratios=(0.55, 0.45),
+     height_ratios=(0.30, 0.30, 0.40),
+     right=0.99, left=0.14,
+     top=0.91, bottom=0.1,
+     wspace=0.4, hspace=0.40
 )
-col1_ylabel = -0.05
-col2_ylabel = -0.25
+col1_ylabel = -0.15
+col2_ylabel = -0.17
+
 #% =====================================================Make panel A===================================================== %%#
-gsA = gs[1, 1].subgridspec(ncols=1, nrows=2)
-
-axA1 = fig3.add_subplot(gsA[1, 1])
-axA1.plot(t, vt, c=v_color, lw=lw_standard)
-ylabel("Vt (mV)")
-axA1.xaxis.set_visible(false) #Turn off the bottom axis
-axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
-axA1.spines["bottom"].set_visible(false)
-
-axA2 = fig3.add_subplot(gsA[2, 1])
-ylim(0.0, 4.0)
-axA2.plot(t, et, c=:green, lw=lw_standard)
-axA2.plot(t, it, c=:red, lw=lw_standard)
-ylabel("NT. Rel. \n (mM)")
-xlabel("Time (s)")
-#axA2.xaxis.set_visible(false) #Turn off the bottom axis
-axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
-axA2.legend(["ACh", "GABA"],
+axA = fig2.add_subplot(gs[1, 1])
+ylim(-100.0, 0.0)
+axA.plot(t, vt, c=v_color, lw=lw_standard)
+ylabel("Membrane \n Voltage (mV)")
+axA.xaxis.set_visible(false) #Turn off the bottom axis
+axA.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA.yaxis.set_major_locator(MultipleLocator(50.0))
+axA.yaxis.set_minor_locator(MultipleLocator(25.0))
+axA.spines["bottom"].set_visible(false)
+# Plot the second column
+axA2 = fig2.add_subplot(gs[1, 2])
+xlim(c1_lims)
+ylim(-100.0, 0.0)
+axA2.plot(points, saddle_p, c=:blue, lw=lw_standard)
+axA2.plot(points, stable_p, c=:green, lw=lw_standard)
+axA2.plot(points, stable_focus_p, c=:green, ls="--", lw=lw_standard)
+axA2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=5.0, c=:cyan)
+I_sn_text = L"I_{sn}"
+axA2.legend(["Saddle Eq.", "Stable Eq.", "Stable Oscillation", "Bifurcation ($(I_sn_text))"],
      ncol=2, columnspacing=0.70,
-     bbox_to_anchor=(0.65, 1.1), fontsize=9.0, markerscale=0.5, handletextpad=0.3
+     bbox_to_anchor=(0.04, 1.3), fontsize=9.0, markerscale=0.5, handletextpad=0.3
 )
-#Plot all of the frame stops
-axA2.plot(t[frame_stops], et[frame_stops], c=:blue, markersize = 2.0, linewidth=0.0, marker="o")
-axA2.plot(t[frame_stops], it[frame_stops], c=:red, markersize = 2.0, linewidth=0.0, marker="o")
-
-axAR = fig3.add_subplot(gs[1, 2])
-xlabel("Voltage (mV)")
-ylabel("Release")
-axAR.plot(v_rng, ACH_r, c=:green, lw=lw_standard)
-axAR.plot(v_rng, GABA_r, c=:red, lw=lw_standard)
-
+ylabel("Equilibria \n Voltage (mV)")
+xlabel("Injected current")
+#Plot the points where the saddle node dissappears
+axA2.xaxis.set_visible(false) #Turn off the bottom axis
+axA2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axA2.yaxis.set_major_locator(MultipleLocator(50.0))
+axA2.yaxis.set_minor_locator(MultipleLocator(25.0))
+axA2.spines["bottom"].set_visible(false)
 #% ===============================================Make panel B=============================================== %%#
-gsBL = gs[2, 1].subgridspec(ncols=4, nrows=1)
-#We should pick 4 locations from 
-for (idx, fr) in enumerate(frame_stops)
-     axBi = fig3.add_subplot(gsBL[idx])
-     if idx == 1
-          ylabel("ACh Release")
-          axBi.set_yticks([])
-          axBi.yaxis.set_label_coords(col2_ylabel, 0.5)
-     else
-          axBi.yaxis.set_visible(false) #Turn off the bottom axis
-     end
-     ctr_B = axBi.contourf(ACH_map[:, :, fr], cmap="Greens", levels=0.0:0.05:0.5, extend="both")
-     axBi.xaxis.set_visible(false) #Turn off the bottom axis
-     axBi.set_aspect("equal", "box")
-     axBi.spines["left"].set_visible(false)
-     axBi.spines["bottom"].set_visible(false)
-end
+axB = fig2.add_subplot(gs[2, 1])
+ylim(-60, 0.0)
+axB.plot(t[1:end-1], ITREK, c=b_color, lw=lw_standard)
+ylabel("TREK \n current (pA)")
+axB.xaxis.set_visible(false) #Turn off the bottom axis
+axB.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB.yaxis.set_major_locator(MultipleLocator(30.0))
+axB.yaxis.set_minor_locator(MultipleLocator(15.0))
+axB.spines["bottom"].set_visible(false)
 
-axBR = fig3.add_subplot(gs[2, 2])
-axBR.set_aspect("equal", "box")
-ctr_E = axBR.contourf(avg_ACH, cmap="Greens", levels=0.0:0.05:0.5, extend="both")
-axBR.set_xticks([])
-axBR.yaxis.set_visible(false) #Turn off the bottom axis
-axBR.spines["bottom"].set_visible(false)
-axBR.spines["left"].set_visible(false)
-xlabel("Avg. ACh \n Release (mM)")
-cbarE = fig3.colorbar(ctr_E, ticks=[0.0, 0.25, 0.5])
-cbarE.ax.set_ylabel("Average Et (ACh)")
+axB2 = fig2.add_subplot(gs[2, 2])
+xlim(c1_lims)
+ylim(-100.0, 0.0)
+axB2.plot(ITREK, vt[1:end-1], linewidth=1.0, c=b_color, marker="o", markersize=4.0, markerfacecolor=:black)
+axB2.legend(["TREK current"],
+     bbox_to_anchor=(0.04, 1.2), fontsize=9.0, handletextpad=0.3
+)
 
-
-#% ===============================================Make panel C=============================================== %%#
-gsCL = gs[3, 1].subgridspec(ncols=4, nrows=1)
-
-for (idx, fr) in enumerate(frame_stops)
-     axCi = fig3.add_subplot(gsCL[idx])
-     ctr_I = axCi.contourf(GABA_map[:, :, fr], cmap="Reds", levels=0.0:0.05:0.5, extend="both")
-     #axCi.xaxis.set_visible(false) #Turn off the bottom axis
-     if idx == 1
-          ylabel("GABA Release")
-          axCi.set_yticks([])
-          axCi.yaxis.set_label_coords(col2_ylabel, 0.5)
-     else
-          axCi.yaxis.set_visible(false) #Turn off the bottom axis
-     end
-     axCi.set_xticks([])
-     axCi.set_aspect("equal", "box")
-     xlabel("t = $(round(t[fr], digits = 1))")
-     axCi.spines["left"].set_visible(false)
-     axCi.spines["bottom"].set_visible(false)
-     #Can we put a text box below each frame 
-
-end
-
-axCR = fig3.add_subplot(gs[3, 2])
-ctr_I = axCR.contourf(avg_GABA, cmap="Reds", levels=0.0:0.05:0.5, extend="both")
-axCR.set_xticks([])
-axCR.yaxis.set_visible(false) #Turn off the bottom axis
-axCR.set_aspect("equal", "box")
-axCR.spines["bottom"].set_visible(false)
-axCR.spines["left"].set_visible(false)
-xlabel("Avg. GABA \n Release (mM)")
-cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.25, 0.5])
-cbarI.ax.set_ylabel("Average It (GABA)")
-
-#% ===============================================Make panel D=============================================== %%#
-gsDL = gs[4, 1].subgridspec(ncols=3, nrows=3)
-axD1 = fig3.add_subplot(gsDL[1, 2])
-cmapYV = plt.get_cmap("Blues")
-cmapYD = plt.get_cmap("Greens")
-cmapXN = plt.get_cmap("Reds")
-cmapXT = plt.get_cmap("Purples")
-ylim(-15.0, 10.0)
-#Plot the Nasal direction
-for (i, dyv) in enumerate(dY_V)
-     axD1.plot(I_TOTAL[dyv, center_x, :], c=cmapYV(i / length(dY_V)), lw=lw_standard)
-end
-
-axD1.xaxis.set_visible(false) #Turn off the bottom axis
-axD1.spines["bottom"].set_visible(false)
-
-axD2 = fig3.add_subplot(gsDL[3, 2])
-ylim(-15.0, 10.0)
-#Plot the Nasal direction
-for (i, dyd) in enumerate(reverse(dY_D))
-     axD2.plot(t, I_TOTAL[dyd, center_x, :], c=cmapYD(i / length(dY_D)), lw=lw_standard)
-end
+axB2.plot(points, saddle_p, c=:blue, lw=lw_standard)
+axB2.plot(points, stable_p, c=:green, lw=lw_standard)
+axB2.plot(points, stable_focus_p, c=:green, ls="--", lw=lw_standard)
+axB2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=5.0, c=:cyan)
+#Plot the points where the saddle node dissappears
+ylabel("Membrane \n Voltage (mV)")
+xlabel("TREK \n Current (pA)")
+axB2.xaxis.set_visible(false) #Turn off the bottom axis
+axB2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axB2.yaxis.set_major_locator(MultipleLocator(50.0))
+axB2.yaxis.set_minor_locator(MultipleLocator(25.0))
+axB2.spines["bottom"].set_visible(false)
+#% ===================================================Figure Panel C=================================================== %%#
+axC = fig2.add_subplot(gs[3, 1])
+ylim(-8.0, 8.0)
+axC.plot(t, wt, c=:black, lw=lw_standard)
+ylabel("Noisy Current \n (pA)")
 xlabel("Time (s)")
+axC.yaxis.set_label_coords(col1_ylabel, 0.5)
+axC.yaxis.set_major_locator(MultipleLocator(8.0))
+axC.yaxis.set_minor_locator(MultipleLocator(4.0))
 
-axDC = fig3.add_subplot(gsDL[2, 2])
-ylim(-15.0, 10.0)
-axDC.plot(t, I_TOTAL[center_y, center_x, :], c=:black, lw=lw_standard)
-axDC.xaxis.set_visible(false) #Turn off the bottom axis
-axDC.spines["bottom"].set_visible(false)
-axDC.spines["left"].set_visible(false)
-axDC.yaxis.set_visible(false) 
+axC.xaxis.set_major_locator(MultipleLocator(20.0))
+axC.xaxis.set_minor_locator(MultipleLocator(10.0))
 
-axD3 = fig3.add_subplot(gsDL[2, 1])
-ylim(-15.0, 10.0)
-ylabel("Current (pA)")
-for (i, dxn) in enumerate(reverse(dX_N))
-     axD3.plot(t, I_TOTAL[center_y, dxn, :], c=cmapXN(i / length(dX_N)), lw=lw_standard)
-end
-xlabel("Time (s)")
-#axD3.xaxis.set_visible(false) #Turn off the bottom axis
-#axD3.spines["bottom"].set_visible(false)
+axC2 = fig2.add_subplot(gs[3, 2])
+xlim(c1_lims)
+ylim(0.0, 1.0)
+hfit = fit(Histogram, wt, LinRange(c1_lims[1], c1_lims[2], 200))
+weights = hfit.weights / maximum(hfit.weights)
+edges = collect(hfit.edges[1])[1:length(hfit.weights)]
+axC2.plot(edges, weights, c=:black, lw=lw_standard)
+axC2.fill_between(edges[edges.<=saddle_bifurcation], weights[edges.<=saddle_bifurcation], color=:gray)
+axC2.fill_between(edges[edges.>saddle_bifurcation], weights[edges.>saddle_bifurcation], color=:green)
+axC2.legend(["Noise Histogram", "Non-spiking noise", "Spiking Noise"],
+     bbox_to_anchor=(0.04, 1.0), fontsize=9.0, handletextpad=0.3
+)
 
-axD4 = fig3.add_subplot(gsDL[2, 3])
-ylim(-15.0, 10.0)
-for (i, dxt) in enumerate(dX_T)
-     axD4.plot(t, I_TOTAL[center_y, dxt, :], c=cmapXT(i / length(dX_T)), lw=lw_standard)
-end
-xlabel("Time (s)")
-
-axDR = fig3.add_subplot(gs[4, 2])
-ctr_i = axDR.contourf(avg_I_TOTAL, cmap="RdYlGn", levels=-5.0:0.5:5.0, extend="both")
-axDR.plot([center_x], [center_y], linewidth=0.0, marker="o", ms=4.0)
-#Plot sample points
-valYD = abs.(center_y .- dY_D .- 1)
-valYV = abs.(center_y .- dY_V .- 1)
-axDR.scatter(fill(center_x, length(dY_D)), dY_D .- 1, s=4.0, c=valYD, cmap=cmapYD, lw=lw_standard, marker="s") #Dorsal
-axDR.scatter(fill(center_x, length(dY_V)), dY_V .- 1, s=4.0, c=valYV, cmap=cmapYV, lw=lw_standard, marker="s") #Dorsal
-valXN = abs.(center_x .- dX_N .- 1)
-valXT = abs.(center_x .- dX_T .- 1)
-axDR.scatter(dX_N .- 1, fill(center_y, length(dX_N)), s=4.0, c=valXN, cmap=cmapXN, lw=lw_standard, marker="s") #Dorsal
-axDR.scatter(dX_T .- 1, fill(center_y, length(dX_T)), s=4.0, c=valXT, cmap=cmapXT, lw=lw_standard, marker="s") #Dorsal
-axDR.set_facecolor("none")
-
-axDR.set_xticks([])
-axDR.yaxis.set_visible(false) #Turn off the bottom axis
-xlim(0, nx)
-ylim(0, ny)
-axDR.set_aspect("equal", "box")
-axDR.spines["bottom"].set_visible(false)
-axDR.spines["left"].set_visible(false)
-cbari = fig3.colorbar(ctr_i, ticks=[-25.0, 0.0, 10.0])
-cbari.ax.set_ylabel("Induced Current (pA)")
-
-axDR.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axDR.annotate("B", (0.01, 0.75), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axDR.annotate("C", (0.01, 0.50), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axDR.annotate("D", (0.01, 0.25), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+ylabel("Probability of \n Noisy Current")
+xlabel("Noise Current (pA)")
+axC2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axC2.yaxis.set_major_locator(MultipleLocator(0.5))
+axC2.yaxis.set_minor_locator(MultipleLocator(0.25))
+axC2.xaxis.set_major_locator(MultipleLocator(20.0))
+axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
 println(" Completed")
 
+axC2.annotate("A", (0.01, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("B", (0.53, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("C", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("D", (0.53, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axC2.annotate("E", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
 
-#%% Save the plot
+axC2.annotate("F", (0.53, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+
+#%% Save the Plot 
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
-print("[$(now())]: Saving the figure 3...")
-fig3.savefig("$(loc)/Figure4_Neurotransmitters.jpg")
+print("[$(now())]: Saving the figure 2...")
+fig2.savefig("$(loc)/Figure3_BiophysicalProperties.jpg")
 plt.close("all")
 println(" Completed")
-
-#%% Generate a diffusion animation
-fig, ax = plt.subplots(2)
-anim = @animate for i = 1:10
-     ax[1].plot(rand(10))
-     ax[2].plot(rand(10))
-end
-     
-     
-
-#%%
-anim = @animate for i = 1:100:length(t)
-     print("[$(now())]: Animating simulation...")
-     println(i)
-     e_frame = ACH_map[:, :, i]
-     i_frame = GABA_map[:, :, i]
-     I_frame = I_TOTAL[:, :, i]
-     #contourf(frame_e, e_frame, clims=(0.0, 1.0))
-     contour_e = contourf(e_frame,
-          ratio=:equal, grid=false,
-          ylabel="t = $(round(t[i], digits = 2))",
-          xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny),
-          c=:curl, clims=(0.0, 1.0), levels=0.0:0.05:3.0,
-          colorbar_title="[ACh] (μM)"
-     )
-     xlabel("")
-     contour_i = contourf(i_frame,
-          ratio=:equal, grid=false, xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny),
-          c=:jet, clims=(0.0, 1.0), levels=0.0:0.05:3.0, 
-          colorbar_title = "[GABA] (μM)"
-     )
-
-     contour_I = contourf(I_frame,
-          ratio=:equal, grid=false, xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny),
-          c=:RdYlGn, clims=(-8.0, 8.0), levels=-15.0:0.5:15.0, 
-          colorbar_title = "Induced Current (pA)"
-     )
-     plot(contour_e, contour_i, contour_I, layout=3)
-end
-
-gif(anim, "$(loc)/S1 Neurotransmitter Conductance.gif")

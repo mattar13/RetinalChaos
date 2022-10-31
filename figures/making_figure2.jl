@@ -1,201 +1,284 @@
+include("figure_setup.jl")
 using RetinalChaos
-import RetinalChaos: calculate_threshold, get
-import RetinalChaos: extract_equilibria, find_equilibria
-using LaTeXStrings, Statistics
-include("figure_setup.jl");
-
-println("Running the plotting script for figure 2")
-
+import RetinalChaos: get_timestamps
+plt.pygui(true) #Make the GUI external to vscode
+println("Running the plotting script for figure 1")
 #%% Open data
-print("[$(now())]: Setting up modelling data... ")
-#Step 1: Import the initial conditions
-conds_dict = read_JSON("params\\conds.json")
-conds_dict[:v] = -25.0
-u0 = conds_dict |> extract_dict
-#Step 2: Import the parameters
-pars_dict = read_JSON("params\\params.json")
-pars_dict[:I_app] = 15.0
-pars_dict[:ρi] = 0.0
-pars_dict[:ρe] = 0.0
-p = pars_dict |> extract_dict
+#Step 1: Import the model, initial conditions, and parameters
+import RetinalChaos.ODEModel #import the ODEModel
+import RetinalChaos.u0 #import the 
+import RetinalChaos.parameters
+
+#Step 2: Adjust parameters
+parameters[I_app] = 15.0
+parameters[ρi] = 0.0
+parameters[ρe] = 0.0
+parameters[g_Na] = 0.0 #Don't include voltage gated sodium channels
+
 #Step 3: determine the timespan
-tspan = (0.0, 300e3)
+tmin = 0.0
+tmax = 120e3
+
 #Step 4: set up the problem
-prob = SDEProblem(T_SDE, noise, u0, tspan, p)
+prob = ODEProblem(ODEModel, u0, (tmin, tmax), parameters)
+
 #Step 5: Solve the problem
-sol = solve(prob, SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7, progress=true, progress_steps=1);
+sol = solve(prob, progress=true, progress_steps=1);
+println(" Completed")
+ODEModel.states
+
+fig, ax = plt.subplots(1)
+ax.plot(sol.t, sol(sol.t, idxs = v))
+fig
+# Run the analysis 
+print("[$(now())]: Running analysis... ")
+ts, data = RetinalChaos.timeseries_analysis(sol)
+tSpike, vnSpike = extract_spike_trace(ts, data, cell_n = 2, idx = 1, spike_dur=200)
+ts["Spikes"]
+
+#Upsample the spike time
+dtSpike = 0.01 #Set the time differential
+tSpike = tSpike[1]:dtSpike:tSpike[end]
+vSpike = sol(tSpike, idxs=2)
+nSpike = sol(tSpike, idxs=3)
+#tSpike = tSpike .- tSpike[1]
+
+#Spikes arrows
+deltaArrow = 1.0
+tSpikeArrow = LinRange(tSpike[1], tSpike[end], 25)
+vSpikeArrow = sol(tSpikeArrow, idxs=[2]) |> Array
+nSpikeArrow = sol(tSpikeArrow, idxs=[3]) |> Array
+dvSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[1]) .- vSpikeArrow
+dnSpikeArrow = sol(tSpikeArrow .+ deltaArrow, idxs=[2]) .- nSpikeArrow
+
+#extract the bursts
+beginBurst = ts["Bursts"][2][2]
+dtBurst = 1.0
+tBurst = (beginBurst-1000):dtBurst:(beginBurst+2000)
+vBurst = sol(tBurst, idxs=2)
+cBurst = sol(tBurst, idxs=6)
+#tBurst = (tBurst .- tBurst[1]) ./ 1000 #Offset the time range
+
+#Bursts
+tBurstArrow = tBurst[1]:250:tBurst[end]
+vBurstArrow = sol(tBurstArrow, idxs=[2]) |> Array
+cBurstArrow = sol(tBurstArrow, idxs=[6]) |> Array
+dvBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[1]) .- vBurstArrow
+dcBurstArrow = sol(tBurstArrow .+ deltaArrow, idxs=[3]) .- cBurstArrow
+
+#extract the IBI
+C_dt = 1.0
+ts["Bursts"][2][2,2]
+tIBI = (ts["Bursts"][2][2, 2]-1000):C_dt:(ts["Bursts"][2][3, 2]+10000)
+vIBI = sol(tIBI, idxs=2)
+cIBI = sol(tIBI, idxs=6)
+aIBI = sol(tIBI, idxs=7)
+bIBI = sol(tIBI, idxs=8)
+
+#IBIs
+tIBIArrow = LinRange(tIBI[1], tIBI[end], 100)
+vIBIArrow = sol(tIBIArrow, idxs=[2]) |> Array
+cIBIArrow = sol(tIBIArrow, idxs=[6]) |> Array
+aIBIArrow = sol(tIBIArrow, idxs=[7]) |> Array
+bIBIArrow = sol(tIBIArrow, idxs=[8]) |> Array
+
+dvIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[2]) .- vIBIArrow
+dcIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[6]) .- cIBIArrow
+daIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[7]) .- cIBIArrow
+dbIBIArrow = sol(tIBIArrow .+ deltaArrow, idxs=[8]) .- cIBIArrow
 println(" Completed")
 
+#plt.clf() #While drawing you can use this to clear the figure 
 
-#% Run a dynamical analysis to get the equilibrium
-print("[$(now())]: Setting up equilibrium data... ")
-conds_dict = read_JSON("params\\conds.json")
-u0 = conds_dict |> extract_dict
-pars_dict_eq = read_JSON("params\\params.json")
-pars_dict_eq[:I_app] = 0.0 #Set initial applied current to 0
-pars_dict_eq[:ρi] = 0.0 #remove GABA influence
-pars_dict_eq[:ρe] = 0.0 #remove ACh influence
-pars_dict_eq[:g_TREK] = 0.0 #Remove the sAHP
-p_eq = pars_dict_eq |> extract_dict
-prob_eq = ODEProblem(T_ODE, u0, (0.0, 100.0), p_eq)
-# Conduct the codim analysis
-codim1 = (:I_app)
-c1_lims = (-70.0, 30.0)
-c1_map = codim_map(prob_eq, codim1, c1_lims, equilibrium_resolution=10)
-println(" Completed")
-#% 
-print("[$(now())]: Extracting data... ")
-res = extract_equilibria(c1_map) #Pass back all of the equilibria
-points = res[1]
-saddle_p = res[2]
-stable_p = res[3]
-unstable_p = res[4]
-unstable_focus_p = res[5]
-stable_focus_p = res[6]
-
-last_saddle_idx = findlast(isnan.(saddle_p) .== 0)
-saddle_bifurcation = points[last_saddle_idx]
-saddle_eq = saddle_p[last_saddle_idx]
-
-#% Extract plotting data
-dt = 1.0
-t = (sol.t[1]:dt:120e3)
-vt = sol(t, idxs=1)
-bt = sol(t, idxs=5)
-wt = sol(t, idxs=8)
-t = t / 1000
-
-gTREK = -pars_dict[:g_TREK]
-EK = pars_dict[:E_K]
-ITREK = gTREK .* bt[2:end] .* (vt[1:end-1] .- EK) #We want to measure the current from the value before
-ITREK_avg = sum(ITREK)/length(ITREK)
-ITREK_SEM = std(ITREK)/sqrt(length(ITREK))
-println(" Completed")
-
-#%% Let s set up the figures
-print("[$(now())]: Plotting... ")
+#%% Start the plotting of the figure
+print("[$(now())]: Plotting figure 1...")
 width_inches = 7.5
-height_inches = 5.0
-fig2 = plt.figure("Biophysical Noise", figsize=(width_inches, height_inches))
+height_inches = 7.5
+fig1 = plt.figure("Model Basics", figsize=(width_inches, height_inches))
 
-gs = fig2.add_gridspec(3, 2,
-     width_ratios=(0.55, 0.45),
+#% Make a plot in PyPlot
+gs = fig1.add_gridspec(3, 2,
+     width_ratios=(0.75, 0.25),
      height_ratios=(0.30, 0.30, 0.40),
-     right=0.99, left=0.14,
-     top=0.91, bottom=0.1,
+     right=0.95, left=0.14,
+     top=0.94, bottom=0.08,
      wspace=0.4, hspace=0.40
 )
-col1_ylabel = -0.15
-col2_ylabel = -0.17
 
+col1_ylabel = -0.1
+col2_ylabel = -0.25
 #% =====================================================Make panel A===================================================== %%#
-axA = fig2.add_subplot(gs[1, 1])
-ylim(-100.0, 0.0)
-axA.plot(t, vt, c=v_color, lw=lw_standard)
-ylabel("Membrane \n Voltage (mV)")
-axA.xaxis.set_visible(false) #Turn off the bottom axis
-axA.yaxis.set_label_coords(col1_ylabel, 0.5)
-axA.yaxis.set_major_locator(MultipleLocator(50.0))
-axA.yaxis.set_minor_locator(MultipleLocator(25.0))
-axA.spines["bottom"].set_visible(false)
-# Plot the second column
-axA2 = fig2.add_subplot(gs[1, 2])
-xlim(c1_lims)
-ylim(-100.0, 0.0)
-axA2.plot(points, saddle_p, c=:blue, lw=lw_standard)
-axA2.plot(points, stable_p, c=:green, lw=lw_standard)
-axA2.plot(points, stable_focus_p, c=:green, ls="--", lw=lw_standard)
-axA2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=5.0, c=:cyan)
-I_sn_text = L"I_{sn}"
-axA2.legend(["Saddle Eq.", "Stable Eq.", "Stable Oscillation", "Bifurcation ($(I_sn_text))"],
-     ncol=2, columnspacing=0.70,
-     bbox_to_anchor=(0.04, 1.3), fontsize=9.0, markerscale=0.5, handletextpad=0.3
-)
-ylabel("Equilibria \n Voltage (mV)")
-xlabel("Injected current")
-#Plot the points where the saddle node dissappears
-axA2.xaxis.set_visible(false) #Turn off the bottom axis
-axA2.yaxis.set_label_coords(col2_ylabel, 0.5)
-axA2.yaxis.set_major_locator(MultipleLocator(50.0))
-axA2.yaxis.set_minor_locator(MultipleLocator(25.0))
-axA2.spines["bottom"].set_visible(false)
+vlims = (-55.0, 5.0)
+nlims = (-0.1, 1.1)
+clims = (0.0, 0.5)
+alims = (-0.1, 0.6)
+blims = (-0.1, 0.6)
+
+#Do the plotting
+gsAL = gs[1, 1].subgridspec(ncols=1, nrows=2)
+axA1 = fig1.add_subplot(gsAL[1])
+ylim(vlims)
+axA1.plot(tSpike .- tSpike[1], vSpike, c=v_color, lw=lw_standard)
+ylabel("Voltage \n (mV)")
+axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA1.xaxis.set_visible(false) #Turn off the bottom axis
+axA1.spines["bottom"].set_visible(false)
+axA1.yaxis.set_major_locator(MultipleLocator(50.0))
+axA1.yaxis.set_minor_locator(MultipleLocator(25.0))
+
+axA2 = fig1.add_subplot(gsAL[2])
+ylim(nlims)
+axA2.plot(tSpike .- tSpike[1], nSpike, c=n_color, lw=lw_standard)
+ylabel("K-Chan. \n open prob.")
+xlabel("Time (ms)")
+axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axA2.yaxis.set_major_locator(MultipleLocator(1.00))
+axA2.yaxis.set_minor_locator(MultipleLocator(0.50))
+
+axAR = fig1.add_subplot(gs[1, 2])
+xlim(vlims)
+ylim(nlims)
+axAR.plot(vSpike, nSpike, c=:black, lw=lw_standard)
+add_direction(axAR, vSpikeArrow, nSpikeArrow, dvSpikeArrow, dnSpikeArrow)
+xlabel("Voltage (mV)")
+ylabel("K-Chan. \n open prob.")
+axAR.xaxis.set_major_locator(MultipleLocator(25.0))
+axAR.xaxis.set_minor_locator(MultipleLocator(12.5))
+axAR.yaxis.set_major_locator(MultipleLocator(0.50))
+axAR.yaxis.set_minor_locator(MultipleLocator(0.25))
+axAR.yaxis.set_label_coords(col2_ylabel, 0.5)
+#add arrows here?
 #% ===============================================Make panel B=============================================== %%#
-axB = fig2.add_subplot(gs[2, 1])
-ylim(-60, 0.0)
-axB.plot(t[1:end-1], ITREK, c=b_color, lw=lw_standard)
-ylabel("TREK \n current (pA)")
-axB.xaxis.set_visible(false) #Turn off the bottom axis
-axB.yaxis.set_label_coords(col1_ylabel, 0.5)
-axB.yaxis.set_major_locator(MultipleLocator(30.0))
-axB.yaxis.set_minor_locator(MultipleLocator(15.0))
-axB.spines["bottom"].set_visible(false)
+vlims = (-75.0, 5.0)
+gsBL = gs[2, 1].subgridspec(ncols=1, nrows=2)
+axB1 = fig1.add_subplot(gsBL[1])
+ylim(vlims)
+axB1.plot((tBurst .- tBurst[1]) ./ 1000, vBurst, c=v_color, lw=lw_standard)
+axB1.xaxis.set_visible(false) #Turn off the bottom axis
+ylabel("Voltage \n (mV)")
+axB1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB1.spines["bottom"].set_visible(false)
+axB1.yaxis.set_major_locator(MultipleLocator(30.0))
+axB1.yaxis.set_minor_locator(MultipleLocator(15.0))
 
-axB2 = fig2.add_subplot(gs[2, 2])
-xlim(c1_lims)
-ylim(-100.0, 0.0)
-axB2.plot(ITREK, vt[1:end-1], linewidth=1.0, c=b_color, marker="o", markersize=4.0, markerfacecolor=:black)
-axB2.legend(["TREK current"],
-     bbox_to_anchor=(0.04, 1.2), fontsize=9.0, handletextpad=0.3
-)
-
-axB2.plot(points, saddle_p, c=:blue, lw=lw_standard)
-axB2.plot(points, stable_p, c=:green, lw=lw_standard)
-axB2.plot(points, stable_focus_p, c=:green, ls="--", lw=lw_standard)
-axB2.plot(saddle_bifurcation, saddle_eq, marker="s", markersize=5.0, c=:cyan)
-#Plot the points where the saddle node dissappears
-ylabel("Membrane \n Voltage (mV)")
-xlabel("TREK \n Current (pA)")
-axB2.xaxis.set_visible(false) #Turn off the bottom axis
-axB2.yaxis.set_label_coords(col2_ylabel, 0.5)
-axB2.yaxis.set_major_locator(MultipleLocator(50.0))
-axB2.yaxis.set_minor_locator(MultipleLocator(25.0))
-axB2.spines["bottom"].set_visible(false)
-#% ===================================================Figure Panel C=================================================== %%#
-axC = fig2.add_subplot(gs[3, 1])
-ylim(-8.0, 8.0)
-axC.plot(t, wt, c=:black, lw=lw_standard)
-ylabel("Noisy Current \n (pA)")
+axB2 = fig1.add_subplot(gsBL[2])
+ylim(0.0, 0.41)
+axB2.plot((tBurst .- tBurst[1]) ./ 1000, cBurst, c=c_color, lw=lw_standard)
 xlabel("Time (s)")
-axC.yaxis.set_label_coords(col1_ylabel, 0.5)
-axC.yaxis.set_major_locator(MultipleLocator(8.0))
-axC.yaxis.set_minor_locator(MultipleLocator(4.0))
+ylabel("[Ca2+] \n (mM)")
+axB2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axB2.yaxis.set_major_locator(MultipleLocator(0.20))
+axB2.yaxis.set_minor_locator(MultipleLocator(0.1))
 
-axC.xaxis.set_major_locator(MultipleLocator(20.0))
-axC.xaxis.set_minor_locator(MultipleLocator(10.0))
+axBR = fig1.add_subplot(gs[2, 2])
+xlim(-75.0, 5.0)
+ylim(0.0, 0.41)
+add_direction(axBR, vBurstArrow, cBurstArrow, dvBurstArrow, dcBurstArrow, color=c_color)
+axBR.plot(vBurst, cBurst, c=c_color, lw=2.0)
+xlabel("Voltage (mV)")
+ylabel("[Ca2+] (mM)")
+axBR.yaxis.set_label_coords(col2_ylabel, 0.5)
+axBR.xaxis.set_major_locator(MultipleLocator(30.0))
+axBR.xaxis.set_minor_locator(MultipleLocator(15.0))
+axBR.yaxis.set_major_locator(MultipleLocator(0.2))
+axBR.yaxis.set_minor_locator(MultipleLocator(0.1))
 
-axC2 = fig2.add_subplot(gs[3, 2])
-xlim(c1_lims)
-ylim(0.0, 1.0)
-hfit = fit(Histogram, wt, LinRange(c1_lims[1], c1_lims[2], 200))
-weights = hfit.weights / maximum(hfit.weights)
-edges = collect(hfit.edges[1])[1:length(hfit.weights)]
-axC2.plot(edges, weights, c=:black, lw=lw_standard)
-axC2.fill_between(edges[edges.<=saddle_bifurcation], weights[edges.<=saddle_bifurcation], color=:gray)
-axC2.fill_between(edges[edges.>saddle_bifurcation], weights[edges.>saddle_bifurcation], color=:green)
-axC2.legend(["Noise Histogram", "Non-spiking noise", "Spiking Noise"],
-     bbox_to_anchor=(0.04, 1.0), fontsize=9.0, handletextpad=0.3
-)
+#% ===================================================Figure Panel C=================================================== %%#
+gsCL = gs[3, 1].subgridspec(ncols=1, nrows=4)
+axCL1 = fig1.add_subplot(gsCL[1])
+ylim(-0.1, 0.41)
+axCL1.plot((tIBI .- tIBI[1]) ./ 1000, cIBI, c=c_color, lw=lw_standard)
+ylabel("[Ca2+] \n (mM)")
+axCL1.xaxis.set_visible(false) #Turn off the bottom axis
+axCL1.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL1.spines["bottom"].set_visible(false)
+axCL1.yaxis.set_major_locator(MultipleLocator(0.4))
+axCL1.yaxis.set_minor_locator(MultipleLocator(0.2))
 
-ylabel("Probability of \n Noisy Current")
-xlabel("Noise Current (pA)")
-axC2.yaxis.set_label_coords(col2_ylabel, 0.5)
-axC2.yaxis.set_major_locator(MultipleLocator(0.5))
-axC2.yaxis.set_minor_locator(MultipleLocator(0.25))
-axC2.xaxis.set_major_locator(MultipleLocator(20.0))
-axC2.xaxis.set_minor_locator(MultipleLocator(10.0))
-println(" Completed")
+axCL2 = fig1.add_subplot(gsCL[2])
+ylim(-0.76, 0.1)
+axCL2.plot((tIBI .- tIBI[1]) ./ 1000, -aIBI, c=a_color, lw=lw_standard)
+ylabel("cAMP \n (At)")
+axCL2.xaxis.set_visible(false) #Turn off the bottom axis
+axCL2.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL2.spines["bottom"].set_visible(false)
+axCL2.yaxis.set_major_locator(MultipleLocator(0.60))
+axCL2.yaxis.set_minor_locator(MultipleLocator(0.30))
 
-axC2.annotate("A", (0.01, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("B", (0.53, 0.90), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("C", (0.01, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("D", (0.53, 0.65), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
-axC2.annotate("E", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axCL3 = fig1.add_subplot(gsCL[3])
+ylim(-0.1, 0.76)
+axCL3.plot((tIBI .- tIBI[1]) ./ 1000, bIBI, c=b_color, lw=lw_standard)
+ylabel("TREK \n (Bt)")
+axCL3.xaxis.set_visible(false) #Turn off the bottom axis
+axCL3.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL3.spines["bottom"].set_visible(false)
+axCL3.yaxis.set_major_locator(MultipleLocator(0.60))
+axCL3.yaxis.set_minor_locator(MultipleLocator(0.30))
 
-axC2.annotate("F", (0.53, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axCL4 = fig1.add_subplot(gsCL[4])
+ylim(-90.0, 5.0)
+axCL4.plot((tIBI .- tIBI[1]) ./ 1000, vIBI, c=v_color, lw=lw_standard)
+xlabel("Time (s)")
+ylabel("Volt. \n (mV)")
+axCL4.yaxis.set_label_coords(col1_ylabel, 0.5)
+axCL4.yaxis.set_major_locator(MultipleLocator(60.0))
+axCL4.yaxis.set_minor_locator(MultipleLocator(30.0))
 
-#%% Save the Plot 
+gsCR = gs[3, 2].subgridspec(ncols=1, nrows=5, height_ratios=[0.2, 0.2, 0.2, 0.2, 0.2])
+axCR1 = fig1.add_subplot(gsCR[1])
+xlim(0.0, 0.41)
+ylim(-0.1, 0.761)
+axCR1.plot(cIBI, aIBI, c=a_color, lw=lw_standard)
+#add_direction(axCR1, cIBIArrow, aIBIArrow, dcIBIArrow, daIBIArrow, color=a_color)
+xlabel("[Ca2+](mM)")
+ylabel("cAMP \n decay (At)")
+axCR1.yaxis.set_label_coords(col2_ylabel, 0.5)
+axCR1.xaxis.set_major_locator(MultipleLocator(0.2))
+axCR1.xaxis.set_minor_locator(MultipleLocator(0.1))
+axCR1.yaxis.set_major_locator(MultipleLocator(0.60))
+axCR1.yaxis.set_minor_locator(MultipleLocator(0.30))
+
+
+axCR2 = fig1.add_subplot(gsCR[3])
+xlim(-0.1, 0.65)
+ylim(-0.1, 0.65)
+axCR2.plot(aIBI, bIBI, c=b_color, lw=lw_standard)
+#add_direction(axCR2, aIBIArrow, bIBIArrow, daIBIArrow, dbIBIArrow, color=b_color)
+xlabel("cAMP decay (At)")
+ylabel("TREK \n (Bt)")
+axCR2.yaxis.set_label_coords(col2_ylabel, 0.5)
+axCR2.xaxis.set_major_locator(MultipleLocator(0.3))
+axCR2.xaxis.set_minor_locator(MultipleLocator(0.15))
+axCR2.yaxis.set_major_locator(MultipleLocator(0.6))
+axCR2.yaxis.set_minor_locator(MultipleLocator(0.3))
+
+axCR3 = fig1.add_subplot(gsCR[5])
+xlim(-0.1, 0.61)
+ylim(-90.0, 5.0)
+axCR3.plot(bIBI, vIBI, c=v_color, lw=lw_standard)
+#add_direction(axCR3, bIBIArrow, vIBIArrow, dbIBIArrow, dvIBIArrow, color=v_color)
+xlabel("TREK (Bt)")
+ylabel("Voltage \n (mV)")
+axCR3.yaxis.set_label_coords(col2_ylabel, 0.5)
+axCR3.xaxis.set_major_locator(MultipleLocator(0.3))
+axCR3.xaxis.set_minor_locator(MultipleLocator(0.15))
+axCR3.yaxis.set_major_locator(MultipleLocator(60.0))
+axCR3.yaxis.set_minor_locator(MultipleLocator(30.0))
+
+axA1.annotate("A", (0.01, 0.94), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("B", (0.67, 0.94), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+
+axA1.annotate("C", (0.01, 0.66), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("D", (0.67, 0.66), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+
+axA1.annotate("E", (0.01, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+axA1.annotate("F", (0.67, 0.35), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
+
+println(" Complete")
+#%% Save the figure
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
-print("[$(now())]: Saving the figure 2...")
-fig2.savefig("$(loc)/figure2_BiophysicalProperties.jpg")
+print("[$(now())]: Saving the figure 1...")
+fig1
+fig1.savefig("$(loc)/Figure2_ModelVariables.jpg")
 plt.close("all")
 println(" Completed")
