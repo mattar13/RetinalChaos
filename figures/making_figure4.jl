@@ -1,3 +1,10 @@
+using Revise
+include("figure_setup.jl")
+using RetinalChaos
+
+import RetinalChaos.SDEModel #import the ODEModel
+import RetinalChaos.u0 #import the 
+import RetinalChaos.parameters
 
 #%% How does each of the parameters affect the model statistics
 using DataFrames, XLSX, Query
