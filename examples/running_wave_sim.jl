@@ -18,7 +18,6 @@ u0 = extract_dict(conds_dict, t_conds, dims=(nx, ny))
 
 #Step 3: Import the parameters
 pars_dict = read_JSON("params/params.json")
-pars_dict[:g_Na] = 2.5
 p = pars_dict |> extract_dict
 
 #Step 4: Determine the timespan
