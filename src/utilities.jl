@@ -201,21 +201,20 @@ This function runs the model using the indicated parameters
 
 """
 function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
-    tmax=120e3, xmax=64, ymax=64,
+    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 120e3, DEmodel = T_PDE_w_NA,
     kwargs...
 ) where {T<:Real}
 
     print("[$(now())]: Setting up parameters, conditions, and network settings... ")
     u0 = extract_dict(u_dict, t_conds, dims=(xmax, ymax))
     p = p_dict |> extract_dict
-    tspan = (0.0, tmax)
     println("Complete")
     print("[$(now())]: Warming up the model for 60s... ")
-    prob = SDEProblem(T_PDE_w_NA, noise, u0, (0.0, 60e3), p)
+    prob = SDEProblem(DEmodel, noise, u0, (0.0, warmup_tmax), p)
     @time warmup = solve(prob, save_everystep=false, progress=true, progress_steps=1; kwargs...)
     println("Completed")
     print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
-    prob = SDEProblem(T_PDE_w_NA, noise, warmup[end], tspan, p)
+    prob = SDEProblem(DEmodel, noise, warmup[end], (0.0, tmax), p)
     @time sol = solve(prob, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]; kwargs...)
     return sol
 end 
@@ -229,13 +228,14 @@ function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T}, loc::String;
         println("directory doesn't exist. Making it")
         mkdir(loc)
     end
-    animate_dt = 60.0
-    anim = @animate for t = 1.0:animate_dt:sol.t[end]
-        println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
-        frame_i = reshape(sol(t) |> Array, (nx, ny))
-        heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
-    end
-    gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
+    #animate_dt = 60.0
+    #anim = @animate for t = 1.0:animate_dt:sol.t[end]
+    #    println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
+    #    frame_i = reshape(sol(t) |> Array, (nx, ny))
+    #    heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
+    #end
+    #gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
+    
     timestamps, data = timeseries_analysis(sol, loc)
     hist_plot = plot_histograms(data, loc)
     return timestamps, data, hist_plot
