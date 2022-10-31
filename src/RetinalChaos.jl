@@ -101,6 +101,7 @@ export MeanSquaredErrorSOL, MeanSquaredError
 export TimescaleLoss
 
 #Load all of the old modelling aspects. We can use that one for PDE
+#import Plots.@animate #Only import 
 include("models.jl")
 export T_PDE_w_NA, noise
 using Statistics, StatsBase
