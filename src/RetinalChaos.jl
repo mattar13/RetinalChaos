@@ -106,6 +106,7 @@ include("models.jl")
 export T_PDE_w_NA, noise
 using Statistics, StatsBase
 export std
+export run_model
 #=
 using Telegram, Telegram.API, ConfigEnv
 
