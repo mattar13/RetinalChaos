@@ -3,15 +3,16 @@ using RetinalChaos
 using Plots
 include("figure_setup.jl")
 # Run 3 models
-#%% Model 1: Regular Baseline model 
 
-loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\wave_model"
+#%% Model 1: Regular Baseline model 
+root = raw"C:\Users\RennaLabSA1\The University of Akron\Renna Lab - Documents\General\Data\Modelling"
+loc = "$(root)\\wave_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 @time sol = run_model(p_dict, u_dict, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7);
 
 #%% Model 2: Blocked Neurotransmission 
-loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\isolated_model"
+loc = "$(root)\\isolated_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:g_ACh] = 0.0 # Block all Acetylcholine receptors
@@ -19,21 +20,21 @@ p_dict[:g_GABA] = 0.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 3: No GABA
-loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\no_GABA_model"
+loc = "$(root)\\no_GABA_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:g_GABA] = 0.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 4 ECl Differential
-loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\ECl55_model"
+loc = "$(root)\\ECl55_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:E_Cl] = -55.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 5 ECl more hyperpolarizing Differential
-loc = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling\figure_data\ECl75_model"
+loc = "$(root)\\ECl75_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:E_Cl] = -75.0 #Block all GABA receptors

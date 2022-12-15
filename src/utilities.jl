@@ -198,10 +198,16 @@ end
 
 """
 This function runs the model using the indicated parameters
-
+idxs: 
+1 = Voltage
+2 = n
+3 = m
+4 = h
+5 = Ca
 """
 function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
-    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 120e3, DEmodel = T_PDE_w_NA, verbose = false,
+    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 120e3, DEmodel = T_PDE_w_NA, verbose = true,
+    idx = 5, #
     kwargs...
 ) where {T<:Real}
 
@@ -221,7 +227,9 @@ function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
         print("[$(now())]: Simulating up the model for $(round(tmax/1000))s... ")
     end
     prob = SDEProblem(DEmodel, noise, warmup[end], (0.0, tmax), p)
-    sol = solve(prob, progress=true, progress_steps=1, save_idxs=[1:(xmax*ymax)...]; kwargs...)
+    start_idx = idx*(xmax*ymax)-(xmax*ymax)+1
+    end_idx = idx*(xmax*ymax)
+    sol = solve(prob, progress=true, progress_steps=1, save_idxs=[start_idx:end_idx...]; kwargs...)
     if verbose
         println("Completed")
     end
@@ -229,6 +237,7 @@ function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
 end 
 
 function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T}, loc::String;
+    plot_hists = false, 
     tmax=120e3, xmax=64, ymax=64, animate_dt = 60.0,
     kwargs...
 ) where {T<:Real}
@@ -246,6 +255,15 @@ function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T}, loc::String;
     #gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
     
     timestamps, data = timeseries_analysis(sol, loc)
-    hist_plot = plot_histograms(data, loc)
-    return timestamps, data, hist_plot
+    if plot_hists
+        try
+            hist_plot = plot_histograms(data, loc)
+            return timestamps, data, hist_plot
+        catch
+            println("Something went wrong in plotting")
+            return timestamps, data
+        end
+    else
+        return timestamps, data
+    end
 end
