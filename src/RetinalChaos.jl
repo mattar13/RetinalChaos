@@ -109,8 +109,9 @@ export std
 export run_model
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
-using Images, ImageSegmentation
-export label_components
+using Images, ImageSegmentation 
+using DataFrames, Query, XLSX
+export label_components, WaveSegmentation
 #=
 using Telegram, Telegram.API, ConfigEnv
 
