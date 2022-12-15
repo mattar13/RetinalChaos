@@ -107,11 +107,14 @@ export T_PDE_w_NA, noise
 using Statistics, StatsBase
 export std
 export run_model
-#=
-using Telegram, Telegram.API, ConfigEnv
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
 using Images, ImageSegmentation
+export label_components
+#=
+using Telegram, Telegram.API, ConfigEnv
+
+
 ######################UTILITIES######################
 =#
 end
