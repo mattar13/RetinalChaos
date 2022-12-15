@@ -40,12 +40,35 @@ p_dict[:E_Cl] = -75.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% if we just wanted to open the data to plot a heatmap figure1_ModelVariables
-data_root = "C:\\Users\\mtarc\\OneDrive - The University of Akron\\Data\\Modelling\\figure_data"
+data_root = "C:\\Users\\mtarc\\OneDrive - The University of Akron\\Data\\Modelling"
 
 #%% Plot the wave simulation
 wave_path = "$(data_root)/wave_model"
 dataWAVE = load("$(wave_path)/data.jld2")
-solWAVE = reshape(dataWAVE["DataArray"], (nx, ny, size(dataWAVE["DataArray"], 2)))
+dataWAVE
+spikesWAVE = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
+
+#thresholds
+function labelWaves(spikes::BitMatrix)
+     nx = ny = round(Int64, sqrt(size(spikes, 1)))
+     tspan = size(spikes, 2)
+     println(nx, ny, tspan)
+     spike_map = reshape(spikes, (nx, ny, tspan))
+
+     return spike_map
+end
+
+using Images
+spike_map_WAVE = labelWaves(spikesWAVE)
+spike_map_WAVE
+
+label_components
+
+dataWAVE["DataArray"]
+
+
+
+
 anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
      println("[$(now())]: Animating simulation $(t) out of $(size(solWAVE, 3))...")
      frame_i = solWAVE[:, :, round(Int64, t)]
