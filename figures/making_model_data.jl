@@ -43,18 +43,29 @@ run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters
 #%% if we just wanted to open the data to plot a heatmap figure1_ModelVariables
 data_root = "C:\\Users\\mtarc\\OneDrive - The University of Akron\\Data\\Modelling"
 
+#%% Plot the wave simulation
 wave_path = "$(data_root)/wave_model"
 dataWAVE = load("$(wave_path)/data.jld2")
 spikesWAVE = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
+WaveSegmentation(spikesWAVE, wave_path)
 
-df = RetinalChaos.WaveSegmentation(spikesWAVE, wave_path)
-df
+isolated_path = "$(data_root)/isolated_model"
+dataISO = load("$(isolated_path)/data.jld2")
+spikesISO = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
+WaveSegmentation(spikesISO, isolated_path)
 
-#%% Plot the wave simulation
-dataWAVE["DataArray"]
-fig, ax = plt.subplots(1)
-ax.contourf(seg)
+noGABA_path = "$(data_root)/no_GABA_model"
+dataNG = load("$(noGABA_path)/data.jld2")
+spikesNG = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
+WaveSegmentation(spikesNG, noGABA_path)
 
+ECl55_path = "$(data_root)/ECl55_model"
+dataECl = load("$(ECl55_path)/data.jld2")
+spikesECl = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
+WaveSegmentation(spikesECl, ECl55_path)
+
+#%% Animations Wave
+solWAVE = reshape(dataWAVE["DataArray"], (nx, ny, size(dataWAVE["DataArray"], 2)))
 anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
      println("[$(now())]: Animating simulation $(t) out of $(size(solWAVE, 3))...")
      frame_i = solWAVE[:, :, round(Int64, t)]
@@ -65,9 +76,7 @@ anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
 end
 gif(anim, "$(save_loc)/S6 Wave Simulation.gif", fps=1000.0 / animate_dt)
 
-#%% Isolated path
-isolated_path = "$(data_root)/isolated_model"
-dataISO = load("$(isolated_path)/data.jld2")
+#%% Animations isolated path
 solISO = reshape(dataISO["DataArray"], (nx, ny, size(dataISO["DataArray"], 2)))
 anim = @animate for t = 1.0:animate_dt:size(solISO, 3)
      println("[$(now())]: Animating simulation $(t) out of $(size(solISO, 2))...")
@@ -80,8 +89,6 @@ end
 gif(anim, "$(save_loc)/S4 Neurotransmission Blocked Simulation.gif", fps=1000.0 / animate_dt)
 
 #%% No GABA path
-noGABA_path = "$(data_root)/no_GABA_model"
-dataNG = load("$(noGABA_path)/data.jld2")
 solNG = reshape(dataNG["DataArray"], (nx, ny, size(dataNG["DataArray"], 2)))
 anim = @animate for t = 1.0:animate_dt:size(solNG, 3)
      println("[$(now())]: Animating simulation $(t) out of $(size(solNG, 2))...")
@@ -95,8 +102,6 @@ gif(anim, "$(save_loc)/S5 NoGABA Simulation.gif", fps=1000.0 / animate_dt)
 
 
 #%% Plot the ECl-55 simulation
-ECl55_path = "$(data_root)/ECl55_model"
-dataECl = load("$(ECl55_path)/data.jld2")
 solECl = reshape(dataECl["DataArray"], (nx, ny, size(dataECl["DataArray"], 2)))
 anim = @animate for t = 1.0:animate_dt:size(solECl, 3)
      println("[$(now())]: Animating simulation $(t) out of $(size(solECl, 2))...")
@@ -107,6 +112,19 @@ anim = @animate for t = 1.0:animate_dt:size(solECl, 3)
      )
 end
 gif(anim, "$(save_loc)/S7 ECl -55 Simulation.gif", fps=1000.0 / animate_dt)
+
+#%% Plot the ECl-75 simulation
+solECl = reshape(dataECl["DataArray"], (nx, ny, size(dataECl["DataArray"], 2)))
+anim = @animate for t = 1.0:animate_dt:size(solECl, 3)
+     println("[$(now())]: Animating simulation $(t) out of $(size(solECl, 2))...")
+     frame_i = solECl[:, :, round(Int64, t)]
+     heatmap(frame_i, ratio=:equal, grid=false,
+          xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0),
+          colorbar_title="Voltage (mV)"
+     )
+end
+gif(anim, "$(save_loc)/S7 ECl -55 Simulation.gif", fps=1000.0 / animate_dt)
+
 
 #Open up data for the Diffusion experiments==================================================================================================================#
 
