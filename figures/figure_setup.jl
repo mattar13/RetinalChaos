@@ -17,8 +17,8 @@ cm_conversion = 1 / 2.54
 #(lines thinner than 0.25 pt may vanish in print). Do not rasterize or outline these lines if possible.
 lw_standard = 1.0
 #Run this to set up the default parameters for plotting the figures
-using Plots
-using Plots.Measures
+#using Plots
+#using Plots.Measures
 import PyCall as py
 import PyCall.@py_str
 import PyCall: @pyimport
@@ -27,7 +27,6 @@ import PyPlot: matplotlib, xlim, ylim, xlabel, ylabel, title
 #Pyplot plot will be plt.plot
 #normal plots will be plot
 
-Plots.pyplot() #Switch the backend to pyplot
 plt.pygui(true) #Make the GUI external to vscode
 @pyimport matplotlib.colors as COLOR
 @pyimport matplotlib.gridspec as gspec #add the gridspec interface
