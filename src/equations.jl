@@ -12,8 +12,8 @@ print("Loading ODE models... ")
      Dt(c) ~ (C_0 + δ * (ICa(v)) - λ * c) / τc,
      Dt(a) ~ (α * c^4 * (1 - a) - a) / τa,
      Dt(b) ~ (β * a^4 * (1 - b) - b) / τb,
-     Dt(e) ~ (ρe * Φe(v) - e) / τACh,
-     Dt(i) ~ (ρi * Φi(v) - i) / τGABA,
+     Dt(e) ~ ρe-e, #(ρe * Φe(v) - e) / τACh,
+     Dt(i) ~ ρi-i, #(ρi * Φi(v) - i) / τGABA,
      Dt(W) ~ -W / τw
 ])
 ODEModel = structural_simplify(SAC_Algebraic)

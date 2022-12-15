@@ -284,38 +284,33 @@ FASTe_path = wave_path = "$(data_root)/FastEdiffusion"
 dataFASTe = load("$(FASTe_path)/data.jld2")
 tsFASTe = load("$(FASTe_path)/timestamps.jld2")
 tsFASTe = convert(Dict{String,Vector{Matrix{Float64}}}, tsFASTe)
-#wave_xIdx = rand(findall(tsWAVE["Bursts"] .!= nothing))
-FASTe_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsFASTe["Bursts"])))
-FASTe_xIdx = 1801
-spike_t_FASTe, spike_vt_FASTe = extract_spike_trace(tsFASTe, dataFASTe, normalize=false, cell_n=wave_xIdx, idx=1)
-burst_t_FASTe, burst_vt_FASTe = extract_burst_trace(tsFASTe, dataFASTe, normalize=false, cell_n=wave_xIdx, idx=1)
-IBI_t_FASTe, IBI_vt_FASTe = extract_IBI_trace(tsFASTe, dataFASTe, normalize=false, cell_n=wave_xIdx, idx=1)
-println("Complete")
 
-wave_baselines = calculate_threshold(dataWAVE["DataArray"], Z=1.0, dims=2)
-wave_baseline_avg = sum(wave_baselines) / length(wave_baselines)
-wave_baseline_SEM = std(wave_baselines) / sqrt(length(wave_baselines))
+print("Opening wave data... ")
+FASTi_path = wave_path = "$(data_root)/FastIdiffusion"
+dataFASTi = load("$(FASTi_path)/data.jld2")
+tsFASTi = load("$(FASTi_path)/timestamps.jld2")
+tsFASTi = convert(Dict{String,Vector{Matrix{Float64}}}, tsFASTi)
 
-wave_min = minimum(dataWAVE["DataArray"], dims=2)
-wave_min_avg = sum(wave_min) / length(wave_min)
-wave_min_SEM = std(wave_min) / sqrt(length(wave_min))
+print("Opening wave data... ")
+FASTei_path = wave_path = "$(data_root)/FastI_Ediffusion"
+dataFASTei = load("$(FASTei_path)/data.jld2")
+tsFASTei = load("$(FASTei_path)/timestamps.jld2")
+tsFASTei = convert(Dict{String,Vector{Matrix{Float64}}}, tsFASTei)
 
-wave_max = maximum(dataWAVE["DataArray"], dims=2)
-wave_max_avg = sum(wave_max) / length(wave_max)
-wave_max_SEM = std(wave_max) / sqrt(length(wave_max))
+#SLOW=====================================================================================#
+SLOWe_path = wave_path = "$(data_root)/SlowEdiffusion"
+dataSLOWe = load("$(SLOWe_path)/data.jld2")
+tsSLOWe = load("$(SLOWe_path)/timestamps.jld2")
+tsSLOWe = convert(Dict{String,Vector{Matrix{Float64}}}, tsSLOWe)
 
-wave_sdur_hfit = fit(Histogram, dataWAVE["SpikeDurs"], LinRange(0.0, 100.0, 50))
-wave_sdur_weights = wave_sdur_hfit.weights / maximum(wave_sdur_hfit.weights)
-wave_sdur_edges = collect(wave_sdur_hfit.edges[1])[1:length(wave_sdur_weights)]
+print("Opening wave data... ")
+SLOWi_path = wave_path = "$(data_root)/SlowIdiffusion"
+dataSLOWi = load("$(SLOWi_path)/data.jld2")
+tsSLOWi = load("$(SLOWi_path)/timestamps.jld2")
+tsSLOWi = convert(Dict{String,Vector{Matrix{Float64}}}, tsSLOWi)
 
-wave_isi_hfit = fit(Histogram, dataWAVE["ISIs"], LinRange(0.0, 100.0, 50))
-wave_isi_weights = wave_isi_hfit.weights / maximum(wave_isi_hfit.weights)
-wave_isi_edges = collect(wave_isi_hfit.edges[1])[1:length(wave_isi_weights)]
-
-wave_bdur_hfit = fit(Histogram, dataWAVE["BurstDurs"], LinRange(0.0, 2000.0, 50))
-wave_bdur_weights = wave_bdur_hfit.weights / maximum(wave_bdur_hfit.weights)
-wave_bdur_edges = collect(wave_bdur_hfit.edges[1])[1:length(wave_bdur_weights)]
-
-wave_ibi_hfit = fit(Histogram, dataWAVE["IBIs"], LinRange(0.0, 120e3, 50))
-wave_ibi_weights = wave_ibi_hfit.weights / maximum(wave_ibi_hfit.weights)
-wave_ibi_edges = collect(wave_ibi_hfit.edges[1])[1:length(wave_ibi_weights)]
+print("Opening wave data... ")
+SLOWei_path = wave_path = "$(data_root)/SlowI_Ediffusion"
+dataSLOWei = load("$(SLOWei_path)/data.jld2")
+tsSLOWei = load("$(SLOWei_path)/timestamps.jld2")
+tsSLOWei = convert(Dict{String,Vector{Matrix{Float64}}}, tsSLOWei)

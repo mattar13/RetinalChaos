@@ -201,21 +201,30 @@ This function runs the model using the indicated parameters
 
 """
 function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
-    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 120e3, DEmodel = T_PDE_w_NA,
+    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 120e3, DEmodel = T_PDE_w_NA, verbose = false,
     kwargs...
 ) where {T<:Real}
 
-    print("[$(now())]: Setting up parameters, conditions, and network settings... ")
+    if verbose
+        print("[$(now())]: Setting up parameters, conditions, and network settings... ")
+    end
     u0 = extract_dict(u_dict, t_conds, dims=(xmax, ymax))
     p = p_dict |> extract_dict
-    println("Complete")
-    print("[$(now())]: Warming up the model for 60s... ")
+    if verbose
+        println("Complete")
+        print("[$(now())]: Warming up the model for $(round(warmup_tmax/1000))s... ")
+    end
     prob = SDEProblem(DEmodel, noise, u0, (0.0, warmup_tmax), p)
-    @time warmup = solve(prob, save_everystep=false, progress=true, progress_steps=1; kwargs...)
-    println("Completed")
-    print("[$(now())]: Simulating up the model for $(round(tspan[end]/1000))s... ")
+    warmup = solve(prob, save_everystep=false, progress=true, progress_steps=1; kwargs...)
+    if verbose
+        println("Completed")
+        print("[$(now())]: Simulating up the model for $(round(tmax/1000))s... ")
+    end
     prob = SDEProblem(DEmodel, noise, warmup[end], (0.0, tmax), p)
-    @time sol = solve(prob, progress=true, progress_steps=1, save_idxs=[1:(nx*ny)...]; kwargs...)
+    sol = solve(prob, progress=true, progress_steps=1, save_idxs=[1:(xmax*ymax)...]; kwargs...)
+    if verbose
+        println("Completed")
+    end
     return sol
 end 
 

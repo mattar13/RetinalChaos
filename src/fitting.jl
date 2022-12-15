@@ -95,11 +95,11 @@ end
 =#
 
 function extract_trace(ts::Dict{String,Matrix{T}}, data;
-    tstamps="Spikes", dt=1.0, idx=1, duration=25, normalize=true
+    tstamps="Spikes", dt=1.0, idx=1, duration=25, offset = 0.0, normalize=true
 ) where {T}
     trace_begin = (ts[tstamps][idx, 1] / dt)
     #println(spike_begin)
-    trace_rng = round.(Int64, trace_begin+1:trace_begin+Int64(duration / dt))
+    trace_rng = round.(Int64, (trace_begin+1)-offset:dt:trace_begin+Int64(duration / dt))
     #print("Cell number $cell_n begins at: ")
     #println(spike_rng[1])
     t = data["Time"][trace_rng]
@@ -112,10 +112,10 @@ function extract_trace(ts::Dict{String,Matrix{T}}, data;
 end
 
 function extract_trace(ts::Dict{String,Vector{Matrix{T}}}, data;
-    tstamps="Spikes", dt=1.0, cell_n=1, idx=1, duration=25, normalize=true
+    tstamps="Spikes", dt=1.0, cell_n=1, idx=1, offset = 0.0, duration=25, normalize=true
 ) where {T}
     trace_begin = (ts[tstamps][cell_n][idx, 1] / dt)
-    trace_rng = round.(Int64, trace_begin+1:trace_begin+Int64(duration / dt))
+    trace_rng = round.(Int64, (trace_begin+1)-offset:trace_begin+Int64(duration / dt))
     t = data["Time"][trace_rng]
     trace = data["DataArray"][cell_n, trace_rng]
     if normalize
@@ -125,10 +125,10 @@ function extract_trace(ts::Dict{String,Vector{Matrix{T}}}, data;
 end
 
 function extract_trace(ts::Dict{String,Matrix{Matrix{T}}}, data;
-    tstamps="Spikes", dt=1.0, cell_swp=1, cell_ch = 1,  idx=1, duration=25, normalize=true
+    tstamps="Spikes", dt=1.0, cell_swp=1, cell_ch = 1, offset = 0.0, idx=1, duration=25, normalize=true
 ) where {T}
     trace_begin = (ts[tstamps][cell_swp, cell_ch][idx, 1] / dt)
-    trace_rng = round.(Int64, trace_begin+1:trace_begin+Int64(duration / dt))
+    trace_rng = round.(Int64, (trace_begin+1)-offset:trace_begin+Int64(duration / dt))
     t = data["Time"][trace_rng]
     trace = data["DataArray"][cell_swp, trace_rng, cell_ch]
     if normalize

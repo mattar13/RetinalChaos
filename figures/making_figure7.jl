@@ -127,7 +127,7 @@ axB1.annotate("B", (0.01, 0.50), xycoords="figure fraction", annotation_clip=fal
 
 #%%
 loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
-print("[$(now())]: Saving the figure 5...")
+print("[$(now())]: Saving the figure 7...")
 fig5.savefig("$(loc)/Figure7_DiffusionSpeeds.jpg")
 plt.close("all")
 println(" Completed")
