@@ -1,5 +1,6 @@
 using Revise
 using RetinalChaos
+using DataFrames
 include("figure_setup.jl")
 # Run 3 models
 
@@ -42,32 +43,17 @@ run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters
 #%% if we just wanted to open the data to plot a heatmap figure1_ModelVariables
 data_root = "C:\\Users\\mtarc\\OneDrive - The University of Akron\\Data\\Modelling"
 
-#%% Plot the wave simulation
 wave_path = "$(data_root)/wave_model"
 dataWAVE = load("$(wave_path)/data.jld2")
-dataWAVE
 spikesWAVE = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
 
-#thresholds
-function labelWaves(spikes::BitMatrix)
-     nx = ny = round(Int64, sqrt(size(spikes, 1)))
-     tspan = size(spikes, 2)
-     println(nx, ny, tspan)
-     spike_map = reshape(spikes, (nx, ny, tspan))
+df = RetinalChaos.WaveSegmentation(spikesWAVE, wave_path)
+df
 
-     return spike_map
-end
-
-using Images
-spike_map_WAVE = labelWaves(spikesWAVE)
-spike_map_WAVE
-
-label_components
-
+#%% Plot the wave simulation
 dataWAVE["DataArray"]
-
-
-
+fig, ax = plt.subplots(1)
+ax.contourf(seg)
 
 anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
      println("[$(now())]: Animating simulation $(t) out of $(size(solWAVE, 3))...")
