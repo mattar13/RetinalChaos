@@ -41,12 +41,21 @@ p_dict[:E_Cl] = -75.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% if we just wanted to open the data to plot a heatmap figure1_ModelVariables
-loc = raw"C:\Users\mtarc\The University of Akron\Renna Lab - General\Journal Submissions\2022 A Computational Model - Sci. Rep\Submission 1\Figures"
-nx = ny = 64
-animate_dt = 60.0
+data_root = "C:\\Users\\mtarc\\OneDrive - The University of Akron\\Data\\Modelling\\figure_data"
 
-data_root = "C:/Users/mtarc/OneDrive - The University of Akron/Data/Modelling/figure_data"
-save_loc = "C:\\Users\\mtarc\\The University of Akron\\Renna Lab - General\\Journal Submissions\\2022 A Computational Model - Sci. Rep\\Submission 1\\Figures\\"
+#%% Plot the wave simulation
+wave_path = "$(data_root)/wave_model"
+dataWAVE = load("$(wave_path)/data.jld2")
+solWAVE = reshape(dataWAVE["DataArray"], (nx, ny, size(dataWAVE["DataArray"], 2)))
+anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
+     println("[$(now())]: Animating simulation $(t) out of $(size(solWAVE, 3))...")
+     frame_i = solWAVE[:, :, round(Int64, t)]
+     heatmap(frame_i, ratio=:equal, grid=false,
+          xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0),
+          colorbar_title="Voltage (mV)"
+     )
+end
+gif(anim, "$(save_loc)/S6 Wave Simulation.gif", fps=1000.0 / animate_dt)
 
 #%% Isolated path
 isolated_path = "$(data_root)/isolated_model"
@@ -76,19 +85,6 @@ anim = @animate for t = 1.0:animate_dt:size(solNG, 3)
 end
 gif(anim, "$(save_loc)/S5 NoGABA Simulation.gif", fps=1000.0 / animate_dt)
 
-#%% Plot the wave simulation
-wave_path = "$(data_root)/wave_model"
-dataWAVE = load("$(wave_path)/data.jld2")
-solWAVE = reshape(dataWAVE["DataArray"], (nx, ny, size(dataWAVE["DataArray"], 2)))
-anim = @animate for t = 1.0:animate_dt:size(solWAVE, 3)
-     println("[$(now())]: Animating simulation $(t) out of $(size(solWAVE, 3))...")
-     frame_i = solWAVE[:, :, round(Int64, t)]
-     heatmap(frame_i, ratio=:equal, grid=false,
-          xaxis=false, yaxis=false, xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0),
-          colorbar_title="Voltage (mV)"
-     )
-end
-gif(anim, "$(save_loc)/S6 Wave Simulation.gif", fps=1000.0 / animate_dt)
 
 #%% Plot the ECl-55 simulation
 ECl55_path = "$(data_root)/ECl55_model"
