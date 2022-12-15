@@ -272,32 +272,52 @@ function extract_points(points::Array{CartesianIndex{2},1})
     return xs, ys
 end
 
-"""
-This function seperates bursts from waves It completes tasks in this order
-"""
-function wave_finder(burst_arr::BitArray{3} where T)
-    markers = label_components(burst_arr)
-    n_waves = maximum(markers)
-    burst_events = Vector{Vector{CartesianIndex{3}}}([])
-    wave_events = Vector{Vector{CartesianIndex{3}}}([])
-    @showprogress 0.5 "Finding waves..." for wave_idx = 1:n_waves
-        pᵢ = findall(x -> x == wave_idx, markers)
-        (xs, ys, zs) = pᵢ |> extract_points
-
-        if unique(xs) |> length > 1 || unique(ys) |> length > 1
-            push!(wave_events, pᵢ)
-        else
-            push!(burst_events, pᵢ)
-        end
-    end
-    burst_events, wave_events
-end
-
-function WaveSegmentation(spikes::BitMatrix)
+function WaveSegmentation(spikes::BitMatrix; min_wavesize = 20.0)
     nx = ny = round(Int64, sqrt(size(spikes, 1)))
     tspan = size(spikes, 2)
-    println(nx, ny, tspan)
-    spike_map = reshape(spikes, (nx, ny, tspan))
+    spike_map = reshape(spikes, (nx, ny, tspan)) #Reshape the spike array to be 3D
+    wave_segs = label_components(spike_map) #Label all of the 3D components
+    n_waves = maximum(wave_segs) #Pull out the maximum number of waves
+    is_wave = falses(n_waves)
+    wave_areas = zeros(n_waves) #Record all of the wave sizes 
+    wave_times = zeros(n_waves)
+    wave_distances = zeros(n_waves)
+    wave_velocities = zeros(n_waves)
+    for n = 1:n_waves #For each labeled wave
+        print("Measuring wave $n of $n_waves: ")
+        pᵢ = findall(wave_segs.==n) #measure how many points
+        wave_areas[n] = length(pᵢ)
+        (xs, ys, zs) = RetinalChaos.extract_points(pᵢ)
+        if (maximum(xs) - minimum(xs)) * (maximum(ys) - minimum(ys)) == 0.0
+            #This means that the resulting wave is a burst and doesn't spread
+            println(" Resulting wave is only a burst")
+        else
+            println(" Resulting wave is a wave")
+            is_wave[n] = true
+            wave_times[n] = maximum(zs) - minimum(zs)
+            wave_distances[n] = (maximum(xs) - minimum(xs)) * (maximum(ys) - minimum(ys))
+            wave_velocities[n] = wave_times[n] * wave_distances[n]
+        end
+    end
+    df = DataFrame(
+        WaveN = 1:n_waves, IsWave = is_wave,
+        WaveArea = wave_areas, WaveTime = wave_times, 
+        WaveDistances = wave_distances, WaveVelocities = wave_velocities
+    )
+    return df
+end
 
-    return spike_map
+function WaveSegmentation(spikes::BitMatrix, save_loc::String; kwargs...)
+    df = WaveSegmentation(spikes; kwargs...)
+    only_bursts = df |> @filter(_.IsWave == true) |> DataFrame
+
+    save_path = "$save_loc\\wave_data.xlsx"
+    if isfile(save_path)
+        println("File already exists")
+        rm(save_path)
+        println("Old file deleted")
+    end
+    XLSX.writetable(save_path, "WaveStats" => df, "Waves" => only_bursts)
+    println("New file written")
+    return df
 end
