@@ -292,3 +292,12 @@ function wave_finder(burst_arr::BitArray{3} where T)
     end
     burst_events, wave_events
 end
+
+function WaveSegmentation(spikes::BitMatrix)
+    nx = ny = round(Int64, sqrt(size(spikes, 1)))
+    tspan = size(spikes, 2)
+    println(nx, ny, tspan)
+    spike_map = reshape(spikes, (nx, ny, tspan))
+
+    return spike_map
+end
