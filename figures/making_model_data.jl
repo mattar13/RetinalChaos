@@ -1,6 +1,5 @@
 using Revise
 using RetinalChaos
-using Plots
 include("figure_setup.jl")
 # Run 3 models
 
