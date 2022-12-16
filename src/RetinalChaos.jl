@@ -70,10 +70,12 @@ export Binomial, Histogram, fit
 #==========================================Extracting wave and events==========================================#
 #using ePhys #Export the wave extraction utilities
 
+using Images, ImageSegmentation 
+using DataFrames, Query, XLSX
 include("wave_extraction.jl") #Export functions for wave extraction
 export calculate_threshold, timeseries_analysis
 export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
-export extract_waves
+export WaveSegmentation
 
 using BifurcationKit
 import BifurcationKit as BK
@@ -109,9 +111,8 @@ export std
 export run_model
 
 #These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
-using Images, ImageSegmentation 
-using DataFrames, Query, XLSX
-export label_components, WaveSegmentation
+
+
 #=
 using Telegram, Telegram.API, ConfigEnv
 
