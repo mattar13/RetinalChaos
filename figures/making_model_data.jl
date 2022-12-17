@@ -2,6 +2,11 @@ using Revise
 using RetinalChaos
 using DataFrames
 include("figure_setup.jl")
+
+using Logging: global_logger
+using TerminalLoggers: TerminalLogger
+global_logger(TerminalLogger())
+using ProgressMeter
 # Run 3 models
 
 data_root = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling"
