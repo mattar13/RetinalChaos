@@ -7,11 +7,11 @@ import Dates.now
 export now
 
 #===========================================Import logging materials===========================================#
-using Logging: global_logger
-using TerminalLoggers: TerminalLogger
-global_logger(TerminalLogger())
-using ProgressMeter
-export @showprogress
+#using Logging: global_logger
+#using TerminalLoggers: TerminalLogger
+#global_logger(TerminalLogger())
+#using ProgressMeter
+#export @showprogress
 
 #======================================Exports======================================#
 using DifferentialEquations, ModelingToolkit
@@ -110,13 +110,4 @@ using Statistics, StatsBase
 export std
 export run_model
 
-#These imports are for distributions and statistics. Not necessary for the package, can load based on your needs
-
-
-#=
-using Telegram, Telegram.API, ConfigEnv
-
-
-######################UTILITIES######################
-=#
 end
