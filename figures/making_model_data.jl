@@ -4,65 +4,68 @@ using DataFrames
 include("figure_setup.jl")
 # Run 3 models
 
+data_root = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling"
 #%% Model 1: Regular Baseline model 
-root = raw"C:\Users\RennaLabSA1\The University of Akron\Renna Lab - Documents\General\Data\Modelling"
-loc = "$(root)\\wave_model"
+loc = "$(data_root)\\wave_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
-@time sol = run_model(p_dict, u_dict, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7);
+@time sol = run_model(p_dict, u_dict, loc; alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7);
 
 #%% Model 2: Blocked Neurotransmission 
-loc = "$(root)\\isolated_model"
+loc = "$(data_root)\\isolated_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:g_ACh] = 0.0 # Block all Acetylcholine receptors
 p_dict[:g_GABA] = 0.0 #Block all GABA receptors
-run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
+@time sol = run_model(u_dict, p_dict, loc; alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 3: No GABA
-loc = "$(root)\\no_GABA_model"
+loc = "$(data_root)\\no_GABA_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:g_GABA] = 0.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 4 ECl Differential
-loc = "$(root)\\ECl55_model"
+loc = "$(data_root)\\ECl55_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:E_Cl] = -55.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
 #%% Model 5 ECl more hyperpolarizing Differential
-loc = "$(root)\\ECl75_model"
+loc = "$(data_root)\\ECl75_model"
 u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:E_Cl] = -75.0 #Block all GABA receptors
 run_model(u_dict, p_dict, loc, alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7)
 
-#%% if we just wanted to open the data to plot a heatmap figure1_ModelVariables
-data_root = "C:\\Users\\mtarc\\OneDrive - The University of Akron\\Data\\Modelling"
-
 #%% Plot the wave simulation
-wave_path = "$(data_root)/wave_model"
+nx = ny = 64
+nt = 120001
+wave_path = "$(data_root)/FastI_EDiffusion"
 dataWAVE = load("$(wave_path)/data.jld2")
-spikesWAVE = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
-WaveSegmentation(spikesWAVE, wave_path)
+timestampsWAVE = load("$(wave_path)/timestamps.jld2")
+burstWAVE = RetinalChaos.extract_burstmap(nx,ny,nt,timestampsWAVE["Bursts"])
+WaveSegmentation(burstWAVE, wave_path)
 
 isolated_path = "$(data_root)/isolated_model"
 dataISO = load("$(isolated_path)/data.jld2")
-spikesISO = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
-WaveSegmentation(spikesISO, isolated_path)
+timestampsISO = load("$(isolated_path)/timestamps.jld2")
+burstISO = RetinalChaos.extract_burstmap(nx, ny, nt, timestampsISO["Bursts"])
+WaveSegmentation(burstISO, isolated_path)
 
 noGABA_path = "$(data_root)/no_GABA_model"
 dataNG = load("$(noGABA_path)/data.jld2")
-spikesNG = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
-WaveSegmentation(spikesNG, noGABA_path)
+timestampsNG = load("$(noGABA_path)/timestamps.jld2")
+burstNG = RetinalChaos.extract_burstmap(nx, ny, nt, timestampsNG["Bursts"])
+WaveSegmentation(burstNG, noGABA_path)
 
 ECl55_path = "$(data_root)/ECl55_model"
 dataECl = load("$(ECl55_path)/data.jld2")
-spikesECl = dataWAVE["DataArray"] .> dataWAVE["Thresholds"]
-WaveSegmentation(spikesECl, ECl55_path)
+timestampsECl = load("$(noGABA_path)/timestamps.jld2")
+burstECl = RetinalChaos.extract_burstmap(nx, ny, nt, timestampsECl["Bursts"])
+WaveSegmentation(burstECl, ECl55_path)
 
 #%% Animations Wave
 solWAVE = reshape(dataWAVE["DataArray"], (nx, ny, size(dataWAVE["DataArray"], 2)))
