@@ -241,7 +241,7 @@ function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T}, loc::String;
     tmax=120e3, xmax=64, ymax=64, animate_dt = 60.0,
     kwargs...
 ) where {T<:Real}
-    sol = run_model(p_dict, u_dict, loc; tmax=tmax, xmax=xmax, ymax=ymax, kwargs...)
+    sol = run_model(p_dict, u_dict; tmax=tmax, xmax=xmax, ymax=ymax, kwargs...)
     if !isdir(loc) #If the directory doesn't exist, make it
         println("directory doesn't exist. Making it")
         mkdir(loc)
