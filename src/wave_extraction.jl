@@ -1,5 +1,5 @@
 #To extend some utilites you need to explicitly import them
-import ePhys: calculate_threshold, get_timestamps, timeseries_analysis
+import ePhys: calculate_threshold, get_timestamps, timeseries_analysis, max_interval_algorithim
 
 #This form of the function only calculates the analysis on a single variable
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64};
@@ -206,16 +206,23 @@ end
 """
 For 3D arrays and functions, this will extract all of the bursts and convert it into a graphable array
 """
-function extract_burstmap(spike_array::BitArray{3})
-    burst_map = zeros(size(spike_array))
-    burst_data = max_interval_algorithim(spike_array; dt = 1.0)
-    for (x,y,data) in burst_data
-        if !isnothing(data[1])
-            for (rng_start, rng_stop) in data[1]
-                burst_map[x, y, Int(rng_start):Int(rng_stop)] .= 1.0
+function extract_burstmap(nx, ny, nt, burst_timestamps)
+    burst_map = falses(nx*ny,nt)
+    for (cell_idx, cell) in enumerate(burst_timestamps)
+        #println(cell_idx)
+        #println(cell)
+        if !isnothing(cell)
+            #println(cell)
+            for idx in 1:size(cell,1)
+                rng_start, rng_stop = cell[idx, :]
+                if rng_start == 0
+                    rng_start = 1
+                end
+                burst_map[cell_idx, Int(rng_start):Int(rng_stop)] .= true
             end
         end
     end
+    burst_map = reshape(burst_map, nx, ny, nt)
     return burst_map
 end
 
@@ -272,10 +279,10 @@ function extract_points(points::Array{CartesianIndex{2},1})
     return xs, ys
 end
 
-function WaveSegmentation(spikes::BitMatrix; min_wavesize = 20.0)
-    nx = ny = round(Int64, sqrt(size(spikes, 1)))
+function WaveSegmentation(spikes; min_wavesize = 20.0)
+    #nx = ny = round(Int64, sqrt(size(spikes, 1)))
     tspan = size(spikes, 2)
-    spike_map = reshape(spikes, (nx, ny, tspan)) #Reshape the spike array to be 3D
+    spike_map = spikes#reshape(spikes, (nx, ny, tspan)) #Reshape the spike array to be 3D
     wave_segs = label_components(spike_map) #Label all of the 3D components
     n_waves = maximum(wave_segs) #Pull out the maximum number of waves
     is_wave = falses(n_waves)
@@ -285,8 +292,10 @@ function WaveSegmentation(spikes::BitMatrix; min_wavesize = 20.0)
     wave_velocities = zeros(n_waves)
     for n = 1:n_waves #For each labeled wave
         print("Measuring wave $n of $n_waves: ")
-        pᵢ = findall(wave_segs.==n) #measure how many points
+        pᵢ = findall(wave_segs.==n) #Return a bitarray of all the points
         wave_areas[n] = length(pᵢ)
+        println("Wave size is $(wave_areas[n])")
+        #return pᵢ
         (xs, ys, zs) = RetinalChaos.extract_points(pᵢ)
         if (maximum(xs) - minimum(xs)) * (maximum(ys) - minimum(ys)) == 0.0
             #This means that the resulting wave is a burst and doesn't spread
@@ -307,7 +316,7 @@ function WaveSegmentation(spikes::BitMatrix; min_wavesize = 20.0)
     return df
 end
 
-function WaveSegmentation(spikes::BitMatrix, save_loc::String; kwargs...)
+function WaveSegmentation(spikes, save_loc::String; kwargs...)
     df = WaveSegmentation(spikes; kwargs...)
     only_bursts = df |> @filter(_.IsWave == true) |> DataFrame
 
