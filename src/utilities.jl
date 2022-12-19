@@ -196,6 +196,21 @@ function load_solution(load_path)
     SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
 end
 
+function animate_solution(data, loc; xmax = 64, ymax = 64, animate_dt = 60.0, verbose = false)
+    if verbose
+        println("Animating the solution")
+    end
+    sol = reshape(data["DataArray"], (nx, ny, size(data["DataArray"], 2)))
+    time = data["Time"]
+    anim = @animate for t = time[1]:animate_dt:time[end]
+        println("[$(now())]: Animating simulation $(t)")
+        frame_i = sol[:, :, round(Int64, t)+1]
+        heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, xmax), ylims=(0, ymax), c=:curl, clims=(-90.0, 0.0))
+    end
+    gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
+end
+
+
 """
 This function runs the model using the indicated parameters
 idxs: 
@@ -206,8 +221,8 @@ idxs:
 5 = Ca
 """
 function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
-    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 120e3, DEmodel = T_PDE_w_NA, verbose = true,
-    idx = 5, #
+    tmax=120e3, xmax=64, ymax=64, warmup_tmax = 30e3, DEmodel = T_PDE_w_NA, verbose = true,
+    idx = 1, #
     kwargs...
 ) where {T<:Real}
 
@@ -237,24 +252,39 @@ function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T};
 end 
 
 function run_model(p_dict::Dict{Symbol,T}, u_dict::Dict{Symbol,T}, loc::String;
-    plot_hists = false, 
-    tmax=120e3, xmax=64, ymax=64, animate_dt = 60.0,
+    run_simulation = true, #Normally this will stay true
+    plot_hists = true, 
+    run_animation = true, animate_dt = 60.0,
+    burst_wave = true,
+    tmax=120e3, xmax=64, ymax=64, verbose = false,
     kwargs...
 ) where {T<:Real}
-    sol = run_model(p_dict, u_dict; tmax=tmax, xmax=xmax, ymax=ymax, kwargs...)
-    if !isdir(loc) #If the directory doesn't exist, make it
-        println("directory doesn't exist. Making it")
-        mkdir(loc)
+    if run_simulation
+        if verbose
+            println("Running modle for $tmax ms.")
+        end
+        sol = run_model(p_dict, u_dict; tmax=tmax, xmax=xmax, ymax=ymax, verbose = verbose, kwargs...)
+        if !isdir(loc) #If the directory doesn't exist, make it
+            println("directory doesn't exist. Making it")
+            mkdir(loc)
+        end
+        timestamps, data = timeseries_analysis(sol, loc)
+    else #Automatically load data from the location
+        data = load("$(loc)/data.jld2")
+        timestamps = load("$(loc)/timestamps.jld2")
     end
-    #animate_dt = 60.0
-    #anim = @animate for t = 1.0:animate_dt:sol.t[end]
-    #    println("[$(now())]: Animating simulation $(t) out of $(sol.t[end])...")
-    #    frame_i = reshape(sol(t) |> Array, (nx, ny))
-    #    heatmap(frame_i, ratio=:equal, grid=false, xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny), c=:curl, clims=(-90.0, 0.0))
-    #end
-    #gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
+
+    if run_animation
+        animate_solution(data, loc; xmax = xmax, ymax = ymax, animate_dt = animate_dt, verbose = verbose)
+    end
     
-    timestamps, data = timeseries_analysis(sol, loc)
+    if burst_wave
+        if verbose
+            println("Running burst/wave analysis")
+        end
+        burst = extract_burstmap(xmax,ymax,length(sol.t),timestamps["Bursts"])
+        WaveSegmentation(burst, loc)
+    end
     if plot_hists
         try
             hist_plot = plot_histograms(data, loc)
