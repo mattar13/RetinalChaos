@@ -65,7 +65,7 @@ dataISO = load("$(isolated_path)/data.jld2")
 tsISO = load("$(isolated_path)/timestamps.jld2")
 tsISO = convert(Dict{String,Vector{Matrix{Float64}}}, tsISO)
 #iso_xIdx = rand(findall(map(x -> size(x, 1) > 1, tsISO["Bursts"])))
-iso_xIdx = 2739
+iso_xIdx = 1684
 println("Complete")
 
 #%% Extract the No GABA ===============================================#
@@ -75,7 +75,7 @@ dataNG = load("$(noGABA_path)/data.jld2")
 tsNG = load("$(noGABA_path)/timestamps.jld2")
 tsNG = convert(Dict{String,Vector{Matrix{Float64}}}, tsNG)
 #ng_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsNG["Bursts"])))
-ng_xIdx = 2066
+ng_xIdx = 3494
 println("Complete")
 
 
@@ -86,7 +86,7 @@ dataEC = load("$(ECl55_path)/data.jld2")
 tsEC = load("$(ECl55_path)/timestamps.jld2")
 tsEC = convert(Dict{String,Vector{Matrix{Float64}}}, tsEC)
 #ec_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsEC["Bursts"])))
-ec_xIdx = 3957
+ec_xIdx = 2699
 println("Complete")
 
 #%% Extract the Wave ===============================================#
@@ -96,7 +96,7 @@ dataWAVE = load("$(wave_path)/data.jld2")
 tsWAVE = load("$(wave_path)/timestamps.jld2")
 tsWAVE = convert(Dict{String,Vector{Matrix{Float64}}}, tsWAVE)
 #wave_xIdx = rand(findall(map(x -> size(x, 1) >= 2, tsWAVE["Bursts"])))
-wave_xIdx = 2176
+wave_xIdx = 1874
 println("Complete")
 
 #%% Extract the Fast diffusion ===============================================#
