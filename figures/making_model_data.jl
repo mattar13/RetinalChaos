@@ -41,7 +41,7 @@ u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:g_GABA] = 0.0 #Block all GABA receptors
 @time res = run_model(p_dict, u_dict, noGABA_path; 
-     run_simulation = false, burst_wave = false, verbose = true, 
+     run_simulation = true, burst_wave = true, verbose = true, 
      alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7
 )
 
@@ -51,7 +51,7 @@ u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:E_Cl] = -55.0 #Block all GABA receptors
 @time res = run_model(p_dict, u_dict, ec_path; 
-     run_simulation = false, burst_wave = false, verbose = true, 
+     run_simulation = true, burst_wave = true, verbose = true, 
      alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7
 )
 
@@ -61,7 +61,7 @@ u_dict = read_JSON("params/conds.json")
 p_dict = read_JSON("params/params.json")
 p_dict[:E_Cl] = -75.0 #Block all GABA receptors
 @time res = run_model(p_dict, u_dict, ecH_path; 
-     run_simulation = false, burst_wave = false, verbose = true, 
+     run_simulation = true, burst_wave = true, verbose = true, 
      alg = SOSRI(), abstol=2e-2, reltol=2e-2, maxiters=1e7
 )
 
