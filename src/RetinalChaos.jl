@@ -57,6 +57,9 @@ export V16, V17, V18
 
 #Import all the auxillary functions
 #===========================================Loading the Parameters=============================================#
+using Plots
+#include("plotting.jl")
+
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
 export read_JSON, extract_dict, indexof
@@ -88,7 +91,8 @@ export codim_map
 export @lens, norminf
 export t_pars, t_conds
 #using RecipesBase #I want to avoid using thisPlots
-#include("plotting.jl")
+
+
 #export animate_solution
 
 
