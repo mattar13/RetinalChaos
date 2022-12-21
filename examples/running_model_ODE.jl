@@ -2,7 +2,7 @@ using Revise
 using RetinalChaos
 using Plots
 
-#Step 1: Import the:
+#Step 1: Import the model parameters:
 import RetinalChaos.ODEModel # the ODEModel
 import RetinalChaos.u0 #the initial condutions 
 import RetinalChaos.parameters #the parameters

@@ -31,6 +31,9 @@ plt.pygui(true) #Make the GUI external to vscode
 @pyimport matplotlib.colors as COLOR
 @pyimport matplotlib.gridspec as gspec #add the gridspec interface
 @pyimport matplotlib.ticker as TICK #add the ticker interface
+@pyimport matplotlib.animation as anim
+#mpl.verbose.set_level("helpful")
+@pyimport matplotlib as mpl
 
 MultipleLocator = TICK.MultipleLocator #This is for formatting normal axis
 LogLocator = TICK.LogLocator #This is for formatting the log axis]
@@ -77,7 +80,8 @@ rcParams["errorbar.capsize"] = 1.0 #Set the length of the errorbar cap
 #set the background color for 
 #rcParams["figure.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the figure background transparent white
 #rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background transparent white
-
+rcParams["animation.convert_path"] = "C:\\Program Files\\ImageMagick-7.1.0-Q16-HDRI\\magick.exe"
+mpl.rcParams["verbose.level"] = "helpful"
 #These are the savefig params
 rcParams["savefig.pad_inches"] = 0.0
 println(" Completed")
@@ -140,8 +144,8 @@ function plot_histograms(data, loc::String; name="histogram_plot")
 end
 
 function add_direction(ax, x, y, dx, dy; color=:black)
-    r = sqrt.(dx .^ 2 .+ dy.^ 2)
-    ax.quiver(x, y, dx./r, dy./r,
+    r = sqrt.(dx .^ 2 .+ dy .^ 2)
+    ax.quiver(x, y, dx ./ r, dy ./ r,
         angles="xy",
         #scale=2.0, 
         #scale_units="none", 
