@@ -58,7 +58,9 @@ export V16, V17, V18
 #Import all the auxillary functions
 #===========================================Loading the Parameters=============================================#
 using Plots
-#include("plotting.jl")
+using PyPlot
+using PyCall
+include("plotting.jl")
 
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")

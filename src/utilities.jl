@@ -196,25 +196,6 @@ function load_solution(load_path)
     SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
 end
 
-function animate_solution(data, loc; xmax = 64, ymax = 64, animate_dt = 60.0, verbose = false)
-    if verbose
-        println("Animating the solution")
-    end
-    sol = reshape(data["DataArray"], (xmax, ymax, size(data["DataArray"], 2)))
-    time = data["Time"]
-    println(time[end])
-    anim = @animate for t = time[1]:animate_dt:time[end]
-        println("[$(now())]: Animating simulation $(t) out of $(time[end])")
-        frame_i = sol[:, :, round(Int64, t)+1]
-        heatmap(frame_i, ratio=:equal, grid=false, xaxis="Cell # X", yaxis="Cell # Y", xlims=(0, xmax), ylims=(0, ymax), c=:curl, clims=(-90.0, 0.0))
-    end
-    if verbose
-        println("Animation saved")
-    end
-    gif(anim, "$(loc)/regular_animation.gif", fps=1000.0 / animate_dt)
-end
-
-
 """
 This function runs the model using the indicated parameters
 idxs: 

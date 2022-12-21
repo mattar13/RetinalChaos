@@ -1,11 +1,3 @@
-#Using this will set the default plotting font
-#font_title = Plots.font("Arial", 24)
-#font_axis = Plots.font("Arial", 12)
-#font_legend = Plots.font("Arial", 8)
-#plotlyjs(titlefont=font_title, guidefont = font_axis, legendfont = font_legend)
-import Plots.@animate
-
-export equilibria_object
 const v_color = :deepskyblue
 const n_color = :magenta
 const c_color = :green
@@ -13,630 +5,192 @@ const a_color = :purple
 const b_color = :red
 const e_color = :blue
 const w_color = :gray
-export v_color, n_color, c_color, a_color, b_color, e_color, w_color
+#Scientific reports figure sizes is 
+#For guidance, Nature's standard figure sizes are 89 mm wide (single column) and 183 mm wide (double column). 
+#The full depth of a Nature page is 247 mm. 
+#Figures can also be a column-and-a-half where necessary (120–136 mm).
+cm_conversion = 1 / 2.54
+
+#Authors should check (using a reducing photocopier) that, 
+#at the smallest possible size, lettering remains readable and lines are sufficiently (but not too) heavy to print 
+#clearly. Line weights and strokes should be set between 0.25 and 1 pt at the final size 
+#(lines thinner than 0.25 pt may vanish in print). Do not rasterize or outline these lines if possible.
+lw_standard = 1.0
+#Run this to set up the default parameters for plotting the figures
+#using Plots
+#using Plots.Measures
+import PyCall as py
+import PyCall.@py_str
+import PyCall: @pyimport
+import PyPlot as plt
+import PyPlot: matplotlib, xlim, ylim, xlabel, ylabel, title
+#Pyplot plot will be plt.plot
+#normal plots will be plot
+
+plt.pygui(true) #Make the GUI external to vscode
+@pyimport matplotlib.colors as COLOR
+@pyimport matplotlib.gridspec as gspec #add the gridspec interface
+@pyimport matplotlib.ticker as TICK #add the ticker interface
+@pyimport matplotlib.animation as anim
+#mpl.verbose.set_level("helpful")
+@pyimport matplotlib as mpl
+
+MultipleLocator = TICK.MultipleLocator #This is for formatting normal axis
+LogLocator = TICK.LogLocator #This is for formatting the log axis]
+
+#This functions allows us to get ranges of pyobjects in a Pythonic way
+#In order to get slices we can wrap "getindex" 
+import Base.getindex
 
 
-#=function animate_solution(sol, save_path::String;
-    animate_dt=60.0, verbose=true
-)
-    nx = ny = Int64(sqrt(size(sol, 1)))
-    #we can use this to build a solution without GPU
-    println("[$(now())]: Animating simulation...")
-    anim = @animate for t = 1.0:animate_dt:sol.t[end]
+slice(i, j) = py.pycall(py.pybuiltin("slice"), i, j)
+#==============================These are the default parameters for plotting==============================#
 
-        frame_i = reshape(sol(t) |> Array, (nx, ny))
-        heatmap(frame_i, ratio=:equal, grid=false,
-            xaxis="", yaxis="", xlims=(0, nx), ylims=(0, ny),
-            c=:curl, clims=(-70.0, 0.0),
-        )
-    end
-    gif(anim, "$(save_path)\\animation.gif", fps=1000.0 / animate_dt)
-end
-=#
+print("Default plotting parameters loading... ")
+rcParams = py.PyDict(matplotlib["rcParams"])
 
-@recipe function f(eq::equilibria_object; vars = [:v, :n])
-    seriestype := :scatter
-    markersize := 8.0
-    if eq.stable != []
-        @series begin
-            label := "Stable"
-            seriescolor := :green
-            marker := :star
-            x = []
-            y = []
-            for pt in eq.stable
-                push!(x, pt[vars[1]|>u_find])
-                push!(y, pt[vars[2]|>u_find])
-            end
-            x, y
-        end
-    end
-    if eq.unstable != []
-        @series begin
-            label := "Unstable"
-            seriescolor := :red
-            marker := :star
-            x = []
-            y = []
-            for pt in eq.unstable
-                push!(x, pt[vars[1]|>u_find])
-                push!(y, pt[vars[2]|>u_find])
-            end
-            x, y
-        end
-    end
-    if eq.saddle != []
-        @series begin
-            label := "Saddle"
-            seriescolor := :blue
-            markershape = :star
-            x = []
-            y = []
-            for pt in eq.saddle
-                push!(x, pt[vars[1]|>u_find])
-                push!(y, pt[vars[2]|>u_find])
-            end
-            x, y
-        end
-    end
-    if eq.unstable_focus != []
-        @series begin
-            label := "Unstable Focus"
-            seriescolor := :red
-            x = []
-            y = []
-            for pt in eq.unstable_focus
-                push!(x, pt[vars[1]|>u_find])
-                push!(y, pt[vars[2]|>u_find])
-            end
-            x, y
-        end
-    end
-    if eq.stable_focus != []
-        @series begin
-            label := "Stable Focus"
-            seriescolor := :green
-            x = []
-            y = []
-            for pt in eq.stable_focus
-                push!(x, pt[vars[1]|>u_find])
-                push!(y, pt[vars[2]|>u_find])
-            end
-            x, y
-        end
-    end
-end
+#Settings related the the DPI of the current plot interface
+rcParams["figure.dpi"] = 60 #This is used to display the plot
+rcParams["savefig.dpi"] = 600 #This is used to save the plot
 
-@recipe function f(z::Float64, eq::equilibria_object; 
-        view = :xyz, legend = :none)
-    legend := legend
-    seriestype := :scatter
-    markersize := 8.0
-    if eq.stable != []
-        @series begin
-            label := ""
-            seriescolor := :green
-            marker := :star
+rcParams["font.size"] = 12.0 #This controls the default font size
+rcParams["font.family"] = "arial" #This controls the font family
+rcParams["axes.spines.right"] = false #Make spines to the right invisible
+rcParams["axes.spines.top"] = false #Make spines at the top invisible
+rcParams["axes.linewidth"] = 1.0 #Make the spine width 1.0pts
+rcParams["lines.linewidth"] = 0.7 #Set the lines.linewidth to 0.7pts
+rcParams["xtick.major.size"] = 2.0 #Set the major x ticksize 2.0pts
+rcParams["xtick.minor.size"] = 1.5
+rcParams["xtick.major.pad"] = 2.0
+rcParams["xtick.minor.pad"] = 2.0
 
-            xs = []
-            ys = []
-            zs = []
-            for pt in eq.stable
-                push!(zs, z)
-                push!(xs, pt[1])
-                push!(ys, pt[2])
-            end
-           if view == :xyz
-                xs, ys, zs
-            elseif view == :xzy
-                xs, zs, ys
-            elseif view == :zxy
-                zs, xs, ys
-            elseif view == :zyx
-                zs, ys, xs
-            elseif view == :yzx
-                ys, zs, xs
-            elseif view == :yxz
-                ys, xs, zs
-            elseif view == :xy
-                xs, ys
-            elseif view == :xz
-                xs, zs
-            elseif view == :yz
-                ys, zs
-            elseif view == :yx
-                ys, xs
-            elseif view == :zx
-                zs, xs
-            else
-                zs, ys
-            end
-        end
-    end
-    if eq.unstable != []
-        @series begin
-            label := ""
-            seriescolor := :red
-            marker := :star
-            xs = []
-            ys = []
-            zs = []
-            for pt in eq.unstable
-                push!(zs, z)
-                push!(xs, pt[1])
-                push!(ys, pt[2])
-            end
-           if view == :xyz
-                xs, ys, zs
-            elseif view == :xzy
-                xs, zs, ys
-            elseif view == :zxy
-                zs, xs, ys
-            elseif view == :zyx
-                zs, ys, xs
-            elseif view == :yzx
-                ys, zs, xs
-            elseif view == :yxz
-                ys, xs, zs
-            elseif view == :xy
-                xs, ys
-            elseif view == :xz
-                xs, zs
-            elseif view == :yz
-                ys, zs
-            elseif view == :yx
-                ys, xs
-            elseif view == :zx
-                zs, xs
-            else
-                zs, ys
-            end
-        end
-    end
-    if eq.saddle != []
-        @series begin
-            label := ""
-            seriescolor := :blue
-            markershape := :star
-            xs = []
-            ys = []
-            zs = []
-            for pt in eq.saddle
-                push!(zs, z)
-                push!(xs, pt[1])
-                push!(ys, pt[2])
-            end
-            if view == :xyz
-                xs, ys, zs
-            elseif view == :xzy
-                xs, zs, ys
-            elseif view == :zxy
-                zs, xs, ys
-            elseif view == :zyx
-                zs, ys, xs
-            elseif view == :yzx
-                ys, zs, xs
-            elseif view == :yxz
-                ys, xs, zs
-            elseif view == :xy
-                xs, ys
-            elseif view == :xz
-                xs, zs
-            elseif view == :yz
-                ys, zs
-            elseif view == :yx
-                ys, xs
-            elseif view == :zx
-                zs, xs
-            else
-                zs, ys
-            end
-        end
-    end
-    if eq.unstable_focus != []
-        @series begin
-            label := ""
-            seriescolor := :red
-            xs = []
-            ys = []
-            zs = []
-            for pt in eq.unstable_focus
-                push!(zs, z)
-                push!(xs, pt[1])
-                push!(ys, pt[2])
-            end
-            if view == :xyz
-                xs, ys, zs
-            elseif view == :xzy
-                xs, zs, ys
-            elseif view == :zxy
-                zs, xs, ys
-            elseif view == :zyx
-                zs, ys, xs
-            elseif view == :yzx
-                ys, zs, xs
-            elseif view == :yxz
-                ys, xs, zs
-            elseif view == :xy
-                xs, ys
-            elseif view == :xz
-                xs, zs
-            elseif view == :yz
-                ys, zs
-            elseif view == :yx
-                ys, xs
-            elseif view == :zx
-                zs, xs
-            else
-                zs, ys
-            end
-        end
-    end
-    if eq.stable_focus != []
-        @series begin
-            label := "Stable Focus"
-            seriescolor := :green
-            xs = []
-            ys = []
-            zs = []
-            for pt in eq.stable_focus
-                push!(zs, z)
-                push!(xs, pt[1])
-                push!(ys, pt[2])
-            end
-            if view == :xyz
-                xs, ys, zs
-            elseif view == :xzy
-                xs, zs, ys
-            elseif view == :zxy
-                zs, xs, ys
-            elseif view == :zyx
-                zs, ys, xs
-            elseif view == :yzx
-                ys, zs, xs
-            elseif view == :yxz
-                ys, xs, zs
-            elseif view == :xy
-                xs, ys
-            elseif view == :xz
-                xs, zs
-            elseif view == :yz
-                ys, zs
-            elseif view == :yx
-                ys, xs
-            elseif view == :zx
-                zs, xs
-            else
-                zs, ys
-            end
-        end
-    end
-end
+rcParams["ytick.major.size"] = 2.0
+rcParams["ytick.minor.size"] = 1.5
+rcParams["ytick.major.pad"] = 2.0
+rcParams["ytick.minor.pad"] = 2.0
 
-function extract_equilibria(c1::codim_object{1,T}; vars=:v) where {T<:Real}
-    var_idx = vars |> u_find
-    points = map(x -> x[1], c1.points) #Extract all the points
-    sorted_dims = sortperm(points)
-    points = points[sorted_dims]
-    saddle_p = map(eq -> length(eq.saddle) > 0 ? eq.saddle[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    stable_p = map(eq -> length(eq.stable) > 0 ? eq.stable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    unstable_p = map(eq -> length(eq.unstable) > 0 ? eq.unstable[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    unstable_focus_p = map(eq -> length(eq.unstable_focus) > 0 ? eq.unstable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    stable_focus_p = map(eq -> length(eq.stable_focus) > 0 ? eq.stable_focus[1][var_idx] : NaN, c1.equilibria)[sorted_dims]
-    return points, saddle_p, stable_p, unstable_p, unstable_focus_p, stable_focus_p
+rcParams["legend.frameon"] = false #This turns the legend frame off
+rcParams["legend.labelspacing"] = 0.25 #this changes the spacing of the labels
+rcParams["legend.borderpad"] = 0.2 #This changes the padding of the legend
+#This changes the between the handle and label
+rcParams["legend.handletextpad"] = -0.2
+rcParams["legend.borderaxespad"] = 0.1
+rcParams["legend.loc"] = "upper left"
+rcParams["errorbar.capsize"] = 1.0 #Set the length of the errorbar cap
+#set the background color for 
+#rcParams["figure.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the figure background transparent white
+#rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background transparent white
+rcParams["animation.convert_path"] = "C:\\Program Files\\ImageMagick-7.1.0-Q16-HDRI\\magick.exe"
+mpl.rcParams["verbose.level"] = "helpful"
+#These are the savefig params
+rcParams["savefig.pad_inches"] = 0.0
+println(" Completed")
 
-end
-
-function extract_equilibria(c2::codim_object{2, T}, eq_type::Symbol; eq_var::Int64 = 1, view = :xyz) where T <: Real
-    xs = []; ys = []; zs = [];
-    for idx = 1:length(c2.points)
-        eq = c2.equilibria[idx]
-        if isa(c2.vars, Symbol)
-            x = c2.points[idx]
-            y = 0.0
-        else
-            x,y = c2.points[idx]
-        end
-        if eq_type == :stable && eq.stable != []
-            for eq_points in eq.stable
-                push!(xs, x)
-                push!(ys, y)
-                push!(zs, eq_points[eq_var])
-            end
-        end
-        if eq_type == :unstable && eq.unstable != []
-            for eq_points in eq.unstable
-                push!(xs, x)
-                push!(ys, y)
-                push!(zs, eq_points[eq_var])
-            end
-        end
-        if eq_type == :saddle && eq.saddle != []
-            for eq_points in eq.saddle
-                push!(xs, x)
-                push!(ys, y)
-                push!(zs, eq_points[eq_var])
-            end
-        end
-        if eq_type == :stable_focus && eq.stable_focus != []
-            for eq_points in eq.stable_focus
-                push!(xs, x)
-                push!(ys, y)
-                push!(zs, eq_points[eq_var])
-            end
-        end
-        if eq_type == :unstable_focus && eq.unstable_focus != []
-            for eq_points in eq.unstable_focus
-                push!(xs, x)
-                push!(ys, y)
-                push!(zs, eq_points[eq_var])
-            end
-        end
-    end 
-    if view == :xyz
-        xs, ys, zs
-    elseif view == :xzy
-        xs, zs, ys
-    elseif view == :zxy
-        zs, xs, ys
-    elseif view == :zyx
-        zs, ys, xs
-    elseif view == :yzx
-        ys, zs, xs
-    elseif view == :yxz
-        ys, xs, zs
-    elseif view == :xy
-        xs, ys
-    elseif view == :xz
-        xs, zs
-    elseif view == :yz
-        ys, zs
-    elseif view == :yx
-        ys, xs
-    elseif view == :zx
-        zs, xs
+function plot_histograms(data, loc::String; name="histogram_plot")
+    if !isempty(data["SpikeDurs"])
+        sdur_hfit = fit(Histogram, data["SpikeDurs"], LinRange(0.0, 50.0, 100))
+        sdur_weights = sdur_hfit.weights / maximum(sdur_hfit.weights)
+        sdur_edges = collect(sdur_hfit.edges[1])[1:length(sdur_weights)]
     else
-        zs, ys
+        sdur_edges = sdur_weights = [0]
     end
-end
+    p1 = plot(sdur_edges, sdur_weights, xlabel="Spike Duration (ms)")
 
-@recipe function f(c1::codim_object{1,T}; vars=:v, scatter=false) where {T<:Real}
-    #var_idx = findall(x -> x==vars, tar_conds)[1]
-    res = extract_equilibria(c1, vars = vars) #Pass back all of the equilibria
-    points = res[1] 
-    saddle_p = res[2]
-    stable_p = res[3]
-    unstable_p = res[4]
-    unstable_focus_p = res[5]
-    stable_focus_p = res[6]
-
-    plotted_stable = false
-    plotted_unstable = false
-    plotted_saddle = false
-    plotted_unstable_focus = false
-    plotted_stable_focus = false
-
-    if !all(isnan.(stable_p))
-        @series begin
-            if plotted_stable == false
-                label := "Stable"
-                plotted_stable = true
-            else
-                label := ""
-            end
-            seriescolor := :green
-            if scatter
-                marker := :star
-            end
-            points, stable_p
-        end
-    end
-
-    if !all(isnan.(unstable_p))
-        @series begin
-            if plotted_unstable == false
-                label := "Unstable"
-                plotted_unstable = true
-            else
-                label := ""
-            end
-            seriescolor := :red
-            if scatter
-                marker := :star
-            end
-            points, unstable_p
-        end
-    end
-
-    if !all(isnan.(saddle_p))
-        @series begin
-            if plotted_saddle == false
-                label := "Saddle"
-                plotted_saddle = true
-            else
-                label := ""
-            end
-            seriescolor := :blue
-            if scatter
-                marker := :star
-            end
-            points, saddle_p
-        end
-    end
-
-    if !all(isnan.(stable_focus_p))
-        @series begin
-            if plotted_stable_focus == false
-                label := "Stable Focus"
-                plotted_stable_focus = true
-            else
-                label := ""
-            end
-            linestyle := :dash
-            seriescolor := :green
-            if scatter
-                marker := :circle
-            end
-            points, stable_focus_p
-        end
-    end
-
-    if !all(isnan.(unstable_focus_p))
-        @series begin
-            if plotted_unstable_focus == false
-                label := "Unstable Focus"
-                plotted_unstable_focus = true
-            else
-                label := ""
-            end
-            linestyle := :dash
-            seriescolor := :red
-            if scatter
-                marker := :circle
-            end
-            points, unstable_focus_p
-        end
-    end
-end
-
-@recipe function f(c2::codim_object{2,T}; eq_var = 1, view = :xyz) where T <: Real
-    println("This one is called for some reason")
-    #legend := :none
-    markersize := 8.0
-    #Plotting begins here
-    if isa(c2.vars, Symbol)
-        if view == :thresholds
-            @series begin
-                legend := true
-                label := "Threshold"
-                seriescolor := :blue
-                lw := 4.0
-                extract_thresholds(c1_map)
-            end
-        elseif view == :baselines
-            @series begin
-                legend := true
-                label := "Baselines"
-                seriescolor := :green
-                lw := 4.0
-                extract_baselines(c1_map)
-            end
-        else
-            @series begin
-                legend := true
-                seriestype := :scatter
-                label := "Stable"
-                seriescolor := :green
-                marker := :star
-                extract_equilibria(c2, :stable; eq_var = eq_var, view = :xz)
-            end
-
-            @series begin
-                seriestype := :scatter
-                label := "Unstable"
-                seriescolor := :red
-                marker := :star
-                extract_equilibria(c2, :unstable; eq_var = eq_var, view = :xz)
-            end
-
-
-            @series begin
-                seriestype := :scatter
-                label := "Saddle"
-                seriescolor := :blue
-                marker := :star
-                extract_equilibria(c2, :saddle; eq_var = eq_var, view = :xz)
-            end
-
-
-            @series begin
-                seriestype := :scatter
-                label := "Stable_focus"
-                seriescolor := :green
-                marker := :circle
-                extract_equilibria(c2, :stable_focus; eq_var = eq_var, view = :xz)
-            end
-
-
-            @series begin
-                
-                seriestype := :scatter
-                label := "Unstable_focus"
-                seriescolor := :red
-                marker := :circle
-                extract_equilibria(c2, :unstable_focus; eq_var = eq_var, view = :xz)
-            end  
-        end
+    if !isempty(data["ISIs"])
+        isi_hfit = fit(Histogram, data["ISIs"], LinRange(0.0, 100.0, 100))
+        isi_weights = isi_hfit.weights / maximum(isi_hfit.weights)
+        isi_edges = collect(isi_hfit.edges[1])[1:length(isi_weights)]
     else
-        if view == :thresholds
-
-            xspan, yspan, threshmap = extract_thresholds(c2)
-            null_map = (threshmap .!= Inf) .* Inf
-            legend := true
-            @series begin
-                seriestype := :heatmap
-                seriescolor := :thermal
-                xspan, yspan, threshmap
-            end
-            @series begin
-                seriestype := :heatmap
-                seriescolor := :black
-                xspan, yspan, null_map
-            end
-        elseif view == :baselines
-            xspan, yspan, basemap = extract_baselines(c2)
-            null_map = (basemap .!= Inf) .* Inf
-            legend := true
-            @series begin
-                seriestype := :heatmap
-                seriescolor := :thermal
-                xspan, yspan, basemap
-            end
-            @series begin
-                seriestype := :heatmap
-                seriescolor := :black
-                xspan, yspan, null_map
-            end
-        else    
-            @series begin
-                seriestype := :scatter
-                label := "Stable"
-                seriescolor := :green
-                marker := :star
-                extract_equilibria(c2, :stable;eq_var = eq_var, view = view)
-            end
-
-            @series begin
-                seriestype := :scatter
-                label := "Unstable"
-                seriescolor := :red
-                marker := :star
-                extract_equilibria(c2, :unstable; eq_var = eq_var, view = view)
-            end
-
-            @series begin
-                seriestype := :scatter
-                label := "Saddle"
-                seriescolor := :blue
-                marker := :star
-                extract_equilibria(c2, :saddle; eq_var = eq_var, view = view)
-            end
-
-            @series begin
-                seriestype := :scatter
-                label := "Stable_focus"
-                seriescolor := :green
-                marker := :circle
-                extract_equilibria(c2, :stable_focus; eq_var = eq_var, view = view)
-            end
-
-            @series begin
-                seriestype := :scatter
-                label := "Unstable_focus"
-                seriescolor := :red
-                marker := :circle
-                extract_equilibria(c2, :unstable_focus; eq_var = eq_var, view = view)
-            end  
-        end
+        isi_edges = isi_weights = [0]
     end
+    p2 = plot(isi_edges, isi_weights, xlabel="Spike Interval (s)", xformatter=x -> x / 1000)
+
+    if !isempty(data["BurstDurs"])
+        bdur_hfit = fit(Histogram, data["BurstDurs"], LinRange(0.0, 2000.0, 100))
+        bdur_weights = bdur_hfit.weights / maximum(bdur_hfit.weights)
+        bdur_edges = collect(bdur_hfit.edges[1])[1:length(bdur_weights)]
+    else
+        bdur_edges = bdur_weights = [0]
+    end
+    p3 = plot(bdur_edges, bdur_weights, xlabel="Burst Duration (s)", xformatter=x -> x / 1000)
+
+    if !isempty(data["IBIs"])
+        ibi_hfit = fit(Histogram, data["IBIs"], LinRange(0.0, 120e3, 100))
+        ibi_weights = ibi_hfit.weights / maximum(ibi_hfit.weights)
+        ibi_edges = collect(ibi_hfit.edges[1])[1:length(ibi_weights)]
+    else
+        ibi_edges = ibi_weights = [0]
+    end
+    p4 = plot(ibi_edges, ibi_weights, xlabel="Interburst Interval (s)", xformatter=x -> x / 1000)
+
+    if !isempty(data["Thresholds"])
+        p5 = histogram(data["Thresholds"], yaxis=:log, xlabel="Voltage threshold")
+    else
+        p5 = plot(xlabel="Voltage threshold")
+    end
+
+    if !isempty(data["SpikesPerBurst"])
+        p6 = histogram(data["SpikesPerBurst"], yaxis=:log, xlabel="Spikes per Burst")
+    else
+        p6 = plot(xlabel="Spike Per Burst")
+    end
+    hist_plot = plot(
+        p1, p2, p3, p4, p5, p6,
+        layout=grid(3, 2), ylabel="Counts",
+        legend=false
+    )
+    savefig(hist_plot, "$(loc)/$(name).png")
+    return hist_plot
 end
+
+function add_direction(ax, x, y, dx, dy; color=:black)
+    r = sqrt.(dx .^ 2 .+ dy .^ 2)
+    ax.quiver(x, y, dx ./ r, dy ./ r,
+        angles="xy",
+        #scale=2.0, 
+        #scale_units="none", 
+        #units="xy", 
+        color=color, pivot="mid",
+        width=0.05, headwidth=3.0, headlength=5.0, headaxislength=4.5
+    )
+end
+
+function animate_solution(data, loc; xmax=64, ymax=64, animate_dt=1000.0, verbose=false)
+    if verbose
+        println("Animating the solution")
+    end
+    data_arr = reshape(data["DataArray"], (xmax, ymax, size(data["DataArray"], 2)))
+    #%%
+    figsize = (4, 6)
+    fig, ax = plt.subplots(figsize=figsize)
+    im1 = ax.contourf(data_arr[:, :, 1], levels=-95.0:5.0:5.0, cmap="viridis", extend="both")
+    ax.set_title("No Neurotransmission")
+    ax.set_aspect("equal")
+    cbar = fig.colorbar(im1, ax=ax, ticks=[-80, -40.0, 0.0], aspect=5, location="bottom", pad=0.15)
+    cbar.ax.set_xlabel("Voltage (mV)")
+    ann1 = ax.annotate("t = 0.0 s", (0.1, 0.26), xycoords="figure fraction", annotation_clip=false, fontweight="bold")
+    ax.set_xlabel("Cell # x")
+    ax.set_ylabel("Cell # y")
+    data["Time"]
+    tstops = 1:animate_dt:length(data["Time"])
+    n_frames = length(tstops)
+
+    function update(idx)
+        println("Animating frame $idx of $n_frames")
+        for tp in ax.collections
+            tp.remove()
+        end
+        tstop = tstops[idx+1]
+        frame = data_arr[:, :, tstop]
+        im1 = ax.contourf(frame, levels=-95.0:5.0:5.0, cmap="viridis")
+        ann1.set_text("t = $(round(tstop/1000, digits = 2)) s")
+        return im1, ann1
+    end
+
+    animation = anim.FuncAnimation(fig, update, frames=n_frames, repeat=false)
+    animation.save("$(loc)/regular_animation.gif", fps=1000.0 / animate_dt, dpi=100, writer="imagemagick")
+end
+#%% If we want to run each script by itself use this
+#include("making_figure1.jl")
+#include("making_figure2.jl")
+#include("making_figure3.jl")
