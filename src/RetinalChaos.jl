@@ -6,6 +6,7 @@ import Base.print
 import Dates.now
 export now
 
+
 #===========================================Import logging materials===========================================#
 #using Logging: global_logger
 #using TerminalLoggers: TerminalLogger
@@ -57,10 +58,10 @@ export V16, V17, V18
 
 #Import all the auxillary functions
 #===========================================Loading the Parameters=============================================#
-using Plots
+#using Plots
 using PyPlot
 using PyCall
-include("plotting.jl")
+
 
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")

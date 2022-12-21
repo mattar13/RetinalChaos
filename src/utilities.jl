@@ -196,6 +196,42 @@ function load_solution(load_path)
     SciMLBase.build_solution(sol_prob, SOSRI(), sol_t, sol_u) #we can use this to build a solution without GPU
 end
 
+function animate_solution(data, loc; xmax=64, ymax=64, animate_dt=1000.0, verbose=false)
+    if verbose
+        println("Animating the solution")
+    end
+    data_arr = reshape(data["DataArray"], (xmax, ymax, size(data["DataArray"], 2)))
+    #%%
+    figsize = (4, 6)
+    fig, ax = plt.subplots(figsize=figsize)
+    im1 = ax.contourf(data_arr[:, :, 1], levels=-95.0:5.0:5.0, cmap="viridis", extend="both")
+    ax.set_title("No Neurotransmission")
+    ax.set_aspect("equal")
+    cbar = fig.colorbar(im1, ax=ax, ticks=[-80, -40.0, 0.0], aspect=5, location="bottom", pad=0.15)
+    cbar.ax.set_xlabel("Voltage (mV)")
+    ann1 = ax.annotate("t = 0.0 s", (0.1, 0.26), xycoords="figure fraction", annotation_clip=false, fontweight="bold")
+    ax.set_xlabel("Cell # x")
+    ax.set_ylabel("Cell # y")
+    data["Time"]
+    tstops = 1:animate_dt:length(data["Time"])
+    n_frames = length(tstops)
+
+    function update(idx)
+        println("Animating frame $idx of $n_frames")
+        for tp in ax.collections
+            tp.remove()
+        end
+        tstop = tstops[idx+1]
+        frame = data_arr[:, :, tstop]
+        im1 = ax.contourf(frame, levels=-95.0:5.0:5.0, cmap="viridis")
+        ann1.set_text("t = $(round(tstop/1000, digits = 2)) s")
+        return im1, ann1
+    end
+
+    animation = anim.FuncAnimation(fig, update, frames=n_frames, repeat=false)
+    animation.save("$(loc)/regular_animation.gif", fps=1000.0 / animate_dt, dpi=100, writer="imagemagick")
+end
+
 """
 This function runs the model using the indicated parameters
 idxs: 
