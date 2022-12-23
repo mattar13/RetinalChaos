@@ -59,9 +59,9 @@ export V16, V17, V18
 #Import all the auxillary functions
 #===========================================Loading the Parameters=============================================#
 #using Plots
-using PyPlot
-using PyCall
-
+#using PyPlot
+#using PyCall
+#@pyimport matplotlib.animation as anim
 
 using JSON2, JLD2, BSON #Imports for reading and writing parameters and solutions
 include("utilities.jl")
