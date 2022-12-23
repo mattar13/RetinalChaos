@@ -8,19 +8,11 @@ using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger())
 using ProgressMeter
 
-using Plots
 # Set some initial parameters for this script
 data_root = raw"C:\Users\mtarc\OneDrive - The University of Akron\Data\Modelling"
 nx = ny = 64
 nt = 120001
 animate_dt = 60
-#%% Making model data
-
-loc = "$(data_root)\\wave_model"
-data = load("$(loc)/data.jld2")
-timestamps = load("$(loc)/timestamps.jld2")
-RetinalChaos.animate_solution(data, loc)
-animate_solution
 
 #%% Model 1: Regular Baseline model 
 wave_path = "$(data_root)\\wave_model"

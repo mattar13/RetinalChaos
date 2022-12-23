@@ -132,18 +132,21 @@ fig3 = plt.figure("Neurotransmitter Dynamics", figsize=(width_inches, height_inc
 gs = fig3.add_gridspec(4, 2,
      width_ratios=(0.77, 0.23),
      height_ratios=(0.2, 0.26, 0.26, 0.26),
-     right=0.91, left=0.1,
+     right=0.88, left=0.12,
      top=0.95, bottom=0.08,
-     wspace=0.10, hspace=0.4
+     wspace=0.20, hspace=0.4
 )
-col1_ylabel = -0.05
+col1_ylabel = -0.1
 col2_ylabel = -0.25
+im1_levels = 0.0:0.05:1.0
+im2_levels = 0.0:0.05:1.0
+im3_levels = -13.0:0.5:13.0
 #% =====================================================Make panel A===================================================== %%#
 gsA = gs[1, 1].subgridspec(ncols=1, nrows=2)
 
 axA1 = fig3.add_subplot(gsA[1, 1])
 axA1.plot(tstops, vt, c=v_color, lw=lw_standard)
-ylabel("Vt (mV)")
+ylabel("Volt. \n(mV)")
 axA1.xaxis.set_visible(false) #Turn off the bottom axis
 axA1.yaxis.set_label_coords(col1_ylabel, 0.5)
 axA1.spines["bottom"].set_visible(false)
@@ -152,7 +155,7 @@ axA2 = fig3.add_subplot(gsA[2, 1])
 axA2.plot(tstops, et, c=:green, lw=lw_standard)
 axA2.plot(tstops, it, c=:red, lw=lw_standard)
 axA2.set_xlabel("Time (s)")
-axA2.set_ylabel("NT. Rel. \n (mM)")
+axA2.set_ylabel("Rel. \n(mM)")
 axA2.set_ylim(0.0, 2.0)
 #axA2.xaxis.set_visible(false) #Turn off the bottom axis
 axA2.yaxis.set_label_coords(col1_ylabel, 0.5)
@@ -166,7 +169,7 @@ axA2.plot(tstops[frame_stops], it[frame_stops], c=:red, markersize=2.0, linewidt
 
 axAR = fig3.add_subplot(gs[1, 2])
 axAR.set_xlabel("Voltage (mV)")
-axAR.set_ylabel("Release")
+axAR.set_ylabel("Rel. (mM)")
 axAR.plot(v_rng, ACH_r, c=:green, lw=lw_standard)
 axAR.plot(v_rng, GABA_r, c=:red, lw=lw_standard)
 
@@ -182,7 +185,7 @@ for (idx, fr) in enumerate(frame_stops)
      else
           axBi.yaxis.set_visible(false) #Turn off the bottom axis
      end
-     ctr_B = axBi.contourf(ACH_map[:, :, fr], cmap="Greens", levels=0.0:0.05:0.5, extend="both")
+     ctr_B = axBi.contourf(ACH_map[:, :, fr], cmap="Greens", levels=im1_levels, vmin=0.0, vmax=0.50, extend="both")
      axBi.xaxis.set_visible(false) #Turn off the bottom axis
      axBi.set_aspect("equal", "box")
      axBi.spines["left"].set_visible(false)
@@ -191,13 +194,13 @@ end
 
 axBR = fig3.add_subplot(gs[2, 2])
 axBR.set_aspect("equal", "box")
-ctr_E = axBR.contourf(avg_ACH, cmap="Greens", levels=0.0:0.05:0.5, extend="both")
+ctr_E = axBR.contourf(avg_ACH, cmap="Greens", levels=im1_levels, vmin=0.0, vmax=0.50, extend="both")
 axBR.set_xticks([])
 axBR.yaxis.set_visible(false) #Turn off the bottom axis
 axBR.spines["bottom"].set_visible(false)
 axBR.spines["left"].set_visible(false)
 xlabel("Avg. ACh \n Release (mM)")
-cbarE = fig3.colorbar(ctr_E, ticks=[0.0, 0.25, 0.5])
+cbarE = fig3.colorbar(ctr_E, ticks=[0.0, 0.50, 1.0], aspect=5)
 cbarE.ax.set_ylabel("Average Et (ACh)")
 
 
@@ -206,7 +209,7 @@ gsCL = gs[3, 1].subgridspec(ncols=4, nrows=1)
 
 for (idx, fr) in enumerate(frame_stops)
      axCi = fig3.add_subplot(gsCL[idx])
-     ctr_I = axCi.contourf(GABA_map[:, :, fr], cmap="Reds", levels=0.0:0.05:0.5, extend="both")
+     ctr_I = axCi.contourf(GABA_map[:, :, fr], cmap="Reds", levels=im2_levels, vmin=0.0, vmax=0.50, extend="both")
      #axCi.xaxis.set_visible(false) #Turn off the bottom axis
      if idx == 1
           ylabel("GABA Release")
@@ -225,14 +228,14 @@ for (idx, fr) in enumerate(frame_stops)
 end
 
 axCR = fig3.add_subplot(gs[3, 2])
-ctr_I = axCR.contourf(avg_GABA, cmap="Reds", levels=0.0:0.05:0.5, extend="both")
+ctr_I = axCR.contourf(avg_GABA, cmap="Reds", levels=im2_levels, vmin=0.0, vmax=0.50, extend="both")
 axCR.set_xticks([])
 axCR.yaxis.set_visible(false) #Turn off the bottom axis
 axCR.set_aspect("equal", "box")
 axCR.spines["bottom"].set_visible(false)
 axCR.spines["left"].set_visible(false)
 xlabel("Avg. GABA \n Release (mM)")
-cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.25, 0.5])
+cbarI = fig3.colorbar(ctr_I, ticks=[0.0, 0.50, 1.0], aspect=5)
 cbarI.ax.set_ylabel("Average It (GABA)")
 
 #% ===============================================Make panel D=============================================== %%#
@@ -285,7 +288,7 @@ end
 axD4.set_xlabel("Time (s)")
 
 axDR = fig3.add_subplot(gs[4, 2])
-ctr_i = axDR.contourf(avg_I_TOTAL, cmap="RdYlGn", levels=-5.0:0.5:5.0, extend="both")
+ctr_i = axDR.contourf(avg_I_TOTAL, cmap="RdYlGn", levels=im3_levels, vmin=-5.0, vmax=5.0, extend="both")
 axDR.plot([center_x], [center_y], linewidth=0.0, marker="o", ms=4.0)
 #Plot sample points
 valYD = abs.(center_y .- dY_D .- 1)
@@ -305,7 +308,7 @@ axDR.set_ylim(0, ny)
 axDR.set_aspect("equal", "box")
 axDR.spines["bottom"].set_visible(false)
 axDR.spines["left"].set_visible(false)
-cbari = fig3.colorbar(ctr_i, ticks=[-25.0, 0.0, 10.0])
+cbari = fig3.colorbar(ctr_i, ticks=[-10.0, 0.0, 10.0], aspect=5)
 cbari.ax.set_ylabel("Induced Current (pA)")
 
 axDR.annotate("A", (0.01, 0.95), xycoords="figure fraction", annotation_clip=false, fontsize=20.0, fontweight="bold")
