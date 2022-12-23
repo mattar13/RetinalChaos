@@ -81,6 +81,7 @@ rcParams["errorbar.capsize"] = 1.0 #Set the length of the errorbar cap
 #rcParams["figure.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the figure background transparent white
 #rcParams["axes.facecolor"] = (0.0, 0.0, 0.0, 0.0) #Make the axes background transparent white
 rcParams["animation.convert_path"] = "C:\\Program Files\\ImageMagick-7.1.0-Q16-HDRI\\magick.exe"
+#rcParams["animation.convert_path"] = "C:\\ffmpeg\\bin\\ffmpeg.exe"
 mpl.rcParams["verbose.level"] = "helpful"
 #These are the savefig params
 rcParams["savefig.pad_inches"] = 0.0
@@ -155,7 +156,84 @@ function add_direction(ax, x, y, dx, dy; color=:black)
     )
 end
 
-#%% If we want to run each script by itself use this
-#include("making_figure1.jl")
-#include("making_figure2.jl")
-#include("making_figure3.jl")
+function animate_solution(data, loc;
+    mode = :imshow, figsize = (4, 3), title = "Default",
+    animation_filename="regular_animation", extension=".mp4",
+    xmax=64, ymax=64, animate_dt=100.0, verbose=false,
+    cmin=-85.0, dc=5.0, cmax=-40.0, clims = (-65.0, -35.0),
+    cticks=[-85, -65.0, -45.0],
+    kwargs...
+)
+    data_arr = reshape(data["DataArray"], (xmax, ymax, size(data["DataArray"], 2)))
+    data_arr = mapslices(rot180,data_arr,dims=[1,2])
+    if mode == :contourf
+        if verbose
+            println("using contourf to animating the solution")
+        end
+        figsize = (4, 3)
+        fig, ax = plt.subplots(figsize=figsize)
+        im1 = ax.contourf(data_arr[:, :, 1], levels=cmin:dc:cmax, vmin = clims[1], vmax = clims[2], cmap="viridis", extend="both")
+        ax.set_title("No Neurotransmission")
+        ax.set_aspect("equal")
+        cbar = fig.colorbar(im1, ax=ax, ticks=cticks, aspect=5, location="bottom", pad=0.15)
+        cbar.ax.set_xlabel("Voltage (mV)")
+        ann1 = ax.annotate("t = 0.0 s", (0.1, 0.26), xycoords="figure fraction", annotation_clip=false, fontweight="bold")
+        ax.set_xlabel("Cell # x")
+        ax.set_ylabel("Cell # y")
+
+        tstops = 1:animate_dt:length(data["Time"])
+        n_frames = length(tstops)
+
+        function update(idx)
+            println("Animating frame $idx of $n_frames")
+            for tp in ax.collections
+                tp.remove()
+            end
+            tstop = round(Int64, tstops[idx+1])
+            frame = data_arr[:, :, tstop]
+            im1 = ax.contourf(frame, levels=cmin:dc:cmax, vmin = clims[1], vmax = clims[2], cmap="viridis")
+            ax.set_aspect("equal")
+            ann1.set_text("t = $(round(tstop/1000, digits = 2)) s")
+            return im1, ann1
+        end
+        animation = anim.FuncAnimation(fig, update, frames=n_frames, repeat=false)
+    elseif mode == :imshow
+        if verbose
+            println("using contourf to animating the solution")
+        end
+        fig, ax = plt.subplots(figsize=figsize)
+        plt.subplots_adjust(right=0.8, left=0.2, top=0.90, bottom=0.15)
+        im1 = ax.imshow(data_arr[:, :, 1], vmin = cmin, vmax = cmax, cmap="viridis")
+        ax.set_title(title, pad = 10.0)
+        ax.set_aspect("equal")
+        cbar = fig.colorbar(im1, ax=ax, ticks=cticks, aspect=5, pad=0.15)
+        cbar.ax.set_ylabel("Voltage (mV)")
+        ann1 = ax.annotate("t = 0.0 s", (0.05, 0.07), xycoords="figure fraction", annotation_clip=false, fontweight="bold")
+        ax.set_xlabel("Cell # x")
+        ax.set_ylabel("Cell # y")
+        ax.spines["bottom"].set_visible(false)
+        ax.spines["left"].set_visible(false)
+        tstops = 1:animate_dt:length(data["Time"])
+        n_frames = length(tstops)
+        
+        function anim_init() #tells our animator what artists will need re-drawing every time
+            return im1, cbar, ann1
+        end
+
+        function anim_update(idx)
+            plt.subplots_adjust(right=0.8, left=0.2, top=0.90, bottom=0.15)
+            println("Animating frame $idx of $n_frames")
+            tstop = round(Int64, tstops[idx+1])
+            im1.set_data(data_arr[:, :, tstop])
+            #im1.set_aspect("equal")
+            ann1.set_text("t = $(round(tstop/1000, digits = 2)) s")
+            return im1, cbar, ann1
+        end
+        animation = anim.FuncAnimation(fig, anim_update, init_func=anim_init, frames=n_frames, repeat=false)
+
+        #plt.show()
+    end
+    #animation.save("$(loc)\\Supplementary Movie 1 Neurotransmitter Conductance.mp4", fps=1000.0 / animate_dt, dpi=100, writer="ffmpeg")
+    animation.save("$(loc)\\$(animation_filename)$(extension)", fps=1000.0 / animate_dt, dpi=600, writer="ffmpeg")
+    return animation
+end
