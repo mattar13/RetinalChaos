@@ -10,15 +10,18 @@ Julia code for a system of differential equations used for simulating cholinergi
 
 3 Create a new environment
 
-     - press "]" and in the package environment 
+press "]" and in the package environment 
 
-     - '''generate Modelling'''
+     generate Modelling
 
-     - '''activate Modelling'''
+     activate Modelling
 
-     - add https://github.com/mattar13/RetinalChaos.git
+     add https://github.com/mattar13/RetinalChaos.git
 
 4 Hit backspace to return to Julia REPL mode
 
-5 Type: '''using RetinalChaos''' 
+5 Type: 
+     
+     using RetinalChaos
+
 Download source files using 
