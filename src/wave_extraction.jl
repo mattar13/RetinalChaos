@@ -1,5 +1,4 @@
 #To extend some utilites you need to explicitly import them
-import ePhys: calculate_threshold, get_timestamps, timeseries_analysis, max_interval_algorithim
 
 #This form of the function only calculates the analysis on a single variable
 function calculate_threshold(sol::DiffEqBase.AbstractODESolution{T, N, S}, rng::Tuple{Float64, Float64};
