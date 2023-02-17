@@ -83,15 +83,7 @@ export Binomial, Histogram, fit
 
 
 #export animate_solution
-#using ForwardDiff
-#import ForwardDiff as FD
-#export FD
-#include("fitting.jl")
-#export extract_spike_trace, extract_burst_trace, extract_IBI_trace
-#export SpikeLoss, BurstLoss, IBILoss
-#export IntervalLoss, MSELoss
-#export MeanSquaredErrorSOL, MeanSquaredError
-#export TimescaleLoss
+
 
 #Load all of the old modelling aspects. We can use that one for PDE
 #import Plots.@animate #Only import 
@@ -122,6 +114,17 @@ function __init__()
           export codim_map
           export @lens, norminf
           export t_pars, t_conds
+     end
+
+     @requires ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210" begin
+          import ForwardDiff as FD
+          export FD
+          include("fitting.jl")
+          export extract_spike_trace, extract_burst_trace, extract_IBI_trace
+          export SpikeLoss, BurstLoss, IBILoss
+          export IntervalLoss, MSELoss
+          export MeanSquaredErrorSOL, MeanSquaredError
+          export TimescaleLoss
      end
 end
 
