@@ -1,5 +1,6 @@
 module RetinalChaos
 
+using Requires
 #==Base imports==#
 import Base.length
 import Base.print
@@ -76,38 +77,21 @@ export Binomial, Histogram, fit
 #==========================================Extracting wave and events==========================================#
 #using ePhys #Export the wave extraction utilities
 
-using Images, ImageSegmentation 
-using DataFrames, Query, XLSX
-include("wave_extraction.jl") #Export functions for wave extraction
-export calculate_threshold, timeseries_analysis
-export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
-export WaveSegmentation
 
-using BifurcationKit
-import BifurcationKit as BK
-export BK #Use this explicitly for Bifurcation kit utilities
-using ForwardDiff, NLsolve, Setfield, LinearAlgebra #Imported for dynamical analysis
-include("dynamical_analysis.jl") # Export functions for dynamical analysis
-export ensemble_func
-export find_equilibria, find_bifurcation
-export codim_map
-export @lens, norminf
-export t_pars, t_conds
+
 #using RecipesBase #I want to avoid using thisPlots
 
 
 #export animate_solution
-
-
-using ForwardDiff
-import ForwardDiff as FD
-export FD
-include("fitting.jl")
-export extract_spike_trace, extract_burst_trace, extract_IBI_trace
+#using ForwardDiff
+#import ForwardDiff as FD
+#export FD
+#include("fitting.jl")
+#export extract_spike_trace, extract_burst_trace, extract_IBI_trace
 #export SpikeLoss, BurstLoss, IBILoss
-export IntervalLoss, MSELoss
-export MeanSquaredErrorSOL, MeanSquaredError
-export TimescaleLoss
+#export IntervalLoss, MSELoss
+#export MeanSquaredErrorSOL, MeanSquaredError
+#export TimescaleLoss
 
 #Load all of the old modelling aspects. We can use that one for PDE
 #import Plots.@animate #Only import 
@@ -116,5 +100,29 @@ export T_PDE_w_NA, noise
 using Statistics, StatsBase
 export std
 export run_model
+
+function __init__()
+     @require ePhys = "69cbc4a0-077e-48a7-9b45-fa8b7014b5ca" begin
+          import ePhys: calculate_threshold, get_timestamps, timeseries_analysis, max_interval_algorithim
+          using Images, ImageSegmentation 
+          using DataFrames, Query, XLSX
+          include("wave_extraction.jl") #Export functions for wave extraction
+          export calculate_threshold, timeseries_analysis
+          export get_timestamps, max_interval_algorithim, extract_interval, timeseries_analysis
+          export WaveSegmentation
+     end
+
+     @require BifurcationKit = "0f109fa4-8a5d-4b75-95aa-f515264e7665" begin
+          import BifurcationKit as BK
+          export BK #Use this explicitly for Bifurcation kit utilities
+          using ForwardDiff, NLsolve, Setfield, LinearAlgebra #Imported for dynamical analysis
+          include("dynamical_analysis.jl") # Export functions for dynamical analysis
+          export ensemble_func
+          export find_equilibria, find_bifurcation
+          export codim_map
+          export @lens, norminf
+          export t_pars, t_conds
+     end
+end
 
 end
