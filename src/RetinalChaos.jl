@@ -116,7 +116,7 @@ function __init__()
           export t_pars, t_conds
      end
 
-     @requires ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210" begin
+     @require ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210" begin
           import ForwardDiff as FD
           export FD
           include("fitting.jl")
