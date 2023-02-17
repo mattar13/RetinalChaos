@@ -4,24 +4,24 @@ A system of dynamical equations simulating the phenomena of retinal waves
 Julia code for a system of differential equations used for simulating cholinergic retinal waves
 
 ## To install:
-#### 1) Install the most up to date Julia: https://julialang.org/ 
+1) Install the most up to date Julia: https://julialang.org/ 
 
-#### 2) Run Julia
+2) Run Julia
 
-#### 3) Press "]" and create and activate a new environment: 
+3) Press "]" and create and activate a new environment: 
 
      generate Modelling
 
      activate Modelling
 
-#### 4) Install the package
+4) Install the package
 
      add https://github.com/mattar13/RetinalChaos.git
 
-#### 5) Hit backspace to return to Julia REPL mode
+5) Hit backspace to return to Julia REPL mode
 
 ## To use
-#### 1) Run a ODE: (This is also located in examples/running_model_ODE.jl)
+1) Run a ODE: (This is also located in examples/running_model_ODE.jl)
      
      using RetinalChaos
      using Plots
